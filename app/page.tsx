@@ -1,32 +1,25 @@
-import { FactoryIcon } from "@/lib/icons";
+import Link from "next/link";
+import { WalletIcon } from "@/lib/icons";
 
 export default function Home() {
   return (
-    <main style={{ maxWidth: 640, margin: "80px auto", padding: "0 24px" }}>
+    <main style={{ maxWidth: 480, margin: "80px auto", padding: "0 24px" }}>
       <h1 style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <FactoryIcon width={28} height={28} />
-        Mini App Factory
+        <WalletIcon width={28} height={28} style={{ color: "var(--primary)" }} />
+        Simulador de deudas
       </h1>
-      <p>
-        Si estás viendo esto en <code>localhost:3000</code>, el boilerplate
-        arrancó bien.
+      <p style={{ color: "var(--on-surface-variant)", lineHeight: 1.5 }}>
+        Cargá tus deudas y gastos y mantené el estado de tu situación
+        financiera actualizado automáticamente a medida que cambian los
+        datos reales — sin recalcular nada a mano.
       </p>
-      <ol>
-        <li>Configurá tu proyecto de Supabase y completá el <code>.env.local</code></li>
-        <li>
-          Corré <code>supabase/schema.sql</code> en el SQL Editor de tu
-          proyecto
-        </li>
-        <li>Empezá a construir tu primera mini app acá adentro</li>
-      </ol>
-      <p>
-        La lógica de suscripciones vive en <code>lib/billing/index.ts</code> —
-        desde ahí llamás <code>createSubscription()</code> sin importar si el
-        usuario paga con Stripe o MercadoPago.
-      </p>
-      <p style={{ marginTop: 24 }}>
-        <a href="/login" style={{ marginRight: 16 }}>Iniciar sesión</a>
-        <a href="/signup">Crear cuenta</a>
+      <p style={{ marginTop: 24, display: "flex", gap: 12 }}>
+        <Link href="/login">
+          <button type="button">Iniciar sesión</button>
+        </Link>
+        <Link href="/signup">
+          <button type="button" style={{ background: "white" }}>Crear cuenta</button>
+        </Link>
       </p>
     </main>
   );

@@ -29,8 +29,8 @@ export async function extractLayoutText(buffer: Buffer): Promise<string> {
     const page = await pdf.getPage(pageNum);
     const content = await page.getTextContent();
 
-    const items = content.items
-      .filter((item: any): item is { str: string; transform: number[] } => "str" in item && item.str.trim().length > 0)
+    const items = (content.items as any[])
+      .filter((item) => "str" in item && item.str.trim().length > 0)
       .map((item) => ({
         text: item.str,
         x: item.transform[4],
