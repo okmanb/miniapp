@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Debts</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#dae2fd",
+                        "secondary-container": "#8d42ff",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#bbcac3",
+                        "inverse-primary": "#46ddbb",
+                        "inverse-on-surface": "#eef0ff",
+                        "primary-container": "#00bd9d",
+                        "primary-fixed-dim": "#46ddbb",
+                        "surface-container": "#eaedff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#3a4d00",
+                        "primary-fixed": "#69fad7",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#270058",
+                        "on-background": "#131b2e",
+                        "error-container": "#ffdad6",
+                        "background": "#faf8ff",
+                        "on-tertiary-fixed": "#151f00",
+                        "on-secondary-fixed-variant": "#5d00c2",
+                        "on-tertiary-container": "#314200",
+                        "surface-container-low": "#f2f3ff",
+                        "tertiary-fixed": "#c6f251",
+                        "outline": "#6c7a75",
+                        "surface-dim": "#B8C2E6",
+                        "neon-teal-glow": "rgba(0, 189, 157, 0.4)",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e2e7ff",
+                        "on-error": "#ffffff",
+                        "secondary": "#731be5",
+                        "primary": "#006b58",
+                        "surface-container-highest": "#dae2fd",
+                        "secondary-fixed": "#ebdcff",
+                        "surface": "#faf8ff",
+                        "on-surface": "#131b2e",
+                        "surface-tint": "#006b58",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#abd535",
+                        "surface-bright": "#faf8ff",
+                        "tertiary-container": "#8db50c",
+                        "on-surface-variant": "#3c4a45",
+                        "neon-violet-glow": "rgba(138, 63, 252, 0.4)",
+                        "tertiary": "#4e6700",
+                        "inverse-surface": "#283044",
+                        "on-primary-fixed": "#002019",
+                        "on-primary-container": "#004538",
+                        "secondary-fixed-dim": "#d4bbff",
+                        "on-secondary-container": "#fdf6ff",
+                        "on-primary-fixed-variant": "#005142"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gap-lg": "32px",
+                        "gutter": "16px",
+                        "padding-card": "20px",
+                        "gap-sm": "8px",
+                        "gap-md": "16px",
+                        "unit": "4px",
+                        "margin-main": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Geist"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Geist"],
+                        "body-md": ["Geist"],
+                        "body-lg": ["Geist"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Geist"],
+                        "display-lg": ["Geist"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.05em", "fontWeight": "900" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Geist', sans-serif;
+            background-color: #faf8ff;
+            color: #131b2e;
+        }
+        .glow-button {
+            box-shadow: 0 0 15px rgba(0, 189, 157, 0.4);
+        }
+        .glow-button:hover {
+            box-shadow: 0 0 20px rgba(0, 189, 157, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0 pt-16">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-white/10 shadow-sm transition-transform duration-200">
+<div class="flex items-center justify-between px-gutter h-16 w-full max-w-md mx-auto">
+<div class="flex items-center">
+<img class="w-8 h-8 rounded-full bg-surface-dim object-cover mr-3" data-alt="A small, circular avatar portrait of a professional looking individual against a clean white background, rendered in high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpFa9kh0vMRbfE3UErjjtEjJLbloia7X4kz_TAgwDYgf6etdchKLHXrrZRSd5dL98JzF19jcgYROpoMty3iaY8BfGWdkRxOoGoOfF8Zzk3msSDNgYrFrYXxHCbEbUtcyTxzlIzQ2QMaAwsruRKItshkop0hMcofwd26TN1i7SM6NRqv7X7bbNc89_JdbktEE0yhAGmcaD7YqM9tP-MFa9PdkYha1CbuUKcZqSX_W7HuSkyZt8N9rX8"/>
+<span class="text-headline-md font-headline-md font-bold tracking-tight text-primary-fixed dark:text-primary-fixed-dim">Lumina Finance</span>
+</div>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+</button>
+</div>
+</header>
+<main class="max-w-md mx-auto px-gutter pt-margin-main">
+<!-- Strategy Toggle -->
+<div class="mb-gap-lg">
+<h2 class="text-headline-md font-headline-md mb-gap-sm">Payoff Strategy</h2>
+<div class="flex bg-surface-container-high rounded-full p-1 relative border border-outline-variant/30">
+<div class="absolute inset-y-1 left-1 w-1/2 bg-white rounded-full shadow-sm border border-surface-container-high transition-transform duration-300"></div>
+<button class="flex-1 py-2 text-center text-label-md font-label-md text-primary-container relative z-10 transition-colors">Avalanche</button>
+<button class="flex-1 py-2 text-center text-label-md font-label-md text-on-surface-variant hover:text-on-surface relative z-10 transition-colors">Snowball</button>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mt-2 text-center">Highest interest first.</p>
+</div>
+<!-- Total Debt Summary -->
+<div class="bg-primary-container text-on-primary rounded-xl p-padding-card shadow-[0_8px_32px_rgba(0,189,157,0.3)] mb-gap-lg relative overflow-hidden">
+<div class="absolute -right-10 -top-10 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none"></div>
+<h3 class="text-body-lg font-body-lg text-white/80 mb-1">Total Remaining</h3>
+<div class="text-display-lg font-display-lg mb-4">$42,500.00</div>
+<div class="flex justify-between items-end">
+<div>
+<span class="text-label-md font-label-md bg-white/20 px-2 py-1 rounded text-white inline-flex items-center">
+<span class="material-symbols-outlined text-[16px] mr-1">trending_down</span> -$1,200 this mo
+                    </span>
+</div>
+<button class="bg-white text-primary-container text-label-md font-label-md px-4 py-2 rounded-full hover:bg-surface transition-colors shadow-sm">
+                    Make Extra Payment
+                </button>
+</div>
+</div>
+<!-- Debt Cards -->
+<h3 class="text-headline-lg-mobile font-headline-lg-mobile mb-gap-md">Active Debts</h3>
+<div class="flex flex-col gap-gap-md">
+<!-- Card 1: Chase Sapphire -->
+<div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-padding-card relative">
+<div class="absolute inset-0 border-2 border-primary-container rounded-xl pointer-events-none z-10 shadow-[inset_0_0_10px_rgba(0,189,157,0.1)]"></div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-body-lg font-body-lg font-bold">Chase Sapphire</span>
+<span class="bg-error-container text-on-error-container text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">24.9% APR</span>
+</div>
+<div class="text-label-md font-label-md text-on-surface-variant">Target Payoff: Oct 2024</div>
+</div>
+<div class="bg-primary-container/10 text-primary-container p-2 rounded-lg">
+<span class="material-symbols-outlined">credit_card</span>
+</div>
+</div>
+<div class="flex justify-between items-end mb-2">
+<div>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Balance</span>
+<div class="text-headline-md font-headline-md">$4,250</div>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Min Payment</span>
+<div class="text-body-lg font-body-lg">$150/mo</div>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-surface-container rounded-full h-2 mb-4 mt-2">
+<div class="bg-primary-container h-2 rounded-full" style="width: 65%"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-label-sm font-label-sm text-primary-container font-bold">Recommended Focus</span>
+<button class="bg-primary-container text-white text-label-md font-label-md px-4 py-2 rounded-full glow-button transition-all">
+                        Pay Now
+                    </button>
+</div>
+</div>
+<!-- Card 2: Student Loan -->
+<div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-padding-card">
+<div class="flex justify-between items-start mb-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-body-lg font-body-lg font-bold">Student Loan</span>
+<span class="bg-surface-dim text-on-surface text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">5.8% APR</span>
+</div>
+<div class="text-label-md font-label-md text-on-surface-variant">Target Payoff: Dec 2028</div>
+</div>
+<div class="bg-secondary/10 text-secondary p-2 rounded-lg">
+<span class="material-symbols-outlined">school</span>
+</div>
+</div>
+<div class="flex justify-between items-end mb-2">
+<div>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Balance</span>
+<div class="text-headline-md font-headline-md">$35,000</div>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Min Payment</span>
+<div class="text-body-lg font-body-lg">$450/mo</div>
+</div>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2 mb-4 mt-2">
+<div class="bg-secondary h-2 rounded-full" style="width: 20%"></div>
+</div>
+<div class="flex justify-end">
+<button class="border-2 border-secondary text-secondary hover:bg-secondary/5 text-label-md font-label-md px-4 py-2 rounded-full transition-colors">
+                        Manage
+                    </button>
+</div>
+</div>
+<!-- Card 3: Apple Card -->
+<div class="bg-surface-container-lowest border border-surface-container-high rounded-xl p-padding-card opacity-80">
+<div class="flex justify-between items-start mb-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-body-lg font-body-lg font-bold">Apple Card</span>
+<span class="bg-surface-dim text-on-surface text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">15.9% APR</span>
+</div>
+<div class="text-label-md font-label-md text-on-surface-variant">Target Payoff: Feb 2025</div>
+</div>
+<div class="bg-outline/10 text-outline p-2 rounded-lg">
+<span class="material-symbols-outlined">phone_iphone</span>
+</div>
+</div>
+<div class="flex justify-between items-end mb-2">
+<div>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Balance</span>
+<div class="text-headline-md font-headline-md">$3,250</div>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Min Payment</span>
+<div class="text-body-lg font-body-lg">$100/mo</div>
+</div>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2 mb-4 mt-2">
+<div class="bg-outline h-2 rounded-full" style="width: 45%"></div>
+</div>
+<div class="flex justify-end">
+<button class="border border-outline-variant text-on-surface hover:bg-surface-container text-label-md font-label-md px-4 py-2 rounded-full transition-colors">
+                        Manage
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface/90 dark:bg-surface/90 backdrop-blur-2xl border-t border-white/10 shadow-[0_-4px_24px_rgba(0,189,157,0.1)] md:hidden">
+<div class="flex justify-around items-center w-full px-4 pb-6 pt-3 max-w-md mx-auto">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-60 hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined mb-1 group-active:scale-90 transition-transform duration-200" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span class="text-label-sm font-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary-fixed dark:text-primary-fixed-dim bg-primary/10 rounded-xl px-3 py-1 scale-95 transition-all duration-200" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">credit_card</span>
+<span class="text-label-sm font-label-sm">Debts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-60 hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined mb-1 group-active:scale-90 transition-transform duration-200" style="font-variation-settings: 'FILL' 0;">auto_awesome</span>
+<span class="text-label-sm font-label-sm">Assistant</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-60 hover:bg-white/5 transition-colors group" href="#">
+<span class="material-symbols-outlined mb-1 group-active:scale-90 transition-transform duration-200" style="font-variation-settings: 'FILL' 0;">local_fire_department</span>
+<span class="text-label-sm font-label-sm">Streaks</span>
+</a>
+</div>
+</nav>
+<script>
+        // Strategy Toggle Interaction
+        const toggleContainer = document.querySelector('.flex.bg-surface-container-high');
+        const highlight = toggleContainer.querySelector('.absolute');
+        const buttons = toggleContainer.querySelectorAll('button');
+
+        buttons.forEach((button, index) => {
+            button.addEventListener('click', () => {
+                // Move highlight
+                highlight.style.transform = `translateX(${index * 100}%)`;
+                
+                // Update text colors
+                buttons.forEach(btn => {
+                    btn.classList.remove('text-primary-container');
+                    btn.classList.add('text-on-surface-variant');
+                });
+                button.classList.remove('text-on-surface-variant');
+                button.classList.add('text-primary-container');
+            });
+        });
+    </script>
+</body></html>

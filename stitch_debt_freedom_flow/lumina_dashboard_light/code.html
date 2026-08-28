@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina Finance - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "accent-violet": "#8A3FFC",
+                "on-secondary-fixed-variant": "#5d00c2",
+                "on-error": "#ffffff",
+                "on-background": "#131b2e",
+                "outline-variant": "#bbcac3",
+                "inverse-on-surface": "#eef0ff",
+                "background": "#faf8ff",
+                "tertiary-fixed-dim": "#abd535",
+                "surface-container-lowest": "#ffffff",
+                "surface-alt": "#F8FAFC",
+                "surface-tint": "#006b58",
+                "on-primary": "#ffffff",
+                "tertiary-fixed": "#c6f251",
+                "on-primary-fixed-variant": "#005142",
+                "on-tertiary": "#ffffff",
+                "surface-container-low": "#f2f3ff",
+                "surface-container-high": "#e2e7ff",
+                "on-surface": "#131b2e",
+                "text-primary": "#0F172A",
+                "error": "#ba1a1a",
+                "on-primary-fixed": "#002019",
+                "on-primary-container": "#004538",
+                "surface-variant": "#dae2fd",
+                "primary-container": "#00bd9d",
+                "on-secondary-container": "#fdf6ff",
+                "surface": "#FFFFFF",
+                "surface-container": "#eaedff",
+                "inverse-surface": "#283044",
+                "on-tertiary-fixed-variant": "#3a4d00",
+                "on-surface-variant": "#3c4a45",
+                "surface-bright": "#faf8ff",
+                "error-container": "#ffdad6",
+                "on-tertiary-fixed": "#151f00",
+                "inverse-primary": "#46ddbb",
+                "on-tertiary-container": "#314200",
+                "on-error-container": "#93000a",
+                "tertiary-container": "#8db50c",
+                "border-soft": "#E2E8F0",
+                "primary": "#006b58",
+                "primary-fixed-dim": "#46ddbb",
+                "secondary-fixed": "#ebdcff",
+                "primary-fixed": "#69fad7",
+                "surface-container-highest": "#dae2fd",
+                "on-secondary": "#ffffff",
+                "secondary-container": "#8d42ff",
+                "secondary-fixed-dim": "#d4bbff",
+                "text-secondary": "#64748B",
+                "outline": "#6c7a75",
+                "accent-lime": "#88B000",
+                "accent-teal": "#00BD9D",
+                "tertiary": "#4e6700",
+                "secondary": "#731be5",
+                "surface-dim": "#d2d9f4",
+                "on-secondary-fixed": "#270058"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "gap-sm": "8px",
+                "unit": "4px",
+                "padding-card": "16px",
+                "gutter": "12px",
+                "margin-main": "20px",
+                "gap-md": "16px",
+                "gap-lg": "24px",
+                "stack-gap-sm": "8px",
+                "stack-gap-lg": "24px",
+                "stack-gap-md": "16px",
+                "container-padding": "20px",
+                "grid-gutter": "12px"
+        },
+        "fontFamily": {
+                "headline-md": [
+                        "Geist"
+                ],
+                "headline-lg-mobile": [
+                        "Geist"
+                ],
+                "body-md": [
+                        "Geist"
+                ],
+                "headline-lg": [
+                        "Geist"
+                ],
+                "display-lg": [
+                        "Geist"
+                ],
+                "label-md": [
+                        "JetBrains Mono"
+                ],
+                "body-lg": [
+                        "Geist"
+                ],
+                "label-sm": [
+                        "JetBrains Mono"
+                ]
+        },
+        "fontSize": {
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "28px",
+                        {
+                                "lineHeight": "36px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.04em",
+                                "fontWeight": "800"
+                        }
+                ],
+                "label-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .glow-accent {
+            box-shadow: 0 0 24px rgba(0, 189, 157, 0.15);
+        }
+        .glow-tertiary {
+            box-shadow: 0 0 24px rgba(141, 181, 12, 0.15);
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen relative overflow-x-hidden">
+<!-- Ambient Background Glows -->
+<div class="fixed top-0 left-0 w-full h-96 bg-primary-fixed/20 blur-[120px] pointer-events-none -z-10"></div>
+<div class="fixed bottom-0 right-0 w-96 h-96 bg-secondary-fixed/30 blur-[120px] pointer-events-none -z-10"></div>
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-xl border-b border-border-soft shadow-sm">
+<div class="flex items-center justify-between px-container-padding h-16 w-full max-w-md mx-auto">
+<!-- Leading Avatar -->
+<button class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest flex items-center justify-center scale-95 active:scale-90 transition-transform duration-200 hover:opacity-80 transition-opacity border border-border-soft">
+<img class="w-full h-full object-cover" data-alt="A cinematic, high-contrast close-up portrait of a modern professional in a softly lit, tech-forward environment. The lighting is slightly cool and atmospheric, reflecting a sophisticated fintech vibe with deep shadows and soft highlights on the face. High-end, premium aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYvg9EjlIh3mKLkNttbP3Ksxm5OpifHalwd0y5en_DQIH9pNXuI_1yRVh40lH-XxD5glU337_yWYQCpYnAayoH8ZSknjgtiThrmrVDAz5qjRqa8ljBaLtI-agtNxR4YMK1cX2WJRfQmU1vDWTOLyDTpFJEZ5E1IJiTBunMVXwgos7U15-zP8dM6nn4_l5RbifPHtO-7imvsnVm2bWarrsDhwHLf0MaFo0ZwqOgFfYOiygcdkO84Fgh"/>
+</button>
+<!-- Headline -->
+<h1 class="text-headline-md font-headline-md font-bold tracking-tight text-primary">Lumina Finance</h1>
+<!-- Trailing Icon -->
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" data-weight="fill">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-32 px-container-padding max-w-md mx-auto flex flex-col gap-stack-lg">
+<!-- Total Debt Summary Card -->
+<section class="relative overflow-hidden rounded-xl bg-surface p-6 glow-accent border border-border-soft shadow-sm">
+<!-- Decorative Gradient Blob -->
+<div class="absolute -top-12 -right-12 w-48 h-48 bg-primary-fixed/30 blur-3xl rounded-full pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-unit">
+<h2 class="text-label-md font-label-md text-text-secondary uppercase tracking-wider">Total Debt</h2>
+<div class="text-display-lg font-display-lg font-extrabold text-text-primary tracking-tight">
+                    $24,500<span class="text-text-secondary text-headline-md">.00</span>
+</div>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-primary text-sm">trending_down</span>
+<span class="text-label-sm font-label-sm text-primary">-$450 from last month</span>
+</div>
+</div>
+</section>
+<!-- Quick Action Buttons -->
+<section class="flex gap-stack-md w-full">
+<button class="flex-1 bg-primary text-on-primary rounded-full py-4 px-6 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity active:scale-95 duration-200 shadow-md shadow-primary/20">
+<span class="material-symbols-outlined text-base">payments</span>
+<span class="text-label-md font-label-md font-bold">Pay Now</span>
+</button>
+<button class="flex-1 bg-surface text-text-primary rounded-full py-4 px-6 flex items-center justify-center gap-2 border border-border-soft hover:bg-surface-alt transition-colors active:scale-95 duration-200 shadow-sm">
+<span class="material-symbols-outlined text-base">add</span>
+<span class="text-label-md font-label-md font-bold">Add Debt</span>
+</button>
+</section>
+<!-- Next Due Section -->
+<section class="flex flex-col gap-stack-sm">
+<h3 class="text-label-sm font-label-sm text-text-secondary px-1">Next Due</h3>
+<div class="glass-card rounded-xl p-4 flex items-center justify-between group hover:bg-surface-alt transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">credit_card</span>
+</div>
+<div class="flex flex-col">
+<span class="text-body-md font-body-md font-semibold text-text-primary">Chase Sapphire</span>
+<span class="text-label-sm font-label-sm text-error flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                            Due Tomorrow
+                        </span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-headline-md font-headline-md font-bold text-text-primary">$150.00</span>
+<span class="text-label-sm font-label-sm text-text-secondary bg-surface-alt px-2 py-1 rounded-full mt-1 border border-border-soft">Minimum</span>
+</div>
+</div>
+</section>
+<!-- Streak Widget -->
+<section class="glass-card rounded-xl p-5 glow-tertiary relative overflow-hidden flex flex-col gap-stack-md">
+<!-- Subtle background plant motif implied by gradient -->
+<div class="absolute -bottom-8 -right-8 w-32 h-32 bg-tertiary-fixed/20 blur-2xl rounded-full pointer-events-none"></div>
+<div class="flex items-center justify-between relative z-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-weight="fill">eco</span>
+</div>
+<div class="flex flex-col">
+<span class="text-body-md font-body-md font-semibold text-text-primary">Payment Streak</span>
+<span class="text-label-sm font-label-sm text-text-secondary">Keep growing your wealth</span>
+</div>
+</div>
+<div class="text-headline-lg-mobile font-headline-lg-mobile font-bold text-tertiary">
+                    14<span class="text-label-md font-label-md text-text-secondary ml-1">Days</span>
+</div>
+</div>
+<!-- Visual Streak Indicator -->
+<div class="flex items-center gap-2 mt-2 relative z-10">
+<div class="h-2 flex-1 rounded-full bg-tertiary-fixed glow-tertiary"></div>
+<div class="h-2 flex-1 rounded-full bg-tertiary-fixed glow-tertiary"></div>
+<div class="h-2 flex-1 rounded-full bg-tertiary-fixed/40"></div>
+<div class="h-2 flex-1 rounded-full bg-surface-container-highest"></div>
+<div class="h-2 flex-1 rounded-full bg-surface-container-highest"></div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface/95 backdrop-blur-2xl border-t border-border-soft shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
+<div class="flex justify-around items-center w-full px-4 pb-6 pt-3 max-w-md mx-auto">
+<!-- Home (Active) -->
+<button class="flex flex-col items-center justify-center text-primary bg-primary/10 rounded-xl px-4 py-2 scale-95 transition-all duration-200">
+<span class="material-symbols-outlined mb-1" data-weight="fill">dashboard</span>
+<span class="text-label-sm font-label-sm">Home</span>
+</button>
+<!-- Debts -->
+<button class="flex flex-col items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors rounded-xl px-4 py-2">
+<span class="material-symbols-outlined mb-1">credit_card</span>
+<span class="text-label-sm font-label-sm">Debts</span>
+</button>
+<!-- Assistant -->
+<button class="flex flex-col items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors rounded-xl px-4 py-2">
+<span class="material-symbols-outlined mb-1">auto_awesome</span>
+<span class="text-label-sm font-label-sm">Assistant</span>
+</button>
+<!-- Streaks -->
+<button class="flex flex-col items-center justify-center text-text-secondary hover:text-text-primary hover:bg-surface-alt transition-colors rounded-xl px-4 py-2">
+<span class="material-symbols-outlined mb-1">local_fire_department</span>
+<span class="text-label-sm font-label-sm">Streaks</span>
+</button>
+</div>
+</nav>
+</body></html>

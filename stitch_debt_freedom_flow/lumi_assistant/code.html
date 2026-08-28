@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Financial Assistant - Lumina</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#ecffb2",
+                      "inverse-surface": "#dae2fd",
+                      "on-tertiary-container": "#516700",
+                      "on-tertiary-fixed": "#161e00",
+                      "surface-bright": "#31394d",
+                      "surface-tint": "#00dfc1",
+                      "secondary-fixed": "#f2daff",
+                      "surface-container-high": "#222a3d",
+                      "inverse-on-surface": "#283044",
+                      "on-error-container": "#ffdad6",
+                      "surface": "#0b1326",
+                      "on-primary-fixed-variant": "#005144",
+                      "surface-container-highest": "#2d3449",
+                      "surface-container-lowest": "#060e20",
+                      "primary-container": "#00f5d4",
+                      "on-primary-container": "#006c5c",
+                      "error-container": "#93000a",
+                      "on-primary": "#00382f",
+                      "error": "#ffb4ab",
+                      "surface-container": "#171f33",
+                      "secondary": "#e0b6ff",
+                      "on-surface-variant": "#b9cac4",
+                      "on-tertiary": "#283500",
+                      "primary": "#d7fff3",
+                      "background": "#0b1326",
+                      "tertiary-fixed": "#c3f400",
+                      "surface-container-low": "#131b2e",
+                      "surface-variant": "#2d3449",
+                      "on-tertiary-fixed-variant": "#3c4d00",
+                      "primary-fixed": "#26fedc",
+                      "outline": "#83948f",
+                      "outline-variant": "#3a4a46",
+                      "surface-dim": "#0b1326",
+                      "on-error": "#690005",
+                      "on-secondary-container": "#d7a4ff",
+                      "secondary-fixed-dim": "#e0b6ff",
+                      "primary-fixed-dim": "#00dfc1",
+                      "on-secondary-fixed-variant": "#6a0baa",
+                      "on-primary-fixed": "#00201a",
+                      "inverse-primary": "#006b5b",
+                      "on-surface": "#dae2fd",
+                      "on-secondary-fixed": "#2e004e",
+                      "tertiary-container": "#bceb00",
+                      "secondary-container": "#6d11ad",
+                      "tertiary-fixed-dim": "#abd600",
+                      "on-secondary": "#4c007d",
+                      "on-background": "#dae2fd"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-gap-sm": "8px",
+                      "stack-gap-lg": "24px",
+                      "stack-gap-md": "16px",
+                      "unit": "4px",
+                      "container-padding": "20px",
+                      "grid-gutter": "12px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Geist"
+                      ],
+                      "display-lg": [
+                              "Geist"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg": [
+                              "Geist"
+                      ],
+                      "headline-lg-mobile": [
+                              "Geist"
+                      ],
+                      "body-lg": [
+                              "Geist"
+                      ],
+                      "body-md": [
+                              "Geist"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.04em",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        /* Subtle background glow for 'Good Vibe' */
+        .ambient-glow {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            height: 50vh;
+            background: radial-gradient(circle, rgba(0,223,193,0.08) 0%, rgba(11,19,38,0) 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+      </style>
+</head>
+<body class="antialiased min-h-screen relative font-body-md">
+<div class="ambient-glow"></div>
+<main class="relative z-10 w-full max-w-md mx-auto min-h-screen flex flex-col pb-[100px]">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 border-b border-white/10 shadow-sm bg-surface/80 dark:bg-surface/80 backdrop-blur-xl">
+<div class="flex items-center justify-between px-container-padding h-16 w-full max-w-md mx-auto">
+<div class="flex items-center gap-stack-gap-sm scale-95 active:scale-90 transition-transform duration-200 cursor-pointer">
+<img class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="A small circular avatar placeholder image for the user profile, showing a modern, stylized geometric face in dark mode with teal accents, set against a dark background. High-quality digital art style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2ZqqiF3Tpvhy1HcXX72HS-LlahpkfTbcIkuVOpT65-hkg8pLMjj9eeVNOh0KMQFNlUj5PsePKvbqPufGHI0J6KSQnj6GL8lszord8IqOrFshcQX-alwyHusiLXOikOeOJ89rUFM-mEzNT_FZdTjg5l-43fvD_PLRs45D3UInnlXX84GExBpFlGUc4j7jmJ2L3G_SXtVU3nvm3QhXbYvCSn4Mxf7m42kdNxgcSSccqjbq6tqtBp4n-"/>
+</div>
+<h1 class="text-headline-md font-headline-md font-bold tracking-tight text-primary-fixed dark:text-primary-fixed-dim">
+                    Lumina Finance
+                </h1>
+<button class="text-primary-fixed dark:text-primary-fixed-dim hover:opacity-80 transition-opacity scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</div>
+</header>
+<!-- Chat Area -->
+<section class="flex-1 px-container-padding pt-24 pb-32 flex flex-col gap-stack-gap-lg overflow-y-auto">
+<!-- Date Separator -->
+<div class="flex justify-center w-full">
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full border border-white/5">Today, 10:42 AM</span>
+</div>
+<!-- Assistant Message -->
+<div class="flex gap-stack-gap-sm items-start max-w-[90%]">
+<div class="w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-br from-primary-fixed to-secondary-fixed p-[1px] shadow-[0_0_15px_rgba(38,254,220,0.2)]">
+<div class="w-full h-full rounded-full bg-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-fixed" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+</div>
+<div class="flex flex-col gap-stack-gap-sm">
+<div class="text-label-sm font-label-sm text-on-surface-variant ml-1">Lumi</div>
+<div class="bg-surface-container-high/80 backdrop-blur-md border border-white/10 rounded-2xl rounded-tl-sm p-4 shadow-sm text-body-md font-body-md text-on-surface">
+                        Hey Alex, you're <span class="text-primary-fixed font-bold">$250</span> away from hitting your monthly goal! Should we schedule a payment for your <span class="text-secondary-fixed font-bold">highest APR card</span>?
+                    </div>
+</div>
+</div>
+<!-- Action Suggestions (Bento Style) -->
+<div class="grid grid-cols-2 gap-grid-gutter pl-[48px]">
+<!-- Action 1: Primary Action -->
+<button class="col-span-2 relative group overflow-hidden rounded-xl bg-gradient-to-br from-surface-container-high to-surface-container p-[1px] shadow-lg text-left transition-all hover:-translate-y-1">
+<div class="absolute inset-0 bg-primary-fixed/5 group-hover:bg-primary-fixed/10 transition-colors"></div>
+<div class="relative h-full w-full bg-surface/90 backdrop-blur-xl rounded-[11px] p-4 flex items-center justify-between border-t border-white/10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-fixed" style="font-variation-settings: 'FILL' 1;">event_available</span>
+</div>
+<div class="flex flex-col">
+<span class="text-body-md font-headline-md font-semibold text-on-surface">Schedule Payment</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Citi Double Cash (-$250)</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary-fixed transition-colors">arrow_forward</span>
+</div>
+</button>
+<!-- Action 2: Secondary Idea -->
+<button class="col-span-1 rounded-xl bg-surface-container-low border border-white/5 p-4 flex flex-col gap-2 hover:bg-surface-container-high transition-colors shadow-sm relative overflow-hidden group text-left">
+<div class="w-8 h-8 rounded-full bg-secondary-container/30 flex items-center justify-center mb-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]">account_balance</span>
+</div>
+<span class="text-label-md font-headline-md font-medium text-on-surface leading-tight">Explore Debt Consolidation</span>
+<div class="absolute -bottom-4 -right-4 w-16 h-16 bg-secondary-fixed/10 blur-xl rounded-full group-hover:bg-secondary-fixed/20 transition-all"></div>
+</button>
+<!-- Action 3: Quick Action -->
+<button class="col-span-1 rounded-xl bg-surface-container-low border border-white/5 p-4 flex flex-col gap-2 hover:bg-surface-container-high transition-colors shadow-sm relative overflow-hidden group text-left">
+<div class="w-8 h-8 rounded-full bg-tertiary-container/30 flex items-center justify-center mb-1">
+<span class="material-symbols-outlined text-tertiary-fixed text-[18px]">show_chart</span>
+</div>
+<span class="text-label-md font-headline-md font-medium text-on-surface leading-tight">View Goal Progress</span>
+<div class="absolute -bottom-4 -right-4 w-16 h-16 bg-tertiary-fixed/10 blur-xl rounded-full group-hover:bg-tertiary-fixed/20 transition-all"></div>
+</button>
+</div>
+</section>
+<!-- User Input Area -->
+<div class="fixed bottom-[80px] w-full max-w-md mx-auto px-container-padding z-40 bg-gradient-to-t from-background via-background/90 to-transparent pb-4 pt-8">
+<div class="relative w-full flex items-center bg-surface-container-highest rounded-full border border-white/10 shadow-lg p-1 pr-2 backdrop-blur-md">
+<input class="flex-1 bg-transparent border-none text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant focus:ring-0 px-4 h-12" placeholder="Ask Lumi anything..." type="text"/>
+<button class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed hover:bg-primary-fixed-dim transition-colors shadow-[0_0_15px_rgba(38,254,220,0.3)] shrink-0">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+</button>
+</div>
+</div>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface/90 dark:bg-surface/90 backdrop-blur-2xl border-t border-white/10 shadow-[0_-4px_24px_rgba(0,223,193,0.05)] text-primary-fixed dark:text-primary-fixed-dim text-label-sm font-label-sm">
+<div class="flex justify-around items-center w-full px-4 pb-6 pt-3 max-w-md mx-auto">
+<!-- Home -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-60 hover:bg-white/5 transition-colors p-2 rounded-xl">
+<span class="material-symbols-outlined mb-1">dashboard</span>
+<span>Home</span>
+</button>
+<!-- Debts -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-60 hover:bg-white/5 transition-colors p-2 rounded-xl">
+<span class="material-symbols-outlined mb-1">credit_card</span>
+<span>Debts</span>
+</button>
+<!-- Assistant (ACTIVE) -->
+<button class="flex flex-col items-center justify-center text-primary-fixed dark:text-primary-fixed-dim bg-primary/10 rounded-xl px-4 py-1 hover:bg-white/5 transition-colors scale-95 transition-all duration-200 shadow-sm relative overflow-hidden">
+<div class="absolute inset-0 bg-primary-fixed/10 animate-pulse rounded-xl"></div>
+<span class="material-symbols-outlined mb-1 relative z-10" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="relative z-10 font-bold">Assistant</span>
+</button>
+<!-- Streaks -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant opacity-60 hover:bg-white/5 transition-colors p-2 rounded-xl">
+<span class="material-symbols-outlined mb-1">local_fire_department</span>
+<span>Streaks</span>
+</button>
+</div>
+</nav>
+</main>
+</body></html>

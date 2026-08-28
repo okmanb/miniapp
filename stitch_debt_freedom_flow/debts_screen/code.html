@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Debt Statement - Chase Sapphire</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f7f9fb",
+                        "primary-container": "#00bd9d",
+                        "on-primary-fixed-variant": "#005142",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#004538",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "primary-fixed": "#69fad7",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#3c4a45",
+                        "on-tertiary-fixed": "#00201c",
+                        "on-secondary-fixed": "#131b2e",
+                        "primary-fixed-dim": "#46ddbb",
+                        "secondary-fixed": "#dae2fd",
+                        "surface-container-high": "#e6e8ea",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary-container": "#dae2fd",
+                        "surface-dim": "#d8dadc",
+                        "background": "#f7f9fb",
+                        "on-secondary-container": "#5c647a",
+                        "tertiary-fixed-dim": "#3cddc7",
+                        "on-primary-fixed": "#002019",
+                        "surface": "#f7f9fb",
+                        "inverse-surface": "#2d3133",
+                        "outline-variant": "#bbcac3",
+                        "surface-container": "#eceef0",
+                        "on-error": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "tertiary-fixed": "#62fae3",
+                        "surface-tint": "#006b58",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#565e74",
+                        "outline": "#6c7a75",
+                        "primary": "#006b58",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "surface-variant": "#e0e3e5",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#005047",
+                        "tertiary": "#006b5f",
+                        "on-background": "#191c1e",
+                        "on-tertiary-container": "#00453d",
+                        "surface-container-highest": "#e0e3e5",
+                        "inverse-primary": "#46ddbb",
+                        "tertiary-container": "#00bca8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "unit": "8px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "margin-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Geist"],
+                        "title-md": ["Geist"],
+                        "body-lg": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "body-sm": ["Geist"],
+                        "mono-data": ["Geist"],
+                        "label-caps": ["Geist"],
+                        "headline-lg": ["Geist"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "title-md": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "mono-data": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .ambient-glow {
+            box-shadow: 0 0 24px 0 rgba(0, 189, 157, 0.05);
+        }
+        .growth-gradient {
+            background: linear-gradient(135deg, #00bd9d 0%, #006b58 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen pb-24">
+<!-- Top App Bar (Shared Component) -->
+<header class="bg-surface/80 backdrop-blur-xl fixed top-0 w-full z-50 border-b border-white/20 shadow-sm flex justify-between items-center px-4 md:px-margin-desktop h-16">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</div>
+</div>
+<div class="font-display-lg text-headline-lg-mobile md:text-headline-lg tracking-tighter text-primary-container drop-shadow-[0_0_10px_rgba(0,189,157,0.4)]">
+            LUMINA
+        </div>
+<div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-primary-container">notifications</span>
+</button>
+</div>
+</header>
+<main class="pt-24 px-4 md:px-margin-desktop max-w-container-max mx-auto space-y-gutter">
+<!-- Back & Title Context -->
+<div class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer w-fit mb-6">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span class="font-body-sm text-body-sm">All Debts</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Primary Context -->
+<div class="lg:col-span-8 space-y-gutter">
+<!-- Debt Header Card -->
+<div class="glass-panel ambient-glow rounded-xl p-6 bg-surface-container-lowest border border-outline-variant/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+<div class="flex items-center gap-4 z-10">
+<div class="w-16 h-16 rounded-xl growth-gradient flex items-center justify-center text-on-primary shadow-lg shadow-primary-container/20">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">credit_card</span>
+</div>
+<div>
+<h1 class="font-title-md text-title-md text-on-surface">Chase Sapphire</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Credit Card • **** 4829</p>
+</div>
+</div>
+<div class="text-left md:text-right z-10 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-outline-variant/20">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-1">Current Balance</p>
+<div class="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary">$4,250.00</div>
+</div>
+</div>
+<!-- Bento Row 1 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Debt Health Card (Power Card) -->
+<div class="rounded-xl p-6 bg-on-secondary-fixed text-on-primary relative overflow-hidden shadow-2xl">
+<!-- Abstract Background element -->
+<div class="absolute top-0 left-0 w-full h-full opacity-20 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-container via-transparent to-transparent pointer-events-none"></div>
+<div class="relative z-10 h-full flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-6">
+<h2 class="font-title-md text-title-md flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                                        Debt Health
+                                    </h2>
+<div class="px-3 py-1 bg-surface-container-highest/20 rounded-full border border-white/10 font-label-caps text-label-caps backdrop-blur-md">
+                                        Active
+                                    </div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center border-b border-white/10 pb-2">
+<span class="font-body-sm text-body-sm text-secondary-fixed-dim">Interest Rate (APR)</span>
+<span class="font-mono-data text-mono-data text-primary-fixed">18.99%</span>
+</div>
+<div class="flex justify-between items-center border-b border-white/10 pb-2">
+<span class="font-body-sm text-body-sm text-secondary-fixed-dim">Next Payment Date</span>
+<span class="font-mono-data text-mono-data">Oct 24, 2024</span>
+</div>
+<div class="flex justify-between items-center border-b border-white/10 pb-2">
+<span class="font-body-sm text-body-sm text-secondary-fixed-dim">Minimum Due</span>
+<span class="font-mono-data text-mono-data">$125.00</span>
+</div>
+</div>
+</div>
+<div class="mt-6 p-3 bg-surface-container-highest/10 rounded-lg border border-white/5 backdrop-blur-md">
+<p class="font-body-sm text-body-sm text-secondary-fixed-dim text-center">
+                                    You're on track. Paying early saves interest.
+                                </p>
+</div>
+</div>
+</div>
+<!-- Payoff Estimate Card -->
+<div class="glass-panel ambient-glow rounded-xl p-6 bg-surface-container-lowest border border-outline-variant/30 flex flex-col justify-between">
+<div>
+<h2 class="font-title-md text-title-md text-on-surface mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-container" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+                                Payoff Estimate
+                            </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6">
+                                See the impact of paying more than the minimum.
+                            </p>
+<div class="space-y-3">
+<div class="p-3 rounded-lg border border-primary/20 bg-primary/5 flex justify-between items-center cursor-pointer hover:bg-primary/10 transition-colors">
+<div>
+<div class="font-mono-data text-mono-data text-primary mb-1">Pay $125/mo (Min)</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant text-xs">48 months to payoff</div>
+</div>
+<div class="text-right">
+<div class="font-mono-data text-mono-data text-error">$1,850</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant text-[10px]">Total Interest</div>
+</div>
+</div>
+<div class="p-3 rounded-lg border border-primary/40 bg-primary/10 flex justify-between items-center cursor-pointer hover:bg-primary/20 transition-colors relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="pl-2">
+<div class="font-mono-data text-mono-data text-on-surface font-semibold mb-1">Pay $300/mo</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant text-xs">17 months to payoff</div>
+</div>
+<div class="text-right">
+<div class="font-mono-data text-mono-data text-primary-container font-semibold">Save $1,210</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant text-[10px]">in Interest</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Balance Reduction Chart Area -->
+<div class="glass-panel ambient-glow rounded-xl p-6 bg-surface-container-lowest border border-outline-variant/30">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-title-md text-title-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">show_chart</span>
+                            Balance Reduction
+                        </h2>
+<select class="bg-surface border-outline-variant/50 text-body-sm text-on-surface rounded-lg py-1 px-2 focus:ring-primary focus:border-primary">
+<option>Last 6 Months</option>
+<option>Year to Date</option>
+</select>
+</div>
+<!-- Simplified Visual Chart Representation -->
+<div class="h-48 flex items-end justify-between gap-2 px-2 pb-6 border-b border-outline-variant/20 relative">
+<!-- Y-Axis Labels (Visual Only) -->
+<div class="absolute left-0 bottom-0 top-0 w-full pointer-events-none flex flex-col justify-between text-xs text-on-surface-variant/50 font-mono-data pb-6">
+<div>$5k</div>
+<div>$2.5k</div>
+<div>$0</div>
+</div>
+<!-- Bars -->
+<div class="w-full flex justify-around items-end h-full z-10 pl-8">
+<div class="w-1/12 bg-outline-variant/30 rounded-t-sm h-[90%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded transition-opacity font-mono-data">$4,800</div>
+</div>
+<div class="w-1/12 bg-outline-variant/30 rounded-t-sm h-[85%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded transition-opacity font-mono-data">$4,650</div>
+</div>
+<div class="w-1/12 bg-outline-variant/30 rounded-t-sm h-[80%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded transition-opacity font-mono-data">$4,500</div>
+</div>
+<div class="w-1/12 bg-outline-variant/40 rounded-t-sm h-[75%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded transition-opacity font-mono-data">$4,400</div>
+</div>
+<div class="w-1/12 bg-primary/40 rounded-t-sm h-[72%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded transition-opacity font-mono-data">$4,350</div>
+</div>
+<div class="w-1/12 bg-primary rounded-t-sm h-[68%] relative shadow-[0_0_10px_rgba(0,189,157,0.3)] group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-inverse-on-surface text-xs py-1 px-2 rounded transition-opacity font-mono-data">$4,250</div>
+</div>
+</div>
+</div>
+<!-- X-Axis Labels -->
+<div class="flex justify-around w-full pl-8 pt-2 font-label-caps text-label-caps text-on-surface-variant">
+<span>May</span>
+<span>Jun</span>
+<span>Jul</span>
+<span>Aug</span>
+<span>Sep</span>
+<span class="text-primary font-bold">Oct</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Transactions & Actions -->
+<div class="lg:col-span-4 space-y-gutter flex flex-col">
+<!-- Quick Actions -->
+<div class="glass-panel ambient-glow rounded-xl p-6 bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-4">
+<button class="w-full bg-primary text-on-primary font-title-md text-title-md py-3 rounded-lg shadow-md hover:bg-primary/90 transition-colors active:scale-[0.98] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">payments</span>
+                        Make a Payment
+                    </button>
+<button class="w-full bg-transparent border-2 border-primary text-primary font-title-md text-title-md py-3 rounded-lg hover:bg-primary/5 transition-colors active:scale-[0.98] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">autorenew</span>
+                        Manage Autopay
+                    </button>
+</div>
+<!-- Recent Activity -->
+<div class="glass-panel ambient-glow rounded-xl p-0 bg-surface-container-lowest border border-outline-variant/30 flex-grow flex flex-col overflow-hidden">
+<div class="p-4 border-b border-outline-variant/20 bg-surface/50">
+<h2 class="font-title-md text-title-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">history</span>
+                            Recent Activity
+                        </h2>
+</div>
+<div class="overflow-y-auto max-h-[400px] p-2 flex-grow">
+<table class="w-full text-left border-collapse">
+<tbody>
+<!-- Transaction Item -->
+<tr class="border-b border-surface-variant/50 hover:bg-surface/50 transition-colors">
+<td class="p-3 w-10">
+<div class="w-8 h-8 rounded-full bg-error-container text-on-error-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+</div>
+</td>
+<td class="p-3">
+<div class="font-body-sm text-body-sm text-on-surface font-medium">Interest Charged</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Oct 01, 2024</div>
+</td>
+<td class="p-3 text-right">
+<div class="font-mono-data text-mono-data text-on-surface">+$67.24</div>
+</td>
+</tr>
+<!-- Transaction Item -->
+<tr class="border-b border-surface-variant/50 hover:bg-surface/50 transition-colors bg-surface-bright/50">
+<td class="p-3">
+<div class="w-8 h-8 rounded-full bg-primary-container/20 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">download</span>
+</div>
+</td>
+<td class="p-3">
+<div class="font-body-sm text-body-sm text-on-surface font-medium">Principal Payment</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Sep 24, 2024</div>
+</td>
+<td class="p-3 text-right">
+<div class="font-mono-data text-mono-data text-primary">-$150.00</div>
+</td>
+</tr>
+<!-- Transaction Item -->
+<tr class="border-b border-surface-variant/50 hover:bg-surface/50 transition-colors">
+<td class="p-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">receipt_long</span>
+</div>
+</td>
+<td class="p-3">
+<div class="font-body-sm text-body-sm text-on-surface font-medium">Monthly Fee</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Sep 01, 2024</div>
+</td>
+<td class="p-3 text-right">
+<div class="font-mono-data text-mono-data text-on-surface">+$8.00</div>
+</td>
+</tr>
+<!-- Transaction Item -->
+<tr class="border-b border-surface-variant/50 hover:bg-surface/50 transition-colors bg-surface-bright/50">
+<td class="p-3">
+<div class="w-8 h-8 rounded-full bg-primary-container/20 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">download</span>
+</div>
+</td>
+<td class="p-3">
+<div class="font-body-sm text-body-sm text-on-surface font-medium">Principal Payment</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Aug 24, 2024</div>
+</td>
+<td class="p-3 text-right">
+<div class="font-mono-data text-mono-data text-primary">-$150.00</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 text-center border-t border-outline-variant/20 bg-surface/30">
+<a class="font-label-caps text-label-caps text-primary hover:underline" href="#">View All Transactions</a>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Nav Bar (Shared Component) -->
+<nav class="md:hidden bg-surface/90 backdrop-blur-2xl fixed bottom-0 w-full z-50 rounded-t-xl border-t border-white/20 shadow-[0_-4px_20px_rgba(0,189,157,0.15)] flex justify-around items-center h-20 px-4 pb-safe">
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-secondary-container/60 hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<!-- Active (Debts context) -->
+<a class="flex flex-col items-center justify-center text-primary-container font-bold bg-primary-container/20 rounded-xl px-4 py-1 shadow-[0_0_15px_rgba(0,189,157,0.3)] active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Debts</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-secondary-container/60 hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-label-sm text-label-sm mt-1">Assistant</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-secondary-container/60 hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">bolt</span>
+<span class="font-label-sm text-label-sm mt-1">Streaks</span>
+</a>
+</nav>
+</body></html>

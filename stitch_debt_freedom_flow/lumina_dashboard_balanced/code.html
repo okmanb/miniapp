@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina Finance - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed-variant": "#005142",
+                      "tertiary": "#006b5f",
+                      "on-secondary-container": "#5c647a",
+                      "on-secondary-fixed-variant": "#3f465c",
+                      "inverse-on-surface": "#eff1f3",
+                      "on-secondary-fixed": "#131b2e",
+                      "on-tertiary-container": "#00453d",
+                      "on-tertiary-fixed-variant": "#005047",
+                      "surface-container-highest": "#e0e3e5",
+                      "secondary-fixed": "#dae2fd",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed": "#002019",
+                      "surface-variant": "#e0e3e5",
+                      "surface": "#f7f9fb",
+                      "primary": "#006b58",
+                      "tertiary-fixed-dim": "#3cddc7",
+                      "surface-container": "#eceef0",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-container": "#dae2fd",
+                      "on-surface-variant": "#3c4a45",
+                      "on-tertiary-fixed": "#00201c",
+                      "outline": "#6c7a75",
+                      "on-secondary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "inverse-primary": "#46ddbb",
+                      "secondary-fixed-dim": "#bec6e0",
+                      "on-primary-container": "#004538",
+                      "surface-container-low": "#f2f4f6",
+                      "on-error-container": "#93000a",
+                      "surface-bright": "#f7f9fb",
+                      "tertiary-fixed": "#62fae3",
+                      "background": "#f7f9fb",
+                      "on-surface": "#191c1e",
+                      "tertiary-container": "#00bca8",
+                      "outline-variant": "#bbcac3",
+                      "primary-container": "#00bd9d",
+                      "inverse-surface": "#2d3133",
+                      "primary-fixed": "#69fad7",
+                      "surface-dim": "#d8dadc",
+                      "surface-tint": "#006b58",
+                      "secondary": "#565e74",
+                      "primary-fixed-dim": "#46ddbb",
+                      "on-tertiary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-background": "#191c1e",
+                      "surface-container-high": "#e6e8ea"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-desktop": "40px",
+                      "margin-mobile": "16px",
+                      "gutter": "24px",
+                      "unit": "8px",
+                      "container-max": "1280px"
+              },
+              "fontFamily": {
+                      "body-sm": [
+                              "Geist"
+                      ],
+                      "mono-data": [
+                              "Geist"
+                      ],
+                      "display-lg": [
+                              "Geist"
+                      ],
+                      "title-md": [
+                              "Geist"
+                      ],
+                      "body-lg": [
+                              "Geist"
+                      ],
+                      "headline-lg-mobile": [
+                              "Geist"
+                      ],
+                      "label-caps": [
+                              "Geist"
+                      ],
+                      "headline-lg": [
+                              "Geist"
+                      ]
+              },
+              "fontSize": {
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "mono-data": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "title-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .ambient-glow {
+            box-shadow: 0 10px 24px -5px rgba(0, 189, 157, 0.15);
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #004538 0%, #006b5f 100%);
+        }
+        .growth-glow {
+            background: linear-gradient(90deg, #00bd9d 0%, #46ddbb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#F1F5F9] text-on-surface font-body-lg antialiased pb-[80px] md:pb-0">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-surface-dim flat no shadows z-40">
+<div class="flex justify-between items-center px-margin-mobile py-4 max-w-container-max mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="sparkles" style="font-variation-settings: 'FILL' 1;">arrow_back_ios_new</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed">Lumina Finance</span>
+</div>
+<div class="flex items-center gap-4 hidden md:flex">
+<nav class="flex gap-6">
+<a class="font-label-caps text-label-caps text-primary dark:text-primary-fixed hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-200 px-3 py-2 rounded-full bg-primary-container text-on-primary-container" href="#">Dashboard</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-200 px-3 py-2 rounded-full" href="#">Debts</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-200 px-3 py-2 rounded-full" href="#">Lumi AI</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-200 px-3 py-2 rounded-full" href="#">Progress</a>
+</nav>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A small, circular profile picture of a young professional woman smiling warmly against a blurred, light-filled modern office background. The image is brightly lit, conveying trustworthiness and approachability in a modern corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkBVRCA15DCl3xMmHqEgABo-CUFhtbLB3n2IvXj5zlFRuRYepur8liKUMwzo1vz7PZ9iKiv_lvSDQVeSTkUUU8eHTzWi6fSDEpmeIASqV8RsJkf_tVeI9gY3LgMkY-DJzIPDvobnfBUB7Yg0uj_aNBUTJaP4NXqyFO3ACOfo67pkcCWhb44jpafy-cI131G-RS3jSEoI1ennWu6AS7SzdsgnDllOyNQh5VOUO1oWEzKvlVWH3U_R3d"/>
+</div>
+</div>
+<div class="md:hidden w-8 h-8 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A small, circular profile picture of a young professional woman smiling warmly against a blurred, light-filled modern office background. The image is brightly lit, conveying trustworthiness and approachability in a modern corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWIg3t2OA-8nibXjZTzPgtnT4K08wqOl9YAgA2by55nvNGJrMqFMXYwnmpCXipcwpohZz__aLYmUCBehyZmc7PB_5PdVG8Gscjpgd-OCG1A_SQ_Cst4OYzTJhWBsRiUJsPogXjKFaud7-APTgScP0Hvwn3t2gbNgGvVpQvFmIpWUVZHz_jwpaBT1PPCU4-cRLaUKAxE1yq6e4_3RRwU8NPqbWciZllUawdGKScO100GLvIyschA8R-"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-gutter grid grid-cols-4 md:grid-cols-12 gap-gutter">
+<!-- Hero Section: Total Debt -->
+<section class="col-span-4 md:col-span-8 rounded-xl hero-gradient text-on-primary p-6 relative overflow-hidden shadow-lg flex flex-col justify-between min-h-[240px]">
+<!-- Decorative blur -->
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary-container opacity-20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative z-10">
+<h2 class="font-body-sm text-body-sm text-inverse-primary/80 uppercase tracking-wider mb-2">Total Outstanding Balance</h2>
+<div class="font-display-lg text-display-lg font-bold mb-1">$42,850<span class="text-2xl text-inverse-primary/60 font-normal">.00</span></div>
+<div class="flex items-center gap-2 text-inverse-primary font-mono-data text-mono-data mt-2 bg-on-primary/10 w-fit px-3 py-1 rounded-full border border-on-primary/20">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">trending_down</span>
+                    -$1,250 this month
+                </div>
+</div>
+<div class="relative z-10 flex gap-4 mt-8">
+<button class="bg-primary text-on-primary font-label-caps text-label-caps px-6 py-3 rounded-full hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md active:scale-95 flex items-center gap-2">
+                    Pay Now <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<button class="border border-inverse-primary/50 text-on-primary font-label-caps text-label-caps px-6 py-3 rounded-full hover:bg-on-primary/10 transition-all active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span> Add Debt
+                </button>
+</div>
+</section>
+<!-- Sidebar / Secondary Metrics -->
+<section class="col-span-4 md:col-span-4 flex flex-col gap-gutter">
+<!-- Payment Streak -->
+<div class="glass-panel rounded-xl p-6 ambient-glow flex flex-col items-center justify-center text-center relative overflow-hidden">
+<!-- Subtle glow behind streak -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-tertiary-container opacity-10 rounded-full blur-2xl pointer-events-none"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 tracking-widest uppercase">Consistency</h3>
+<div class="relative flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[64px] text-[#F59E0B]" style="font-variation-settings: 'FILL' 1; text-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);">local_fire_department</span>
+<div class="absolute -right-4 -top-2 bg-error text-on-error font-label-caps text-[10px] px-2 py-0.5 rounded-full animate-pulse shadow-sm shadow-error/30">HOT</div>
+</div>
+<div class="font-headline-lg text-headline-lg font-bold growth-glow">14 Months</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">On-time payment streak</p>
+</div>
+<!-- Quick Stats Bento -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest border border-[#E2E8F0] rounded-xl p-4 flex flex-col justify-between">
+<span class="material-symbols-outlined text-tertiary mb-2">credit_score</span>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Credit Score</div>
+<div class="font-title-md text-title-md font-semibold text-primary">742</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-[#E2E8F0] rounded-xl p-4 flex flex-col justify-between">
+<span class="material-symbols-outlined text-tertiary mb-2">account_balance</span>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Interest Saved</div>
+<div class="font-title-md text-title-md font-semibold text-primary">$340</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Next Due Section -->
+<section class="col-span-4 md:col-span-12 mt-4">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h2 class="font-title-md text-title-md font-semibold text-on-surface">Upcoming Payments</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Next 30 days overview</p>
+</div>
+<button class="font-label-caps text-label-caps text-primary hover:text-primary-container transition-colors">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Card 1 -->
+<div class="glass-panel rounded-xl p-5 border border-[#E2E8F0] hover:shadow-lg transition-shadow duration-300 group cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">
+<span class="material-symbols-outlined">credit_card</span>
+</div>
+<div>
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface">Chase Sapphire</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Credit Card</p>
+</div>
+</div>
+<span class="bg-error-container text-on-error-container font-label-caps text-[10px] px-2 py-1 rounded-sm">Due in 3 days</span>
+</div>
+<div class="mb-4">
+<div class="flex justify-between font-mono-data text-mono-data mb-1">
+<span class="text-on-surface-variant">Min Payment</span>
+<span class="text-on-surface font-semibold">$150.00</span>
+</div>
+<div class="flex justify-between font-mono-data text-mono-data">
+<span class="text-on-surface-variant">Balance</span>
+<span class="text-on-surface">$4,500.00</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mb-4 overflow-hidden">
+<div class="bg-[#F87171] h-1.5 rounded-full" style="width: 45%"></div>
+</div>
+<button class="w-full border border-primary text-primary font-label-caps text-label-caps py-2 rounded-lg hover:bg-primary/5 transition-colors">Schedule Pay</button>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 border border-[#E2E8F0] hover:shadow-lg transition-shadow duration-300 group cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 right-0 w-16 h-16 bg-surface-container-highest opacity-50 rounded-bl-full -z-10 transition-transform group-hover:scale-150 duration-500"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<div>
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface">Auto Loan</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Toyota Financial</p>
+</div>
+</div>
+<span class="bg-surface-container-high text-on-surface-variant font-label-caps text-[10px] px-2 py-1 rounded-sm">Due in 12 days</span>
+</div>
+<div class="mb-4">
+<div class="flex justify-between font-mono-data text-mono-data mb-1">
+<span class="text-on-surface-variant">Payment</span>
+<span class="text-on-surface font-semibold">$385.00</span>
+</div>
+<div class="flex justify-between font-mono-data text-mono-data">
+<span class="text-on-surface-variant">Balance</span>
+<span class="text-on-surface">$12,450.00</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mb-4 overflow-hidden">
+<div class="bg-tertiary h-1.5 rounded-full" style="width: 65%"></div>
+</div>
+<button class="w-full border border-[#E2E8F0] text-on-surface-variant font-label-caps text-label-caps py-2 rounded-lg hover:bg-surface-container transition-colors">Review Details</button>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 border border-[#E2E8F0] hover:shadow-lg transition-shadow duration-300 group cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">
+<span class="material-symbols-outlined">school</span>
+</div>
+<div>
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface">Student Loan</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">FedLoan Servicing</p>
+</div>
+</div>
+<span class="bg-surface-container-high text-on-surface-variant font-label-caps text-[10px] px-2 py-1 rounded-sm">Due in 18 days</span>
+</div>
+<div class="mb-4">
+<div class="flex justify-between font-mono-data text-mono-data mb-1">
+<span class="text-on-surface-variant">Payment</span>
+<span class="text-on-surface font-semibold">$250.00</span>
+</div>
+<div class="flex justify-between font-mono-data text-mono-data">
+<span class="text-on-surface-variant">Balance</span>
+<span class="text-on-surface">$25,900.00</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 mb-4 overflow-hidden">
+<div class="bg-primary h-1.5 rounded-full" style="width: 25%"></div>
+</div>
+<button class="w-full border border-[#E2E8F0] text-on-surface-variant font-label-caps text-label-caps py-2 rounded-lg hover:bg-surface-container transition-colors">Review Details</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-secondary dark:bg-on-secondary-fixed-variant shadow-md">
+<div class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-secondary dark:bg-on-secondary-fixed-variant border-none">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 duration-150 transition-all font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed transition-all active:scale-90 duration-150 font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="account_balance_wallet">account_balance_wallet</span>
+                Debts
+            </a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed transition-all active:scale-90 duration-150 font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="smart_toy">smart_toy</span>
+                Lumi AI
+            </a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed transition-all active:scale-90 duration-150 font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="local_florist">local_florist</span>
+                Progress
+            </a>
+</div>
+</nav>
+</body></html>

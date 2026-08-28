@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina - Progress</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;800;900&amp;family=JetBrains+Mono:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#dde4e0",
+                        "on-secondary-container": "#514f81",
+                        "tertiary-container": "#bb94ff",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#46ddbb",
+                        "on-surface-variant": "#3c4a45",
+                        "surface-variant": "#dde4e0",
+                        "secondary-fixed": "#e3dfff",
+                        "deep-indigo": "#1E1B4B",
+                        "surface-container-low": "#eef5f1",
+                        "primary": "#006b58",
+                        "on-background": "#161d1b",
+                        "on-secondary-fixed": "#181445",
+                        "on-primary-fixed-variant": "#005142",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e3eae6",
+                        "accent-glow": "rgba(0, 189, 157, 0.6)",
+                        "on-primary-fixed": "#002019",
+                        "on-tertiary-fixed": "#270058",
+                        "tertiary": "#7825ea",
+                        "secondary-fixed-dim": "#c4c1fb",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#161d1b",
+                        "surface": "#f4fbf7",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#006b58",
+                        "growth-teal": "#00BD9D",
+                        "surface-bright": "#f4fbf7",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#69fad7",
+                        "on-primary-container": "#004538",
+                        "on-tertiary-container": "#5100aa",
+                        "surface-dim": "#d4dcd7",
+                        "surface-container": "#e8f0eb",
+                        "outline-variant": "#bbcac3",
+                        "background": "#f4fbf7",
+                        "outline": "#6c7a75",
+                        "inverse-primary": "#46ddbb",
+                        "inverse-surface": "#2b322f",
+                        "secondary": "#5b598c",
+                        "surface-base": "#FAFAFF",
+                        "success-lime": "#A3E635",
+                        "on-secondary-fixed-variant": "#444173",
+                        "electric-violet": "#8A3FFC",
+                        "tertiary-fixed-dim": "#d4bbff",
+                        "tertiary-fixed": "#ebdcff",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#c7c3fe",
+                        "primary-container": "#00bd9d",
+                        "on-tertiary-fixed-variant": "#5d00c2",
+                        "inverse-on-surface": "#ebf2ee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gap-compact": "8px",
+                        "container-margin": "24px",
+                        "unit": "4px",
+                        "gap-feature": "40px",
+                        "gutter": "16px",
+                        "gap-standard": "20px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "label-md": ["JetBrains Mono"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Geist"],
+                        "body-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "headline-lg": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                        "display-lg": ["56px", { "lineHeight": "60px", "letterSpacing": "-0.06em", "fontWeight": "900" }],
+                        "headline-lg-mobile": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+                        "headline-md": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    },
+                    "boxShadow": {
+                        "teal-glow": "0 0 25px rgba(0, 189, 157, 0.6)",
+                        "indigo-glow": "0 0 25px rgba(30, 27, 75, 0.3)",
+                        "card-depth": "0 10px 30px -10px rgba(0,0,0,0.1)"
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Geist', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .progress-line-active {
+            background: linear-gradient(90deg, #00BD9D 0%, rgba(0, 189, 157, 0) 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface overflow-x-hidden pb-[100px]">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-white/20 shadow-sm flex justify-between items-center px-container-margin h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden ring-2 ring-growth-teal/50">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A macro shot of a sleek, abstract 3D geometric avatar icon with a vibrant teal and white glowing gradient finish, high contrast lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5VPZnl25WIERdRJSpxjx8FJQlygFhapM3ljLdIyLGIMrJqiLblqLIxZHsojWiJUXcTkOJuagyD73DgeTW8uQ3OhXvhggQlvDY0-hlyj90Ru3ufwljGnuFysBPSkWNJbDyp6vtdRc5pOMjRCv8H4Q-METeP3EBWusUdw75sZpIDImW-rt-pjS2GbHPDWn_Q2STjV2UZMqDOv6uGbP526KWhLtbfnIu4mSazw-DkgtHA0TnVndOkQkj"/>
+</div>
+<h1 class="font-display-lg text-headline-md tracking-tighter text-growth-teal drop-shadow-[0_0_10px_rgba(0,189,157,0.4)]">LUMINA</h1>
+</div>
+<button class="text-growth-teal hover:opacity-80 transition-opacity active:scale-95 transition-transform flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-highest">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="pt-24 px-container-margin max-w-4xl mx-auto flex flex-col gap-gap-feature">
+<!-- Streak Banner -->
+<section class="relative bg-deep-indigo rounded-xl p-6 overflow-hidden shadow-teal-glow ring-1 ring-growth-teal/50">
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-growth-teal/30 blur-[40px] rounded-full"></div>
+<div class="relative z-10 flex flex-col items-start gap-2">
+<div class="flex items-center gap-2 text-growth-teal font-label-md text-label-md uppercase tracking-wider">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                    Momentum Active
+                </div>
+<div class="font-display-lg text-display-lg text-white leading-none">
+                    14 <span class="text-headline-lg font-headline-lg text-white/70">Days</span>
+</div>
+<p class="font-body-md text-body-md text-secondary-fixed-dim max-w-sm mt-1">
+                    Your financial discipline is compounding. Keep the streak alive to unlock stage 3 growth.
+                </p>
+</div>
+</section>
+<!-- Growth Visualization -->
+<section class="flex flex-col gap-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Digital Garden</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Your current financial vitality</p>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-6 shadow-card-depth ring-1 ring-outline-variant flex flex-col gap-8">
+<!-- Visuals -->
+<div class="grid grid-cols-3 gap-4 relative">
+<!-- Progress Line -->
+<div class="absolute top-1/2 left-1/6 right-1/6 h-1 bg-surface-container-highest -translate-y-1/2 z-0 rounded-full">
+<div class="h-full w-1/2 bg-gradient-to-r from-growth-teal to-growth-teal/20 rounded-full shadow-[0_0_10px_rgba(0,189,157,0.5)]"></div>
+</div>
+<!-- Stage 1: Sprout -->
+<div class="flex flex-col items-center gap-4 relative z-10 opacity-60">
+<div class="w-20 h-20 rounded-full bg-surface-container ring-2 ring-outline-variant overflow-hidden p-2">
+<div class="w-full h-full rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A minimalist 3D rendering of a small, fragile digital sprout emitting a faint white glow, planted in dark metallic soil, clean light mode studio lighting, soft shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkIve02bClZ7xIhZcCwoTqxobEho6btv4ThgIcsRNqIByNeE2-s2yXupV4FxNeR_kdDcK3w1nm6Wo-M5SbXHEwX867UeTWy1Bduk0oPHQDcIeY5vFN_XEn5Dy1VbYtoojh7Uo_b1Ibevcev4pc2stC3S9XXQZna6_Ci8ZiZhB_q2c0oKB3WwzZF8MVVd4Pq2E-bLdvPgz85Z10pH0lk2qPPlqFU9_2gEFtB-jyPUEpxP7ofPkZqgBZ"/>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Sprout</span>
+</div>
+<!-- Stage 2: Sapling (Current) -->
+<div class="flex flex-col items-center gap-4 relative z-10">
+<div class="w-24 h-24 rounded-full bg-deep-indigo ring-4 ring-growth-teal shadow-teal-glow overflow-hidden p-1">
+<div class="w-full h-full rounded-full overflow-hidden relative">
+<div class="absolute inset-0 bg-growth-teal/10 mix-blend-overlay z-10"></div>
+<img class="w-full h-full object-cover" data-alt="A striking 3D rendering of a futuristic digital sapling with vibrant glowing teal leaves and a sleek geometric indigo stem, energetic light mode aesthetic, intense luminous core, deep contrasts." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDutDxvgarLaC_NarhqXUEBx4EDJFgb-jJfgd32cjCByhxRvY_Pxm2lfI_R8Dpjc7TUHmOxozZI18SIysWuB1z4B2LUY29K8CQok8W3ZUx-kwjXENu7RGH5wxSJhb6aW8PAJbBZZDXXdsDXSqG2NtnQLL-4K6nLsGRaJB-yG4xdu21YF69stSuNDAnZq0Ob9JniCeqL_CtjZU9KD2uIc6udoHJI_8uyxZ4CEgHvqFSNArfYmOjlc34f"/>
+</div>
+</div>
+<span class="font-label-md text-label-md text-growth-teal font-bold bg-primary-container/10 px-3 py-1 rounded-full ring-1 ring-growth-teal/30">Sapling</span>
+</div>
+<!-- Stage 3: Tree -->
+<div class="flex flex-col items-center gap-4 relative z-10 opacity-40 grayscale">
+<div class="w-20 h-20 rounded-full bg-surface-container ring-2 ring-outline-variant overflow-hidden p-2">
+<div class="w-full h-full rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A grand, flourishing futuristic digital tree with dense canopy of glowing teal geometric leaves, towering in a minimalist white void, high key lighting, sophisticated technological nature." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCY3wD2ueqVhCiDUZfImwS61TD4VKVUkC9fmmjsYPDAU3Tigfa9cSYP08RokWvAhOqJPZOxh0Co7-5dXb_WDPD2WYcuip2sNfwZU9gVSc6MX7PQr1QxoOQpNZfvWGbymoIkUwDNjMThN_5InWFjgIAJOgYQ-6VG-OGRiI6yqAiFBtfwkcuoWwFk7H0c2F3d-IYOowa1XvS5RLGNs5N0rk3GTGRKj_Rfd55Rwq4Ti874_q1v3yaN8jXx"/>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Flourishing</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Achievements -->
+<section class="flex flex-col gap-6">
+<h2 class="font-headline-md text-headline-md text-on-surface">Achievements</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Consistency King -->
+<div class="bg-deep-indigo rounded-xl p-5 shadow-indigo-glow border border-electric-violet/30 flex items-center gap-4 relative overflow-hidden group hover:border-electric-violet transition-colors">
+<div class="absolute -right-8 -top-8 w-24 h-24 bg-electric-violet/20 blur-[30px] rounded-full group-hover:bg-electric-violet/40 transition-colors"></div>
+<div class="w-14 h-14 rounded-full bg-electric-violet/10 flex items-center justify-center ring-1 ring-electric-violet/50 shadow-[0_0_15px_rgba(138,63,252,0.4)] flex-shrink-0 z-10">
+<span class="material-symbols-outlined text-electric-violet text-[32px]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div class="z-10">
+<h3 class="font-body-lg text-body-lg text-white font-bold">Consistency King</h3>
+<p class="font-label-sm text-label-sm text-secondary-fixed-dim mt-1">Logged in 14 days straight</p>
+</div>
+</div>
+<!-- Debt Destroyer -->
+<div class="bg-deep-indigo rounded-xl p-5 shadow-indigo-glow border border-success-lime/30 flex items-center gap-4 relative overflow-hidden group hover:border-success-lime transition-colors">
+<div class="absolute -right-8 -bottom-8 w-24 h-24 bg-success-lime/20 blur-[30px] rounded-full group-hover:bg-success-lime/40 transition-colors"></div>
+<div class="w-14 h-14 rounded-full bg-success-lime/10 flex items-center justify-center ring-1 ring-success-lime/50 shadow-[0_0_15px_rgba(163,230,53,0.4)] flex-shrink-0 z-10">
+<span class="material-symbols-outlined text-success-lime text-[32px]" style="font-variation-settings: 'FILL' 1;">swords</span>
+</div>
+<div class="z-10">
+<h3 class="font-body-lg text-body-lg text-white font-bold">Debt Destroyer</h3>
+<p class="font-label-sm text-label-sm text-secondary-fixed-dim mt-1">Cleared $500 high-interest</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl border-t border-white/20 bg-surface/90 backdrop-blur-2xl shadow-[0_-4px_20px_rgba(0,189,157,0.15)] flex justify-around items-center h-20 px-4 pb-safe md:hidden">
+<!-- Home (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-secondary-container/60 hover:text-growth-teal transition-colors active:scale-90 duration-200 w-16" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<!-- Debts (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-secondary-container/60 hover:text-growth-teal transition-colors active:scale-90 duration-200 w-16" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Debts</span>
+</a>
+<!-- Assistant (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-secondary-container/60 hover:text-growth-teal transition-colors active:scale-90 duration-200 w-16" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">smart_toy</span>
+<span class="font-label-sm text-label-sm">Assistant</span>
+</a>
+<!-- Streaks (Active) -->
+<a class="flex flex-col items-center justify-center text-growth-teal font-bold bg-primary-container/20 rounded-xl px-4 py-1 shadow-[0_0_15px_rgba(0,189,157,0.3)] active:scale-90 transition-all duration-200 w-16 h-14" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-label-sm text-label-sm">Streaks</span>
+</a>
+</nav>
+<!-- Desktop Nav Fallback (hidden on mobile, visible on md) -->
+<nav class="hidden md:flex fixed top-0 right-container-margin h-16 items-center gap-8 z-50">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-growth-teal transition-colors" href="#">Home</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-growth-teal transition-colors" href="#">Debts</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-growth-teal transition-colors" href="#">Assistant</a>
+<a class="font-label-md text-label-md text-growth-teal border-b-2 border-growth-teal pb-1" href="#">Streaks</a>
+</nav>
+</body></html>

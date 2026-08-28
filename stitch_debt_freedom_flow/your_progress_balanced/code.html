@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Your Progress - Lumina Finance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#005142",
+                        "tertiary": "#006b5f",
+                        "on-secondary-container": "#5c647a",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-fixed": "#131b2e",
+                        "on-tertiary-container": "#00453d",
+                        "on-tertiary-fixed-variant": "#005047",
+                        "surface-container-highest": "#e0e3e5",
+                        "secondary-fixed": "#dae2fd",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#002019",
+                        "surface-variant": "#e0e3e5",
+                        "surface": "#f7f9fb",
+                        "primary": "#006b58",
+                        "tertiary-fixed-dim": "#3cddc7",
+                        "surface-container": "#eceef0",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#dae2fd",
+                        "on-surface-variant": "#3c4a45",
+                        "on-tertiary-fixed": "#00201c",
+                        "outline": "#6c7a75",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#46ddbb",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "on-primary-container": "#004538",
+                        "surface-container-low": "#f2f4f6",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f7f9fb",
+                        "tertiary-fixed": "#62fae3",
+                        "background": "#f7f9fb",
+                        "on-surface": "#191c1e",
+                        "tertiary-container": "#00bca8",
+                        "outline-variant": "#bbcac3",
+                        "primary-container": "#00bd9d",
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed": "#69fad7",
+                        "surface-dim": "#d8dadc",
+                        "surface-tint": "#006b58",
+                        "secondary": "#565e74",
+                        "primary-fixed-dim": "#46ddbb",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-background": "#191c1e",
+                        "surface-container-high": "#e6e8ea"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "unit": "8px",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Geist"],
+                        "mono-data": ["Geist"],
+                        "display-lg": ["Geist"],
+                        "title-md": ["Geist"],
+                        "body-lg": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "label-caps": ["Geist"],
+                        "headline-lg": ["Geist"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "mono-data": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "title-md": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 1);
+        }
+        .growth-glow {
+            background: radial-gradient(circle at center, rgba(0, 189, 157, 0.15) 0%, rgba(247, 249, 251, 0) 70%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-surface-dim z-40">
+<div class="flex justify-between items-center px-margin-mobile py-4 max-w-container-max mx-auto">
+<div class="flex items-center gap-3 active:scale-95 duration-200 cursor-pointer hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="sparkles" data-weight="fill" style="font-variation-settings: 'FILL' 1;">arrow_back_ios_new</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed">Lumina Finance</span>
+</div>
+<div class="active:scale-95 duration-200 cursor-pointer hover:bg-surface-container dark:hover:bg-surface-container-highest transition-colors p-2 rounded-full">
+<img class="w-10 h-10 rounded-full object-cover shadow-sm border border-outline-variant" data-alt="A small circular avatar of a young professional wearing modern glasses and a casual but smart blazer, smiling gently in a bright office environment, matching the light, clean corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWcEmN9H54vcu-i3FB2E16ag004L7P7e-87ldEWZG_GA87n5eYX5uhuIckwoB9Vv5kdl0AWrc3agnowykP9CfgbxhEIgi97En5I_RbEP6_VNhpsfLfNH_32rS7W1sr46S3hAuUmU06-76FTKbYa2hORzZ3F_OiZ8SuIsGgHn6mkKOJTLOqpQXOkWscabl0KWhDLTMJxzm4ax2Fa-CY4zqiCAV91p7UKjwuhMYwl3Ahk9UZb2OxF0GW"/>
+</div>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile pt-8 flex flex-col items-center">
+<!-- Central Tree Visualization (Digital Garden) -->
+<section class="w-full max-w-md relative flex flex-col items-center justify-center py-12 growth-glow">
+<div class="absolute top-0 w-full text-center">
+<h1 class="font-display-lg text-display-lg text-primary">14 DAYS</h1>
+<p class="font-title-md text-title-md text-on-surface-variant">Consistency Streak</p>
+</div>
+<div class="w-64 h-64 mt-20 relative flex items-center justify-center">
+<img class="w-full h-full object-contain mix-blend-multiply opacity-90 filter drop-shadow-xl" data-alt="A glowing, ethereal digital sapling plant, rendered in a 3D glassmorphic style with neon mint green and soft teal accents, growing out of a pristine white geometric pedestal, set against a very bright, clean white background, evoking a sense of modern financial growth and digital life." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDz1uAKozeFywWfDOFrGmxA4ML_eUp9tB-JqWcYHommvAdPjS0YaW7m7PSofjoFjVa5ITtWJU82_aXSV8Bznt4pu3D9tbiSaK12gmZsTMtfDtSqNYblJtAVziXfyY6t9VpnrH786CUbHNqh7tU2FlmsOQh9l7ynu_1c1wr1wgE5kco3cdTM62Dsx8f42j6bZP4MJbuwgQcxVDvkFgn2wSjAU1R1mqSrk-Bp7974X0UyCW3lax0S1COZ"/>
+<div class="absolute inset-0 animate-pulse bg-primary-container opacity-20 rounded-full blur-3xl -z-10"></div>
+</div>
+<p class="mt-8 font-body-lg text-body-lg text-on-surface-variant text-center max-w-xs">
+                Your Digital Garden is flourishing. Keep up the good habits to grow a mighty oak!
+            </p>
+</section>
+<!-- Achievements -->
+<section class="w-full mt-12 mb-8">
+<h2 class="font-title-md text-title-md mb-6">Recent Achievements</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Consistency King -->
+<div class="glass-card rounded-xl p-6 flex items-start gap-4 hover:-translate-y-1 transition-transform duration-300">
+<div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-2xl" data-icon="emoji_events">emoji_events</span>
+</div>
+<div>
+<h3 class="font-title-md text-title-md text-on-surface">Consistency King</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Logged in and reviewed budgets for 14 consecutive days.</p>
+<div class="mt-4 w-full bg-surface-container-highest rounded-full h-2 overflow-hidden">
+<div class="bg-primary h-full w-full rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Debt Destroyer -->
+<div class="glass-card rounded-xl p-6 flex items-start gap-4 hover:-translate-y-1 transition-transform duration-300">
+<div class="w-12 h-12 rounded-full bg-error-container text-on-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-2xl" data-icon="bolt">bolt</span>
+</div>
+<div>
+<h3 class="font-title-md text-title-md text-on-surface">Debt Destroyer</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Paid off 20% of high-interest credit card debt this month.</p>
+<div class="mt-4 w-full bg-surface-container-highest rounded-full h-2 overflow-hidden">
+<div class="bg-primary h-full w-3/4 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-secondary dark:bg-on-secondary-fixed-variant shadow-md md:hidden">
+<div class="flex justify-around items-center px-4 py-3 pb-safe">
+<!-- Dashboard -->
+<div class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps mt-1">Dashboard</span>
+</div>
+<!-- Debts -->
+<div class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-caps text-label-caps mt-1">Debts</span>
+</div>
+<!-- Lumi AI -->
+<div class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed transition-all active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-label-caps text-label-caps mt-1">Lumi AI</span>
+</div>
+<!-- Progress (Active) -->
+<div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="local_florist" data-weight="fill" style="font-variation-settings: 'FILL' 1;">local_florist</span>
+<span class="font-label-caps text-label-caps mt-1">Progress</span>
+</div>
+</div>
+</nav>
+<!-- Desktop Nav Shell (hidden on mobile, shown on md) -->
+<nav class="hidden md:flex fixed top-4 left-1/2 -translate-x-1/2 z-50 glass-card rounded-full px-6 py-2 shadow-sm gap-8">
+<div class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer font-title-md text-title-md flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span> Dashboard
+        </div>
+<div class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer font-title-md text-title-md flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span> Debts
+        </div>
+<div class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer font-title-md text-title-md flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span> Lumi AI
+        </div>
+<div class="text-primary font-title-md text-title-md flex items-center gap-2 border-b-2 border-primary pb-1">
+<span class="material-symbols-outlined" data-icon="local_florist" data-weight="fill" style="font-variation-settings: 'FILL' 1;">local_florist</span> Progress
+        </div>
+</nav>
+<script>
+        // Simple ambient subtle pulse for the tree container background glow
+        document.addEventListener('DOMContentLoaded', () => {
+            const glows = document.querySelectorAll('.growth-glow');
+            glows.forEach(glow => {
+                let size = 70;
+                let growing = true;
+                setInterval(() => {
+                    if(growing) { size += 1; if(size > 75) growing = false; }
+                    else { size -= 1; if(size < 65) growing = true; }
+                    glow.style.background = `radial-gradient(circle at center, rgba(0, 189, 157, 0.15) 0%, rgba(247, 249, 251, 0) ${size}%)`;
+                }, 100);
+            });
+        });
+    </script>
+</body></html>

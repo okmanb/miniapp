@@ -1,0 +1,608 @@
+/**
+ * Sistema visual: "Lumina Balanced Impact" — superficie institucional
+ * clara (teal profundo + índigo-pizarra), Geist para texto/UI y
+ * JetBrains Mono reservado exclusivamente para datos numéricos (montos,
+ * tasas, fechas). Adoptado completo desde uno de cinco mundos nombrados
+ * de una referencia Stitch construida específicamente para una app de
+ * deudas (`stitch_debt_freedom_flow/lumina_balanced_impact/DESIGN.md`),
+ * sin la capa de gamificación del original (rachas, insignias, mascota
+ * de árbol, chat casual) — ver PRODUCT.md, "Design Direction (superseding
+ * again, this session)".
+ *
+ * Reemplaza por completo "Horizon" (el mundo anterior, descartado por
+ * sentirse como un mosaico de referencias sueltas en vez de un sistema
+ * propio) y, antes que ese, "La Cartelera".
+ *
+ * Ver el contrato de dirección completo en app/layout.tsx.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+:root {
+  /* Superficies — portadas de Lumina Balanced Impact */
+  --background: #f7f9fb;
+  --surface: #f7f9fb;
+  --surface-bright: #f7f9fb;
+  --surface-dim: #d8dadc;
+  --surface-variant: #e0e3e5;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f2f4f6;
+  --surface-container: #eceef0;
+  --surface-container-high: #e6e8ea;
+  --surface-container-highest: #e0e3e5;
+  --outline: #6c7a75;
+  --outline-variant: #bbcac3;
+  --border-soft: #e2e8f0;
+
+  --on-background: #191c1e;
+  --on-surface: #191c1e;
+  --on-surface-variant: #3c4a45;
+  --inverse-surface: #2d3133;
+  --inverse-on-surface: #eff1f3;
+
+  /* Primario — teal institucional profundo. Acción, positivo, foco. */
+  --primary: #006b58;
+  --on-primary: #ffffff;
+  --primary-container: #00bd9d;
+  --on-primary-container: #004538;
+  /* --primary-container es un acento vívido (~55% de luminosidad), no
+     una superficie tonal pálida como el resto de los *-container
+     (~90%+) — así vino de la referencia Lumina, pensado como brillo
+     decorativo, no como fondo de texto. #004538 sobre #00bd9d da
+     ~4.4:1, al límite de AA para texto normal y se lee turbio. Para
+     chips/píldoras de estado "positivo" (fondo + texto encima) se usa
+     esta versión pálida en su lugar; --primary-container sigue
+     disponible para acentos decorativos donde no hay texto sentado
+     arriba. */
+  --primary-container-pale: #d3f5ec;
+
+  /* Secundario — índigo-pizarra. Estructura, nav, texto secundario con peso. */
+  --secondary: #565e74;
+  --on-secondary: #ffffff;
+  --secondary-container: #dae2fd;
+  --on-secondary-container: #5c647a;
+
+  /* Terciario — teal claro. EXCLUSIVO para datos estimados/proyectados. */
+  --tertiary: #006b5f;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #00bca8;
+  --on-tertiary-container: #00453d;
+  /* --tertiary-container es un acento vívido (~55% luminosidad), no
+     una superficie tonal — falla contraste AA como fondo de texto,
+     misma razón que --primary-container-pale existe. Para un chip
+     con texto (ej. "gasto sin resumen todavía", La Regla del Azul...
+     Teal Único) usar esta versión pálida en su lugar. */
+  --tertiary-container-pale: #d3f5ec;
+  --estimate: var(--tertiary);
+  --estimate-container: var(--tertiary-container);
+
+  /* Error — rojo, mora/saldo negativo/crítico. Nunca se atenúa. */
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+
+  --font-display: "Geist", system-ui, sans-serif;
+  --font-ui: "Geist", system-ui, sans-serif;
+  /* Todo dato numérico — montos, tasas, fechas — pasa por acá. Excepción
+     deliberada y documentada a "nunca una tipografía monoespaciada
+     dedicada": ver PRODUCT.md. */
+  --font-mono: "JetBrains Mono", ui-monospace, SF Mono, Menlo, monospace;
+
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+  --focus: var(--primary);
+
+  color-scheme: light;
+
+  /* Alias de compatibilidad — las pantallas que todavía no recibieron
+     la pasada bespoke de este mundo siguen referenciando nombres de
+     token de sistemas anteriores directamente en sus estilos inline.
+     Estos alias evitan que esas pantallas rompan mientras se migran. */
+  --led-amber: var(--primary);
+  --led-amber-dim: var(--primary-container);
+  --led-green: var(--on-primary-container);
+  --led-green-dim: var(--primary);
+  --led-red: var(--on-error-container);
+  --led-red-dim: var(--error);
+  --cyan-estimate: var(--estimate);
+  --cyan-estimate-dim: var(--on-tertiary-container);
+  --ink: var(--on-surface);
+  --ink-muted: var(--on-surface-variant);
+  --ink-faint: #8a8a8a;
+  --board: var(--background);
+  --board-panel: var(--surface-container-low);
+  --board-panel-raised: var(--surface-container);
+  --board-seam: var(--outline-variant);
+  --board-seam-strong: var(--outline);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface-container-low);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--outline-variant);
+  border-radius: 6px;
+  border: 3px solid var(--surface-container-low);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--outline);
+}
+
+body {
+  background: var(--background);
+  color: var(--on-background);
+  font-family: var(--font-ui);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--on-surface);
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+p {
+  color: var(--on-surface);
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--primary-container);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* --- Formularios --- */
+
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: block;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--primary);
+}
+
+/* Un checkbox de opción ("se repite todos los meses") no es un campo
+   — es una oración. El label de campo mayúscula-y-trackea a propósito;
+   este selector lo devuelve a texto normal para que una frase larga
+   no se lea como un grito. */
+label.option-label {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--on-surface);
+}
+
+input,
+select,
+textarea {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  caret-color: var(--primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--on-surface-variant);
+  opacity: 0.55;
+}
+
+input[type="file"] {
+  padding: 6px;
+  color: var(--on-surface-variant);
+  font-size: 13px;
+}
+
+input[type="file"]::file-selector-button,
+input[type="file"]::-webkit-file-upload-button {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  padding: 7px 14px;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+input[type="file"]::file-selector-button:hover,
+input[type="file"]::-webkit-file-upload-button:hover {
+  background: rgba(0, 107, 88, 0.06);
+}
+
+input[type="number"] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 107, 88, 0.14);
+}
+
+fieldset {
+  border-radius: var(--radius-lg) !important;
+  border-color: var(--border-soft) !important;
+}
+
+/* --- Botones --- */
+
+button {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+  cursor: pointer;
+  padding: 10px 18px;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease, filter 0.15s ease;
+}
+
+button:hover {
+  background: var(--tertiary);
+  border-color: var(--tertiary);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--on-surface);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  background: var(--surface-container-high);
+  border-color: var(--surface-container-high);
+  color: var(--on-surface-variant);
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: none;
+}
+
+/* Botón secundario — outline teal sobre superficie clara, se activa vía
+   el inline style `background: white` heredado de sistemas anteriores
+   (hook de compatibilidad, no un token real). */
+button[style*="background: white"],
+button[style*="background:white"] {
+  background: transparent !important;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+  box-shadow: none;
+}
+
+button[style*="background: white"]:hover,
+button[style*="background:white"]:hover {
+  background: rgba(0, 107, 88, 0.06) !important;
+}
+
+/* Botones "de texto" (borrar / acciones destructivas) */
+button[style*="background: none"],
+button[style*="background:none"] {
+  background: none;
+  border: none;
+  color: var(--error);
+  font-weight: 600;
+  padding: 4px 10px;
+}
+
+button[style*="background: none"]:hover,
+button[style*="background:none"]:hover {
+  background: rgba(186, 26, 26, 0.08) !important;
+  box-shadow: none;
+  text-decoration: underline;
+}
+
+/* --- Píldora de acción chica (Cronograma/Pagos/Editar en una tarjeta
+   de deuda) — antes eran links de texto plano, ahora una píldora
+   coherente con el resto del vocabulario de botones. "Borrar" queda
+   afuera a propósito: una acción destructiva se beneficia de ser
+   MENOS prominente, no más, para evitar un clic accidental. */
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.action-pill:hover {
+  background: rgba(0, 107, 88, 0.06);
+  text-decoration: none;
+}
+
+/* --- Selector de estrategia (Avalancha / Bola de nieve) — mismo
+   patrón de píldora que MonthTabs.tsx, pero server-rendered: el input
+   radio queda oculto y el estado activo se resuelve solo con CSS
+   (`:checked` + hermano adyacente), sin componente cliente. --- */
+.strategy-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-container-low);
+  border-radius: var(--radius-full);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.strategy-toggle input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.strategy-toggle label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.strategy-toggle input[type="radio"]:checked + label {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.strategy-toggle input[type="radio"]:focus-visible + label {
+  outline: 2px solid var(--on-surface);
+  outline-offset: 2px;
+}
+
+/* --- Tablas --- */
+
+table {
+  font-size: 14px;
+}
+
+th {
+  color: var(--on-surface-variant);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  text-align: left;
+}
+
+td {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--on-surface);
+  font-size: 13.5px;
+}
+
+td:first-child {
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+
+tr:hover td {
+  background: rgba(0, 107, 88, 0.03);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+/* --- Divisor de sección --- */
+
+.ticket-divider {
+  border: none;
+  border-top: 1px solid var(--border-soft);
+  margin: 32px 0;
+}
+
+/* --- Total / stat destacado (antes .stamp-total) --- */
+
+.stamp-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.stamp-total--positive {
+  color: var(--on-primary-container);
+}
+
+.stamp-total--negative {
+  color: var(--on-error-container);
+}
+
+/* --- Panel sólido (antes .paper-card) — Lumina usa superficies
+   blancas opacas con hairline, no vidrio translúcido; el blur queda
+   reservado para elementos flotantes puntuales (.glass-panel). --- */
+
+.paper-card {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: 0 10px 24px -5px rgba(0, 107, 88, 0.05);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* --- Tarjeta hero de saldo total --- */
+.hero-gradient {
+  background: linear-gradient(135deg, #004538 0%, #006b5f 100%);
+}
+
+/* --- Marca de "estimado" — teal terciario, nunca color-only. --- */
+.estimate-mark {
+  color: var(--estimate);
+}
+
+/* --- Chip de estado (severidad) --- */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* --- Tarjeta contenedora de tabla --- */
+.table-card {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: 4px 12px;
+  box-shadow: 0 10px 24px -5px rgba(0, 107, 88, 0.05);
+}
+
+.table-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-card tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* --- Barra de progreso de pago (saldo pagado vs. total) --- */
+.progress-track {
+  width: 100%;
+  background: var(--surface-container);
+  border-radius: var(--radius-full);
+  height: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+}
+
+/* --- Entrada de los módulos del ribbon de salud --- */
+@keyframes surface-rise-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.board-module {
+  animation: surface-rise-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--module-index, 0) * 60ms);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.board-module:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-module {
+    animation: none;
+  }
+}

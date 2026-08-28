@@ -1,0 +1,190 @@
+{
+  "name": "Mini App Factory — Simulador de Deudas",
+  "description": "Horizon — vidrio esmerilado sobre un fondo claro con lavado de gradiente, tipografía Plus Jakarta Sans e iconos Material Symbols, traducido del registro Persuade de una landing marketing a las superficies Operate de este producto.",
+  "colors": {
+    "background": "#ffffff",
+    "surface": "#ffffff",
+    "surface-container-low": "#f9f3e8",
+    "surface-container": "#f3ede2",
+    "surface-container-high": "#ede8dd",
+    "surface-container-highest": "#e8e2d7",
+    "outline": "#89726b",
+    "outline-variant": "#ddc0b8",
+    "on-background": "#000000",
+    "on-surface": "#000000",
+    "on-surface-variant": "#555555",
+    "primary": "#d14a26",
+    "on-primary": "#ffffff",
+    "primary-container": "#ff8a65",
+    "on-primary-container": "#752305",
+    "secondary": "#556500",
+    "on-secondary": "#ffffff",
+    "secondary-container": "#d6ed7a",
+    "on-secondary-container": "#5a6c00",
+    "tertiary": "#326578",
+    "on-tertiary": "#ffffff",
+    "tertiary-container": "#80b1c7",
+    "on-tertiary-container": "#074457",
+    "estimate": "#326578",
+    "estimate-container": "#80b1c7",
+    "error": "#ba1a1a",
+    "on-error": "#ffffff",
+    "error-container": "#ffdad6",
+    "on-error-container": "#93000a"
+  },
+  "typography": {
+    "display": {
+      "fontFamily": "Plus Jakarta Sans, system-ui, sans-serif",
+      "fontSize": "30px",
+      "fontWeight": 800,
+      "lineHeight": 1.15,
+      "letterSpacing": "-0.02em"
+    },
+    "headline": {
+      "fontFamily": "Plus Jakarta Sans, system-ui, sans-serif",
+      "fontSize": "20px",
+      "fontWeight": 700,
+      "letterSpacing": "-0.02em"
+    },
+    "title": {
+      "fontFamily": "Plus Jakarta Sans, system-ui, sans-serif",
+      "fontSize": "15px",
+      "fontWeight": 700,
+      "letterSpacing": "-0.01em"
+    },
+    "body": {
+      "fontFamily": "Plus Jakarta Sans, system-ui, sans-serif",
+      "fontSize": "15px",
+      "fontWeight": 400,
+      "lineHeight": 1.5
+    },
+    "label": {
+      "fontFamily": "Plus Jakarta Sans, system-ui, sans-serif",
+      "fontSize": "13px",
+      "fontWeight": 600,
+      "letterSpacing": "0.01em"
+    },
+    "tableHeader": {
+      "fontFamily": "Plus Jakarta Sans, system-ui, sans-serif",
+      "fontSize": "11px",
+      "fontWeight": 700,
+      "textTransform": "uppercase",
+      "letterSpacing": "0.06em"
+    },
+    "numeral": {
+      "fontFamily": "Plus Jakarta Sans, system-ui, sans-serif",
+      "fontSize": "14-19px",
+      "fontWeight": "600-800",
+      "fontVariantNumeric": "tabular-nums"
+    }
+  },
+  "rounded": {
+    "sm": "10px",
+    "md": "14px",
+    "lg": "20px",
+    "full": "9999px"
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px"
+  },
+  "components": {
+    "button-primary": {
+      "backgroundColor": "{colors.primary}",
+      "textColor": "{colors.on-primary}",
+      "rounded": "{rounded.full}",
+      "padding": "10px 18px"
+    },
+    "button-primary-hover": {
+      "filter": "brightness(1.06)",
+      "boxShadow": "0 0 0 4px rgba(209,74,38,0.14)"
+    },
+    "button-secondary-glass": {
+      "backgroundColor": "rgba(255,255,255,0.5)",
+      "backdropFilter": "blur(20px)",
+      "border": "1px solid rgba(255,255,255,0.7)",
+      "rounded": "{rounded.full}",
+      "note": "activated via compatibility hook: inline style background: white"
+    },
+    "button-destructive-text": {
+      "backgroundColor": "transparent",
+      "textColor": "{colors.error}",
+      "note": "activated via compatibility hook: inline style background: none"
+    },
+    "paper-card": {
+      "backgroundColor": "rgba(255,255,255,0.5)",
+      "backdropFilter": "blur(24px)",
+      "border": "1px solid rgba(255,255,255,0.7)",
+      "rounded": "{rounded.lg}",
+      "boxShadow": "0 8px 32px rgba(0,0,0,0.04)",
+      "padding": "20px"
+    },
+    "table-card": {
+      "backgroundColor": "rgba(255,255,255,0.5)",
+      "backdropFilter": "blur(20px)",
+      "border": "1px solid rgba(255,255,255,0.7)",
+      "rounded": "{rounded.lg}",
+      "boxShadow": "0 4px 20px rgba(0,0,0,0.03)",
+      "padding": "4px 12px"
+    },
+    "stamp-total": {
+      "backgroundColor": "rgba(255,255,255,0.55)",
+      "backdropFilter": "blur(20px)",
+      "border": "1px solid rgba(255,255,255,0.7)",
+      "rounded": "{rounded.full}",
+      "boxShadow": "0 4px 16px rgba(0,0,0,0.05)"
+    },
+    "status-pill": {
+      "rounded": "{rounded.full}",
+      "padding": "6px 14px",
+      "fontWeight": 700,
+      "fontSize": "13px"
+    },
+    "board-module": {
+      "backgroundColor": "rgba(255,255,255,0.5)",
+      "backdropFilter": "blur(20px)",
+      "border": "1px solid rgba(255,255,255,0.7)",
+      "borderTop": "3px solid <severity-color>",
+      "rounded": "16px",
+      "boxShadow": "0 4px 16px rgba(0,0,0,0.04)",
+      "animation": "surface-rise-in 0.42s cubic-bezier(0.16,1,0.3,1) both, staggered by --module-index"
+    },
+    "input": {
+      "backgroundColor": "{colors.surface-container-low}",
+      "border": "1px solid {colors.outline-variant}",
+      "rounded": "{rounded.sm}",
+      "focus": "border {colors.primary} + box-shadow halo rgba(209,74,38,0.16) + background {colors.surface}"
+    }
+  },
+  "namedRules": [
+    {
+      "name": "La Regla del Azul Único",
+      "rule": "--tertiary/--estimate is used exclusively to mark estimated/projected data, never reused for any other meaning."
+    },
+    {
+      "name": "La Regla del Número Real",
+      "rule": "A negative balance or mora status is always shown at full --error/--on-error-container strength, always paired with a warning icon, never softened. --error-container is background/wash only, never the number's own text color."
+    },
+    {
+      "name": "La Regla del Número Tabular",
+      "rule": "Every money amount uses font-variant-numeric: tabular-nums, regardless of font family (Horizon uses one typeface system-wide, unlike the prior monospace-for-money system)."
+    },
+    {
+      "name": "La Regla del Vidrio Consistente",
+      "rule": "Every elevated surface uses the same frosted-glass recipe (blur + translucent white wash + 70% white border) — one material, not a solid surface competing with a glass one."
+    }
+  ],
+  "notCanonized": [
+    {
+      "item": "Old-system component patterns on ~18 non-bespoke app/dashboard/** pages",
+      "reason": "Only survive visually via a temporary --led-*/--board-*/--ink-* compatibility variable bridge in globals.css; this is a migration aid, not a system to document."
+    },
+    {
+      "item": "Hardcoded hex colors in CashFlowChart.tsx SVG (#5a6c00, #93000a, #89726b, #ddc0b8)",
+      "reason": "Direct duplicates of existing tokens, not new values, but bypass the custom-property system inside a static SVG — recorded as a build divergence, not canonized as a rule."
+    }
+  ]
+}
