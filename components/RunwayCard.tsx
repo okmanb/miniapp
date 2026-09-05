@@ -36,7 +36,11 @@ export function RunwayCard({
         style={{ backgroundColor: accent }}
         aria-hidden
       />
-      <span className="absolute right-[14px] top-[14px] text-[18px] leading-none" style={{ color: "#B8C2B8" }} aria-hidden>
+      <span
+        className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[18px] leading-none"
+        style={{ color: "#B8C2B8" }}
+        aria-hidden
+      >
         ›
       </span>
 
@@ -48,7 +52,11 @@ export function RunwayCard({
         {note}
       </p>
 
-      <div className="mt-[11px] flex items-end justify-between border-t border-border-row pt-[11px]">
+      {/* Punteado, no lleno: separa el resumen del dato sin sonar a fila de tabla. */}
+      <div
+        className="mt-[11px] flex items-end justify-between pt-[11px]"
+        style={{ borderTop: "1px dashed #DEE3DD" }}
+      >
         <span
           className="font-mono text-[10px] uppercase text-muted"
           style={{ letterSpacing: ".06em" }}

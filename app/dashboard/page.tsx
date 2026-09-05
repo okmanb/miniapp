@@ -5,6 +5,7 @@ import type { GrowthCause } from "@/lib/calc/statement";
 import { TotalDebtHero } from "@/components/TotalDebtHero";
 import { RunwayCard } from "@/components/RunwayCard";
 import { AlertsPeek } from "@/components/AlertsPeek";
+import { PayMinimumButton } from "@/components/PayMinimumButton";
 import { Card, EmptyState, PrimaryButton, Screen, Amount, MetaChip } from "@/components/ui";
 
 // El saldo se deriva en cada lectura; cachearlo mostraría una cifra vieja.
@@ -22,11 +23,23 @@ const MONTHS = [
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
 
+/** "Visa Signature …2166" -> "Visa Signature". El botón ya es largo de por sí. */
+function shortName(name: string): string {
+  return name.replace(/\s*[….]{1,3}\s*\d+$/, "").trim();
+}
+
 export default async function DashboardPage() {
   const data = await getDashboard();
   const now = new Date();
   const greeting = GREETING_HOURS.find((g) => now.getHours() < g.until)!.text;
   const dateLabel = `${DAYS[now.getDay()]} ${now.getDate()} de ${MONTHS[now.getMonth()]}`;
+
+  // El atajo apunta a la primera alerta que un pago del mínimo puede resolver,
+  // no siempre a la primera alerta: la más cara no se destraba pagando.
+  const payable =
+    data?.alerts
+      .map((a) => data.debts.find((d) => d.id === a.debtId))
+      .find((d) => d && d.minimumPayment != null && d.minimumPayment > 0) ?? null;
 
   return (
     <Screen>
@@ -80,14 +93,29 @@ export default async function DashboardPage() {
                     ? "brick"
                     : "gold"
               }
-              headline={
-                data.alerts[0]?.title ??
-                `Nada vence en los próximos ${3} días.`
+              headline={data.alerts[0]?.title ?? "Nada vence en los próximos 3 días."}
+              action={
+                payable && (
+                  <PayMinimumButton
+                    debtId={payable.id}
+                    debtName={shortName(payable.name)}
+                    amount={payable.minimumPayment!}
+                    alreadyPaid={payable.minimumPaidThisMonth}
+                  />
+                )
               }
             />
           </div>
 
-          <h2 className="mb-2 mt-5 text-label uppercase text-muted">Tus deudas</h2>
+          <div className="mb-2 mt-5 flex items-baseline justify-between gap-3">
+            <h2 className="text-[15px] font-semibold text-ink">Tus deudas</h2>
+            <span
+              className="font-mono text-[10.5px] uppercase text-muted"
+              style={{ letterSpacing: ".04em" }}
+            >
+              {data.hasOverdue ? "revisar" : "al día"} ({data.debts.length})
+            </span>
+          </div>
 
           {data.debts.length === 0 ? (
             <EmptyState

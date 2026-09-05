@@ -90,10 +90,23 @@ export default function PreviewPage() {
           severity="brick"
           headline="El saldo de Visa Signature sigue creciendo"
           href="#"
+          action={
+            <p className="mt-2 flex min-h-touch w-full items-center justify-center rounded-pill border border-border bg-surface px-[15px] py-2 text-[11.5px] font-semibold text-pine">
+              Pagar el mínimo de Visa Signature · $ 1.300.000
+            </p>
+          }
         />
       </div>
 
-      <h2 className="mb-2 mt-5 text-label uppercase text-muted">Tus deudas</h2>
+      <div className="mb-2 mt-5 flex items-baseline justify-between gap-3">
+        <h2 className="text-[15px] font-semibold text-ink">Tus deudas</h2>
+        <span
+          className="font-mono text-[10.5px] uppercase text-muted"
+          style={{ letterSpacing: ".04em" }}
+        >
+          al día ({debts.length})
+        </span>
+      </div>
 
       <ul className="space-y-2">
         {debts.map((debt) => (

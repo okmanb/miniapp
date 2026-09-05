@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 /**
  * Bandeja de alertas del dashboard. Los tres juegos de color salen del
@@ -9,6 +10,10 @@ import Link from "next/link";
  * dashboard ya puede mostrar brick en una deuda que crece, esta bandeja
  * respeta el techo de dos severidades por pantalla: es la misma severidad,
  * no una tercera.
+ *
+ * El atajo de pagar el mínimo va como hermano del enlace y no adentro: un
+ * botón anidado dentro de un link es HTML inválido, y en la práctica el link
+ * se come el click del botón.
  */
 
 type Severity = "none" | "gold" | "brick";
@@ -24,12 +29,15 @@ export function AlertsPeek({
   severity,
   headline,
   href = "/dashboard/alerts",
+  action,
 }: {
   count: number;
   severity: Severity;
   /** Primera alerta, o el texto de "nada pendiente". */
   headline: string;
   href?: string;
+  /** Atajo de la primera alerta que un pago puede destrabar. */
+  action?: ReactNode;
 }) {
   const c = PALETTE[severity];
   const title =
@@ -40,34 +48,44 @@ export function AlertsPeek({
         : `${count} alertas para revisar`;
 
   return (
-    <Link
-      href={href}
+    <div
       data-motion
-      className="animate-card-in flex min-h-touch items-center gap-3 rounded-surface px-[15px] py-3 transition-opacity duration-150 ease-sd hover:opacity-90"
+      className="animate-card-in rounded-surface px-[15px] py-3"
       style={{ backgroundColor: c.bg, border: `1px solid ${c.border}` }}
     >
-      <span
-        className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-pill"
-        style={{ backgroundColor: c.iconBg }}
-        aria-hidden
+      <Link
+        href={href}
+        className="flex min-h-touch items-center gap-3 transition-opacity duration-150 ease-sd hover:opacity-80"
       >
-        <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
-          <path
-            d="M9 2.5a4 4 0 0 0-4 4v3l-1 2h10l-1-2v-3a4 4 0 0 0-4-4ZM7.5 13.5a1.5 1.5 0 0 0 3 0"
-            stroke={c.fg}
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </span>
-
-      <span className="min-w-0">
-        <span className="block text-[12.5px] font-semibold" style={{ color: c.fg }}>
-          {title}
+        <span
+          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-pill"
+          style={{ backgroundColor: c.iconBg }}
+          aria-hidden
+        >
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
+            <path
+              d="M9 2.5a4 4 0 0 0-4 4v3l-1 2h10l-1-2v-3a4 4 0 0 0-4-4ZM7.5 13.5a1.5 1.5 0 0 0 3 0"
+              stroke={c.fg}
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </span>
-        <span className="mt-0.5 block truncate text-[11.5px] text-muted">{headline}</span>
-      </span>
-    </Link>
+
+        <span className="min-w-0 flex-1">
+          <span className="block text-[12.5px] font-semibold" style={{ color: c.fg }}>
+            {title}
+          </span>
+          <span className="mt-0.5 block truncate text-[11.5px] text-muted">{headline}</span>
+        </span>
+
+        <span className="shrink-0 text-[18px] leading-none" style={{ color: "#B8C2B8" }} aria-hidden>
+          ›
+        </span>
+      </Link>
+
+      {action}
+    </div>
   );
 }

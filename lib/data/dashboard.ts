@@ -31,6 +31,8 @@ export interface DashboardDebt {
   minimumPayment: number | null;
   /** Obligación mensual comprometida: la entry del plan, o el mínimo. */
   monthlyDue: number;
+  /** Si el atajo del mínimo ya se aplicó este mes. */
+  minimumPaidThisMonth: boolean;
 }
 
 export type AlertKind =
@@ -97,7 +99,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
         .eq("scenario_id", scenario.id),
       supabase
         .from("debt_payments")
-        .select("debt_id, amount, period")
+        .select("debt_id, amount, period, kind")
         .eq("scenario_id", scenario.id),
       supabase
         .from("card_statements")
@@ -153,6 +155,9 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
       recurringCharge,
       minimumPayment,
       monthlyDue: minimumPayment ?? 0,
+      minimumPaidThisMonth: payments.some(
+        (p) => p.debt_id === d.id && p.period === period && p.kind === "minimo_estimado"
+      ),
       growth:
         minimumPayment != null
           ? explainGrowth({
