@@ -109,9 +109,15 @@ saldo anterior y los consumos por separado, nunca el total del resumen.
 - **Las 19 pantallas.** El sistema visual, el esquema y el motor están; las pantallas se
   construyen en el orden de `SCREENS.md` (01, 02, 03 y 05 primero). Nada de esto se mergea
   a `main` hasta que la rama `reset` corra completa.
-- **Aplicar el esquema a Supabase.** `supabase/schema.sql` está escrito pero **no se
-  aplicó** a ningún proyecto: es una escritura sobre infraestructura viva y no estaba
-  claro contra qué proyecto correrlo.
+- **Borrar `backup_pre_reset` cuando el modelo nuevo esté verificado.** El esquema ya se
+  aplicó a `miniapp_deb` (`udhqdbpjhifeotgoqaoa`). El proyecto **no estaba vacío**: tenía
+  33 deudas, 28 líneas de consumo, 3 resúmenes y 2 escenarios reales, contra lo que asumía
+  el brief. Se decidió arrancar de cero igual, pero antes del drop quedó un snapshot
+  completo de `public` en el esquema `backup_pre_reset`, dentro del mismo proyecto. Está
+  ahí a propósito: es la única copia de esos datos.
+- **Activar la protección de contraseñas filtradas en Supabase Auth.** El linter la marca
+  como desactivada; contrasta las contraseñas contra HaveIBeenPwned. Es un cambio de
+  configuración de la cuenta, así que no lo toqué.
 - **`next@14.2.15` tiene una vulnerabilidad de seguridad conocida** (npm lo avisa en cada
   install; ver el aviso de Next del 2025-12-11). `RESET.md` dice que Next 14 sigue igual,
   así que no se tocó la mayor, pero conviene subir al parche de la línea 14.x antes de
