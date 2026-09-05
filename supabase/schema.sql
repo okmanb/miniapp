@@ -380,9 +380,16 @@ create or replace function copy_scenario(source_id uuid, new_name text)
 returns uuid
 language plpgsql
 security invoker
+-- Sin search_path fijo, quien pueda crear objetos en un esquema que caiga
+-- antes en el search_path del que llama puede secuestrar las referencias a
+-- tablas de acá adentro. pg_temp va al final y explícito porque la función
+-- crea una tabla temporal.
+set search_path = public, pg_temp
 as $$
 declare
-  new_id uuid;
+  -- No se llama new_id: esa es tambien la columna de _debt_map, y plpgsql no
+  -- sabria a cual se refieren los INSERT ... SELECT que usan las dos.
+  new_scen_id uuid;
   owner uuid;
   old_debt debts%rowtype;
   copied_debt_id uuid;
@@ -395,7 +402,7 @@ begin
   insert into scenarios (user_id, name, starting_balance, is_active)
   select user_id, new_name, starting_balance, false
   from scenarios where id = source_id
-  returning id into new_id;
+  returning id into new_scen_id;
 
   -- Mapa de deudas viejas a nuevas: lo necesitan gastos y todo lo que cuelga
   -- de una deuda.
@@ -413,7 +420,7 @@ begin
       account_last4, is_active
     )
     values (
-      old_debt.user_id, new_id, old_debt.name, old_debt.kind,
+      old_debt.user_id, new_scen_id, old_debt.name, old_debt.kind,
       old_debt.base_balance, old_debt.base_balance_at,
       old_debt.annual_interest_rate, old_debt.tem, old_debt.credit_limit,
       old_debt.due_day, old_debt.closing_day, old_debt.installments_total,
@@ -426,12 +433,12 @@ begin
   end loop;
 
   insert into debt_payments (user_id, scenario_id, debt_id, period, paid_on, amount, kind, note)
-  select p.user_id, new_id, m.new_id, p.period, p.paid_on, p.amount, p.kind, p.note
+  select p.user_id, new_scen_id, m.new_id, p.period, p.paid_on, p.amount, p.kind, p.note
   from debt_payments p join _debt_map m on m.old_id = p.debt_id
   where p.scenario_id = source_id;
 
   insert into debt_schedule_entries (user_id, scenario_id, debt_id, period, amount, kind, is_estimate, note)
-  select e.user_id, new_id, m.new_id, e.period, e.amount, e.kind, e.is_estimate, e.note
+  select e.user_id, new_scen_id, m.new_id, e.period, e.amount, e.kind, e.is_estimate, e.note
   from debt_schedule_entries e join _debt_map m on m.old_id = e.debt_id
   where e.scenario_id = source_id;
 
@@ -441,7 +448,7 @@ begin
     total_due, minimum_payment, amount_paid, usd_charges_excluded, source, warnings
   )
   select
-    s.user_id, new_id, m.new_id, s.period, s.closing_date, s.due_date,
+    s.user_id, new_scen_id, m.new_id, s.period, s.closing_date, s.due_date,
     s.previous_balance, s.interest_charged, s.new_charges, s.installments_charge,
     s.total_due, s.minimum_payment, s.amount_paid, s.usd_charges_excluded, s.source, s.warnings
   from card_statements s join _debt_map m on m.old_id = s.debt_id
@@ -452,7 +459,7 @@ begin
     total_installments, installment_amount, tna, is_active
   )
   select
-    c.user_id, new_id, m.new_id, c.cupon, c.description, c.first_period,
+    c.user_id, new_scen_id, m.new_id, c.cupon, c.description, c.first_period,
     c.total_installments, c.installment_amount, c.tna, c.is_active
   from card_installment_plans c join _debt_map m on m.old_id = c.debt_id
   where c.scenario_id = source_id;
@@ -463,19 +470,19 @@ begin
     is_recurring, ended_period, is_archived, paid_with, debt_id
   )
   select
-    e.user_id, new_id, e.description, e.amount, e.category, e.period,
+    e.user_id, new_scen_id, e.description, e.amount, e.category, e.period,
     e.is_recurring, e.ended_period, e.is_archived, e.paid_with, m.new_id
   from expenses e left join _debt_map m on m.old_id = e.debt_id
   where e.scenario_id = source_id;
 
   insert into incomes (user_id, scenario_id, description, amount, kind, eligible_months, period, ended_period)
-  select user_id, new_id, description, amount, kind, eligible_months, period, ended_period
+  select user_id, new_scen_id, description, amount, kind, eligible_months, period, ended_period
   from incomes where scenario_id = source_id;
 
   insert into bridge_loans (user_id, scenario_id, lender, amount, taken_period, repay_period, annual_interest_rate, note)
-  select user_id, new_id, lender, amount, taken_period, repay_period, annual_interest_rate, note
+  select user_id, new_scen_id, lender, amount, taken_period, repay_period, annual_interest_rate, note
   from bridge_loans where scenario_id = source_id;
 
-  return new_id;
+  return new_scen_id;
 end;
 $$;
