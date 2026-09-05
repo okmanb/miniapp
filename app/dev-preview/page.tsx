@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { TotalDebtHero } from "@/components/TotalDebtHero";
-import { Card, Amount, EmptyState, PrimaryButton, Screen } from "@/components/ui";
+import { RunwayCard } from "@/components/RunwayCard";
+import { AlertsPeek } from "@/components/AlertsPeek";
+import { BottomNav } from "@/components/BottomNav";
+import { Card, Amount, EmptyState, PrimaryButton, Screen, MetaChip } from "@/components/ui";
 import { formatMoney } from "@/lib/calc/money";
 import { deriveBalance } from "@/lib/calc/balance";
 import { explainGrowth } from "@/lib/calc/statement";
@@ -64,6 +67,15 @@ export default function PreviewPage() {
         statusLabel="todas al día"
       />
 
+      <div className="mt-3">
+        <RunwayCard
+          monthLabel="octubre"
+          note="Desde noviembre el saldo queda en rojo. Escenario: Plan base."
+          remaining={300000}
+          href="#"
+        />
+      </div>
+
       <Link
         href="#"
         className="mt-3 flex min-h-touch items-center justify-between rounded-surface bg-mint-wash px-4 py-3 text-card text-pine"
@@ -71,6 +83,15 @@ export default function PreviewPage() {
         <span>Escenario: Plan base</span>
         <span aria-hidden>›</span>
       </Link>
+
+      <div className="mt-3">
+        <AlertsPeek
+          count={4}
+          severity="brick"
+          headline="El saldo de Visa Signature sigue creciendo"
+          href="#"
+        />
+      </div>
 
       <h2 className="mb-2 mt-5 text-label uppercase text-muted">Tus deudas</h2>
 
@@ -81,9 +102,9 @@ export default function PreviewPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="truncate text-card text-ink">{debt.name}</div>
-                  <div className="mt-0.5 text-[11.5px] text-muted">
-                    TNA {debt.tna.toLocaleString("es-AR")}%
-                    {debt.dueDay != null ? ` · vence el ${debt.dueDay}` : ""}
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <MetaChip>{debt.dueDay != null ? `vto. ${debt.dueDay}` : "cuota fija"}</MetaChip>
+                    <MetaChip>TNA {debt.tna.toLocaleString("es-AR")}%</MetaChip>
                   </div>
                 </div>
                 <Amount className="shrink-0 text-card-lg text-ink">
@@ -108,6 +129,8 @@ export default function PreviewPage() {
         note="Cargá tu primera deuda y la app arma la proyección, las alertas y el plan desde ahí."
         action={<PrimaryButton href="#">Cargar mi primera deuda</PrimaryButton>}
       />
+
+      <BottomNav alertCount={4} />
     </Screen>
   );
 }

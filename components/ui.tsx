@@ -134,6 +134,19 @@ export function Row({
 /* Estados de carga                                                            */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Chip de metadato de una fila: vencimiento, tipo de pago, tasa. Medido sobre
+ * el prototipo — mono 9.5px/700 sobre el riel, radio 5px. Es el único lugar
+ * del sistema con un radio fuera de los tres niveles, y sale de ahí.
+ */
+export function MetaChip({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-block rounded-[5px] bg-track px-1.5 py-[3px] font-mono text-[9.5px] font-bold text-muted">
+      {children}
+    </span>
+  );
+}
+
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`rounded-row bg-skeleton ${className}`} aria-hidden />;
 }

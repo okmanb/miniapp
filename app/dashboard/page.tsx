@@ -3,7 +3,9 @@ import { getDashboard } from "@/lib/data/dashboard";
 import { formatMoney } from "@/lib/calc/money";
 import type { GrowthCause } from "@/lib/calc/statement";
 import { TotalDebtHero } from "@/components/TotalDebtHero";
-import { Card, EmptyState, PrimaryButton, Screen, Amount } from "@/components/ui";
+import { RunwayCard } from "@/components/RunwayCard";
+import { AlertsPeek } from "@/components/AlertsPeek";
+import { Card, EmptyState, PrimaryButton, Screen, Amount, MetaChip } from "@/components/ui";
 
 // El saldo se deriva en cada lectura; cachearlo mostraría una cifra vieja.
 export const dynamic = "force-dynamic";
@@ -52,6 +54,14 @@ export default async function DashboardPage() {
             hasOverdue={data.hasOverdue}
           />
 
+          <div className="mt-3">
+            <RunwayCard
+              monthLabel={data.runwayMonth}
+              note={data.runwayNote}
+              remaining={data.cashflow.remainingAtRunway}
+            />
+          </div>
+
           <Link
             href="/dashboard/scenarios"
             className="mt-3 flex min-h-touch items-center justify-between rounded-surface bg-mint-wash px-4 py-3 text-card text-pine transition-colors duration-150 ease-sd hover:bg-selection"
@@ -59,6 +69,23 @@ export default async function DashboardPage() {
             <span>Escenario: {data.scenarioName}</span>
             <span aria-hidden>›</span>
           </Link>
+
+          <div className="mt-3">
+            <AlertsPeek
+              count={data.alerts.length}
+              severity={
+                data.alerts.length === 0
+                  ? "none"
+                  : data.alerts.some((a) => a.severity === "brick")
+                    ? "brick"
+                    : "gold"
+              }
+              headline={
+                data.alerts[0]?.title ??
+                `Nada vence en los próximos ${3} días.`
+              }
+            />
+          </div>
 
           <h2 className="mb-2 mt-5 text-label uppercase text-muted">Tus deudas</h2>
 
@@ -77,11 +104,13 @@ export default async function DashboardPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="truncate text-card text-ink">{debt.name}</div>
-                          <div className="mt-0.5 text-[11.5px] text-muted">
-                            {debt.annualRate != null
-                              ? `TNA ${debt.annualRate.toLocaleString("es-AR")}%`
-                              : "sin tasa cargada"}
-                            {debt.dueDay != null ? ` · vence el ${debt.dueDay}` : ""}
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            <MetaChip>
+                              {debt.dueDay != null ? `vto. ${debt.dueDay}` : "cuota fija"}
+                            </MetaChip>
+                            {debt.annualRate != null && (
+                              <MetaChip>TNA {debt.annualRate.toLocaleString("es-AR")}%</MetaChip>
+                            )}
                           </div>
                         </div>
                         <Amount className="shrink-0 text-card-lg text-ink">
