@@ -212,6 +212,14 @@ create table if not exists card_installment_plans (
 
 create index if not exists plans_debt_idx on card_installment_plans (debt_id);
 
+-- El cupón es el identificador que el banco le da a cada compra en cuotas.
+-- Sin esto, cargar dos veces el mismo resumen duplica todas sus cuotas.
+-- Parcial: una cuota cargada a mano puede no tener cupón, y dos sin cupón no
+-- son necesariamente la misma compra.
+create unique index if not exists card_installment_plans_debt_cupon_idx
+  on card_installment_plans (debt_id, cupon)
+  where cupon is not null;
+
 alter table card_installment_plans enable row level security;
 
 create policy "cuotas propias" on card_installment_plans

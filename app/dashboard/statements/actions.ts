@@ -14,6 +14,16 @@ export interface StatementState {
 
 export const EMPTY_STATEMENT_STATE: StatementState = { message: null };
 
+/** Lo que manda el formulario cuando el PDF detectó compras en cuotas. */
+interface ParsedInstallmentInput {
+  cupon: string;
+  description: string | null;
+  firstPeriod: string;
+  totalInstallments: number;
+  installmentAmount: number;
+  tna: number;
+}
+
 /**
  * Cargar el resumen del mes de una tarjeta.
  *
@@ -121,6 +131,36 @@ export async function saveStatement(
     .eq("id", debtId);
 
   if (balanceError) return { message: "Guardamos el resumen pero no pudimos actualizar el saldo." };
+
+  // Cuotas que trajo el PDF. Se guardan con upsert por (debt_id, cupon):
+  // cargar dos meses seguidos el mismo resumen no tiene que duplicarlas, y
+  // el cupón es el identificador que el banco le da a cada compra.
+  const installmentsRaw = String(formData.get("installments") ?? "");
+  if (installmentsRaw) {
+    try {
+      const plans = JSON.parse(installmentsRaw) as ParsedInstallmentInput[];
+      if (Array.isArray(plans) && plans.length > 0) {
+        await supabase.from("card_installment_plans").upsert(
+          plans.map((plan) => ({
+            user_id: auth.user.id,
+            scenario_id: debt.scenario_id,
+            debt_id: debtId,
+            cupon: plan.cupon,
+            description: plan.description,
+            first_period: plan.firstPeriod,
+            total_installments: plan.totalInstallments,
+            installment_amount: plan.installmentAmount,
+            tna: plan.tna,
+            is_active: true,
+          })),
+          { onConflict: "debt_id,cupon" }
+        );
+      }
+    } catch {
+      // Que las cuotas no se puedan leer no invalida el resumen: los números
+      // principales ya se guardaron y son los que mueven el saldo.
+    }
+  }
 
   // Regla 3: archivar, no borrar.
   if (duplicates.length > 0) {

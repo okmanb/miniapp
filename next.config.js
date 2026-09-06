@@ -15,6 +15,15 @@ const nextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
+
+  experimental: {
+    serverActions: {
+      // El default de 1 MB deja afuera resúmenes con muchas páginas. El
+      // límite real lo pone la acción de parseo, que rechaza arriba de 8 MB
+      // con un mensaje en castellano en vez de un error del framework.
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
 module.exports = nextConfig;
