@@ -143,10 +143,20 @@ Y en la pantalla 02, los seis valores del gráfico de disponible por mes (−0.6
 - **Activar la protección de contraseñas filtradas en Supabase Auth.** El linter la marca
   como desactivada; contrasta las contraseñas contra HaveIBeenPwned. Es un cambio de
   configuración de la cuenta, así que no lo toqué.
-- **`next@14.2.15` tiene una vulnerabilidad de seguridad conocida** (npm lo avisa en cada
-  install; ver el aviso de Next del 2025-12-11). `RESET.md` dice que Next 14 sigue igual,
-  así que no se tocó la mayor, pero conviene subir al parche de la línea 14.x antes de
-  volver a desplegar.
+- **Next 14 sigue con avisos abiertos, y el único arreglo es la mayor.** Se subió de
+  `14.2.15` a `14.2.35`, que es el último parche de la línea, y el build pasa igual. Pero
+  `npm audit` sigue marcando `next` en alto: los avisos que quedan **no tienen arreglo
+  dentro de 14.x**, solo en Next 16. `RESET.md` dice que Next 14 sigue igual, así que la
+  mayor no se hizo — es una decisión de stack, no una tarea de mantenimiento.
+
+  De la lista de avisos, la mayoría no aplica a esta app: no se usa `next/image`, ni el
+  Pages Router con i18n, ni un servidor propio. Los que sí tocan lo que hay acá son los de
+  denegación de servicio en Server Components y Server Actions, el envenenamiento de caché
+  en respuestas de Server Components, y el de redirecciones del middleware. Todos son de
+  disponibilidad o de caché, no de fuga de datos: RLS sigue siendo lo que protege la
+  información, y está activo en las diez tablas.
+
+  `postcss` aparece en la lista solo porque cuelga de Next; se resuelve con lo mismo.
 - **Contrastar el cierre de resumen contra un PDF real** de la Visa, por la diferencia de
   seis cifras de arriba.
 - El `lib/debt-engine/` viejo queda en el repo como control cruzado, no como
