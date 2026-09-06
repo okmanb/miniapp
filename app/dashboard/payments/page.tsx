@@ -30,7 +30,7 @@ const KIND_LABEL: Record<string, string> = {
  * acá es "cuánto puse este mes", no "qué pagué el martes".
  */
 export default async function PaymentsHistoryPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: scenario } = await supabase
     .from("scenarios")

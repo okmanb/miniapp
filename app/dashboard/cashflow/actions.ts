@@ -14,7 +14,7 @@ export type SaveResult = { ok: true } | { ok: false; message: string };
  * confirma, no una estimación nuestra.
  */
 export async function setStartingBalance(formData: FormData): Promise<SaveResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };

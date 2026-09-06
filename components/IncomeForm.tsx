@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import {
   createIncome,
   EMPTY_INCOME_STATE,
@@ -20,7 +20,7 @@ const MONTHS_ES = [
  * diciembre). Un campo que no aplica confunde más que uno que falta.
  */
 export function IncomeForm() {
-  const [state, formAction] = useFormState<IncomeState, FormData>(
+  const [state, formAction, pending] = useActionState<IncomeState, FormData>(
     createIncome,
     EMPTY_INCOME_STATE
   );
@@ -107,13 +107,12 @@ export function IncomeForm() {
         </p>
       )}
 
-      <Submit />
+      <Submit pending={pending} />
     </form>
   );
 }
 
-function Submit() {
-  const { pending } = useFormStatus();
+function Submit({ pending }: { pending: boolean }) {
   return (
     <button
       type="submit"

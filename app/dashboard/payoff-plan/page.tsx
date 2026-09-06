@@ -12,12 +12,13 @@ const EXTRA_OPTIONS = [0, 100_000, 300_000, 500_000, 1_000_000];
 export default async function PayoffPlanPage({
   searchParams,
 }: {
-  searchParams: { extra?: string; estrategia?: string };
+  searchParams: Promise<{ extra?: string; estrategia?: string }>;
 }) {
   const data = await getDashboard();
+  const query = await searchParams;
 
-  const extra = Number(searchParams.extra ?? 300_000);
-  const strategy: Strategy = searchParams.estrategia === "bola_de_nieve" ? "bola_de_nieve" : "avalancha";
+  const extra = Number(query.extra ?? 300_000);
+  const strategy: Strategy = query.estrategia === "bola_de_nieve" ? "bola_de_nieve" : "avalancha";
 
   if (!data || data.debts.length === 0) {
     return (

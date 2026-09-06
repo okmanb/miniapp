@@ -24,7 +24,7 @@ function parseAmount(raw: string): number | null {
  * esa tarjeta lo refleja porque se deriva — no porque acá lo sumemos.
  */
 export async function createExpense(formData: FormData): Promise<ExpenseResult | never> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
@@ -86,7 +86,7 @@ export async function createExpense(formData: FormData): Promise<ExpenseResult |
  * monto distinto es una corrección o un aumento.
  */
 export async function updateExpenseAmount(formData: FormData): Promise<ExpenseResult | never> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
@@ -150,7 +150,7 @@ export async function updateExpenseAmount(formData: FormData): Promise<ExpenseRe
  * siendo cierto.
  */
 export async function endRecurringExpense(id: string): Promise<ExpenseResult | { ok: true }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from("expenses")
@@ -170,7 +170,7 @@ export async function endRecurringExpense(id: string): Promise<ExpenseResult | {
  * a sumar al saldo de la tarjeta.
  */
 export async function restoreExpense(id: string): Promise<ExpenseResult | { ok: true }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from("expenses")

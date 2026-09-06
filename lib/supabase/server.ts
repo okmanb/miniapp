@@ -1,40 +1,44 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-// Cliente para usar en Server Components, Route Handlers y Server Actions
-export function createClient() {
-  const cookieStore = cookies();
+/**
+ * Cliente para Server Components, Route Handlers y Server Actions.
+ *
+ * Es async porque desde Next 15 `cookies()` devuelve una promesa: la petición
+ * puede no haber llegado todavía cuando el componente empieza a renderizarse.
+ * Por eso todos los llamadores hacen `await createClient()`.
+ */
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
         },
-        set(name: string, value: string, options: any) {
+        setAll(cookiesToSet) {
           try {
-            cookieStore.set({ name, value, ...options });
+            for (const { name, value, options } of cookiesToSet) {
+              cookieStore.set(name, value, options);
+            }
           } catch {
-            // Se llama desde un Server Component: se puede ignorar
-            // si hay middleware refrescando la sesión.
+            // Llamado desde un Server Component, donde las cookies son de solo
+            // lectura. Se puede ignorar: el middleware ya refresca la sesión.
           }
-        },
-        remove(name: string, options: any) {
-          try {
-            cookieStore.set({ name, value: "", ...options });
-          } catch {}
         },
       },
     }
   );
 }
 
-// Cliente admin con service role — SOLO para uso en el servidor
-// (webhooks, jobs). Nunca exponer al browser.
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-
+/**
+ * Cliente con service role — SOLO para tareas de servidor (jobs,
+ * importaciones). Nunca en el browser: se saltea RLS.
+ */
 export function createAdminClient() {
   return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

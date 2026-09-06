@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import { saveDebt, EMPTY_STATE, type DebtFormState } from "@/app/dashboard/debts/actions";
 import { DEBT_KINDS } from "@/app/dashboard/debts/validation";
 import { Spinner } from "./ui";
@@ -26,7 +26,7 @@ export interface DebtFormValues {
 }
 
 export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
-  const [state, formAction] = useFormState<DebtFormState, FormData>(saveDebt, EMPTY_STATE);
+  const [state, formAction, pending] = useActionState<DebtFormState, FormData>(saveDebt, EMPTY_STATE);
   const editing = Boolean(initial.id);
 
   return (
@@ -150,13 +150,12 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         </p>
       )}
 
-      <SubmitButton editing={editing} />
+      <SubmitButton editing={editing} pending={pending} />
     </form>
   );
 }
 
-function SubmitButton({ editing }: { editing: boolean }) {
-  const { pending } = useFormStatus();
+function SubmitButton({ editing, pending }: { editing: boolean; pending: boolean }) {
   return (
     <button
       type="submit"

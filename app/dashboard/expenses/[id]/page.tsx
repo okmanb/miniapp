@@ -17,13 +17,14 @@ function monthTitle(period: string): string {
   return `${MONTHS_ES[Number(month) - 1]} ${year}`;
 }
 
-export default async function ExpenseDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+export default async function ExpenseDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
 
   const { data: expense } = await supabase
     .from("expenses")
     .select("id, description, amount, period, ended_period, is_recurring, is_archived, paid_with, debt_id, debts(name)")
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
 
   if (!expense) notFound();

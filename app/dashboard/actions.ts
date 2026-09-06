@@ -21,7 +21,7 @@ export type ActionResult = { ok: true } | { ok: false; message: string };
  * "el mínimo", no "lo que diga el botón".
  */
 export async function payMinimum(debtId: string): Promise<ActionResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };

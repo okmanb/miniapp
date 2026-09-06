@@ -25,7 +25,7 @@ function whenLabel(kind: string, months: number[]): string {
  * por eso el tipo decide en qué meses entra, y no es una etiqueta.
  */
 export default async function IncomesPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: scenario } = await supabase
     .from("scenarios")

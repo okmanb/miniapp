@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
  * hace falta entender antes de tocar cualquier botón de acá.
  */
 export default async function ScenariosPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: scenarios } = await supabase
     .from("scenarios")

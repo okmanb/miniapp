@@ -143,20 +143,29 @@ Y en la pantalla 02, los seis valores del gráfico de disponible por mes (−0.6
 - **Activar la protección de contraseñas filtradas en Supabase Auth.** El linter la marca
   como desactivada; contrasta las contraseñas contra HaveIBeenPwned. Es un cambio de
   configuración de la cuenta, así que no lo toqué.
-- **Next 14 sigue con avisos abiertos, y el único arreglo es la mayor.** Se subió de
-  `14.2.15` a `14.2.35`, que es el último parche de la línea, y el build pasa igual. Pero
-  `npm audit` sigue marcando `next` en alto: los avisos que quedan **no tienen arreglo
-  dentro de 14.x**, solo en Next 16. `RESET.md` dice que Next 14 sigue igual, así que la
-  mayor no se hizo — es una decisión de stack, no una tarea de mantenimiento.
+- **Migrado a Next 16 — `npm audit` da 0 vulnerabilidades.** Primero se subió dentro de la
+  línea 14 (`14.2.15` → `14.2.35`), y no alcanzó: los avisos que quedaban no tenían arreglo
+  dentro de 14.x. Como el objetivo era cero, se hizo la mayor. Esto **contradice a propósito**
+  la línea de `RESET.md` que decía que Next 14 seguía igual: fue una decisión explícita del
+  usuario, tomada después de ver que el parche no bastaba.
 
-  De la lista de avisos, la mayoría no aplica a esta app: no se usa `next/image`, ni el
-  Pages Router con i18n, ni un servidor propio. Los que sí tocan lo que hay acá son los de
-  denegación de servicio en Server Components y Server Actions, el envenenamiento de caché
-  en respuestas de Server Components, y el de redirecciones del middleware. Todos son de
-  disponibilidad o de caché, no de fuga de datos: RLS sigue siendo lo que protege la
-  información, y está activo en las diez tablas.
+  Lo que cambió con la mayor, por si algo se comporta raro:
 
-  `postcss` aparece en la lista solo porque cuelga de Next; se resuelve con lo mismo.
+  - **React 19.** `useFormState` (de `react-dom`) quedó obsoleto y se reemplazó por
+    `useActionState` (de `react`), que además devuelve el estado de pendiente — así
+    desapareció `useFormStatus` y con él los subcomponentes que existían solo para leerlo.
+  - **`cookies()` es asíncrono**, así que `createClient()` de `lib/supabase/server.ts`
+    también, y los 28 archivos que lo usan hacen `await`. Se pasó de la API `get/set/remove`
+    de cookies a `getAll/setAll`, que es la vigente en `@supabase/ssr` 0.7.
+  - **`params` y `searchParams` son promesas** en las páginas. Se desenvuelven con `await`.
+  - **`middleware.ts` pasó a llamarse `proxy.ts`**, que es la convención de Next 16. Es el
+    mismo archivo con otro nombre; lo pedía el propio aviso de deprecación.
+  - **Turbopack** es el bundler por defecto. Hubo que fijarle `turbopack.root`, porque si no
+    sube buscando un lockfile y encuentra uno en el home del usuario, fuera del repo.
+
+  Después de migrar: build limpio sin avisos, las 24 rutas responden (públicas 200, privadas
+  307 al login), cero errores de consola, y el control cruzado sigue dando las mismas cifras
+  al peso.
 - **Contrastar el cierre de resumen contra un PDF real** de la Visa, por la diferencia de
   seis cifras de arriba.
 - El `lib/debt-engine/` viejo queda en el repo como control cruzado, no como

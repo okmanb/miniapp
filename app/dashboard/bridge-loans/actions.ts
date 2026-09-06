@@ -8,7 +8,7 @@ import { currentPeriod } from "@/lib/data/dashboard";
 export type BridgeResult = { ok: true } | { ok: false; message: string };
 
 export async function createBridgeLoan(formData: FormData): Promise<BridgeResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };

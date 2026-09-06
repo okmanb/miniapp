@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import {
   saveStatement,
   EMPTY_STATEMENT_STATE,
@@ -26,7 +26,7 @@ export function StatementForm({
   defaultDebtId?: string;
   defaultPeriod: string;
 }) {
-  const [state, formAction] = useFormState<StatementState, FormData>(
+  const [state, formAction, pending] = useActionState<StatementState, FormData>(
     saveStatement,
     EMPTY_STATEMENT_STATE
   );
@@ -120,13 +120,12 @@ export function StatementForm({
         </div>
       )}
 
-      <SubmitButton needsConfirm={needsConfirm} />
+      <SubmitButton needsConfirm={needsConfirm} pending={pending} />
     </form>
   );
 }
 
-function SubmitButton({ needsConfirm }: { needsConfirm: boolean }) {
-  const { pending } = useFormStatus();
+function SubmitButton({ needsConfirm, pending }: { needsConfirm: boolean; pending: boolean }) {
   return (
     <button
       type="submit"

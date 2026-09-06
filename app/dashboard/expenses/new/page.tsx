@@ -6,7 +6,7 @@ import { EmptyState, PrimaryButton, Screen } from "@/components/ui";
 export const dynamic = "force-dynamic";
 
 export default async function NewExpensePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: scenario } = await supabase
     .from("scenarios")

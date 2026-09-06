@@ -85,7 +85,7 @@ const DUE_SOON_DAYS = 3;
  * y la página para todo lo demás, y aun así la base se consulta una sola vez.
  */
 export const getDashboard = cache(async function getDashboard(): Promise<DashboardData | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: scenario, error: scenarioError } = await supabase
     .from("scenarios")

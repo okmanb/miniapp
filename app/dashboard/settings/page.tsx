@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  * ve mal, y por eso cada uno lleva a donde se completa.
  */
 export default async function SettingsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
 

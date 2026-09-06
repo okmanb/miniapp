@@ -24,7 +24,7 @@ function monthTitle(period: string): string {
  * que sirva o que hunda el mes siguiente.
  */
 export default async function BridgeLoansPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: scenario } = await supabase
     .from("scenarios")

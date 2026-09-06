@@ -4,11 +4,13 @@ import { AuthShell, AuthField, AuthSubmit, AuthError } from "@/components/AuthSh
 
 export const dynamic = "force-dynamic";
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string; redirectTo?: string };
+  searchParams: Promise<{ error?: string; redirectTo?: string }>;
 }) {
+  const query = await searchParams;
+
   return (
     <AuthShell
       title="Entrar"
@@ -18,7 +20,7 @@ export default function LoginPage({
         <AuthField id="email" label="Mail" type="email" autoComplete="email" />
         <AuthField id="password" label="Clave" type="password" autoComplete="current-password" />
 
-        {searchParams.error && <AuthError message={searchParams.error} />}
+        {query.error && <AuthError message={query.error} />}
 
         <AuthSubmit>Entrar</AuthSubmit>
       </form>

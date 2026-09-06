@@ -27,7 +27,7 @@ export async function saveDebt(
   _prev: DebtFormState,
   formData: FormData
 ): Promise<DebtFormState> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { errors: {}, message: "Tenés que iniciar sesión." };
@@ -83,7 +83,7 @@ export async function saveDebt(
  * borrarla los dejaría huérfanos o se los llevaría puestos.
  */
 export async function archiveDebt(id: string): Promise<{ ok: boolean; message?: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error } = await supabase.from("debts").update({ is_active: false }).eq("id", id);
   if (error) return { ok: false, message: "No pudimos archivarla." };

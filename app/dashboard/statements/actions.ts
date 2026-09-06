@@ -34,7 +34,7 @@ export async function saveStatement(
   _prev: StatementState,
   formData: FormData
 ): Promise<StatementState> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { message: "Tenés que iniciar sesión." };

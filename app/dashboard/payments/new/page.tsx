@@ -14,9 +14,10 @@ export const dynamic = "force-dynamic";
 export default async function NewPaymentPage({
   searchParams,
 }: {
-  searchParams: { deuda?: string };
+  searchParams: Promise<{ deuda?: string }>;
 }) {
-  const supabase = createClient();
+  const query = await searchParams;
+  const supabase = await createClient();
 
   const { data: scenario } = await supabase
     .from("scenarios")
@@ -57,7 +58,7 @@ export default async function NewPaymentPage({
           />
         </div>
       ) : (
-        <PaymentForm debts={debts} defaultDebtId={searchParams.deuda} />
+        <PaymentForm debts={debts} defaultDebtId={query.deuda} />
       )}
     </Screen>
   );

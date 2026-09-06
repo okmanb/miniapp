@@ -11,7 +11,7 @@ export type ScenarioResult = { ok: true } | { ok: false; message: string };
  * prender el nuevo — si no, el índice rechaza el segundo.
  */
 export async function activateScenario(id: string): Promise<ScenarioResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
@@ -37,7 +37,7 @@ export async function activateScenario(id: string): Promise<ScenarioResult> {
  * Crear un escenario vacío.
  */
 export async function createScenario(formData: FormData): Promise<ScenarioResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
@@ -65,7 +65,7 @@ export async function createScenario(formData: FormData): Promise<ScenarioResult
  * sin los gastos— es peor que no copiarlo, porque parece completo.
  */
 export async function duplicateScenario(formData: FormData): Promise<ScenarioResult> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const sourceId = String(formData.get("source_id") ?? "");
   const name = String(formData.get("name") ?? "").trim();

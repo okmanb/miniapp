@@ -15,9 +15,10 @@ function previousPeriod(): string {
 export default async function NewStatementPage({
   searchParams,
 }: {
-  searchParams: { deuda?: string };
+  searchParams: Promise<{ deuda?: string }>;
 }) {
-  const supabase = createClient();
+  const query = await searchParams;
+  const supabase = await createClient();
 
   const { data: scenario } = await supabase
     .from("scenarios")
@@ -61,7 +62,7 @@ export default async function NewStatementPage({
       ) : (
         <StatementForm
           cards={cards}
-          defaultDebtId={searchParams.deuda}
+          defaultDebtId={query.deuda}
           defaultPeriod={previousPeriod()}
         />
       )}

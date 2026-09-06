@@ -68,7 +68,7 @@ function NavItem({
 }: {
   href: string;
   label: string;
-  icon: () => JSX.Element;
+  icon: () => React.JSX.Element;
   pathname: string;
   badge?: number;
 }) {

@@ -27,7 +27,7 @@ export async function createPayment(
   _prev: PaymentState,
   formData: FormData
 ): Promise<PaymentState> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { message: "Tenés que iniciar sesión." };
@@ -78,7 +78,7 @@ export async function createPayment(
  * Borrar un pago mal cargado. El saldo vuelve solo porque se deriva.
  */
 export async function deletePayment(id: string): Promise<{ ok: boolean; message?: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("debt_payments").delete().eq("id", id);
   if (error) return { ok: false, message: "No pudimos borrarlo." };
 

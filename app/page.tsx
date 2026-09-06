@@ -27,7 +27,7 @@ const STEPS = [
 ];
 
 export default async function HomePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
   // Quien ya entró no necesita ver la presentación de nuevo.

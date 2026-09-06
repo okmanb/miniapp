@@ -98,7 +98,7 @@ function formatLongDate(date: Date): string {
 export const getDebtDetail = cache(async function getDebtDetail(
   debtId: string
 ): Promise<DebtDetail | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: debt, error } = await supabase
     .from("debts")

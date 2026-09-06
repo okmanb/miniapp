@@ -30,7 +30,7 @@ export async function createIncome(
   _prev: IncomeState,
   formData: FormData
 ): Promise<IncomeState> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { message: "Tenés que iniciar sesión." };
@@ -85,7 +85,7 @@ export async function createIncome(
  * el monto de un gasto fijo.
  */
 export async function raiseIncome(formData: FormData): Promise<IncomeResult | never> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };

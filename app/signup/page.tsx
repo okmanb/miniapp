@@ -4,12 +4,14 @@ import { AuthShell, AuthField, AuthSubmit, AuthError } from "@/components/AuthSh
 
 export const dynamic = "force-dynamic";
 
-export default function SignupPage({
+export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: { error?: string; check_email?: string };
+  searchParams: Promise<{ error?: string; check_email?: string }>;
 }) {
-  if (searchParams.check_email) {
+  const query = await searchParams;
+
+  if (query.check_email) {
     return (
       <AuthShell
         title="Revisá tu mail"
@@ -44,7 +46,7 @@ export default function SignupPage({
           help="Al menos seis caracteres. Usá una que no uses en el banco."
         />
 
-        {searchParams.error && <AuthError message={searchParams.error} />}
+        {query.error && <AuthError message={query.error} />}
 
         <AuthSubmit>Crear cuenta</AuthSubmit>
       </form>

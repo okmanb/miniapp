@@ -53,7 +53,7 @@ function periodLabel(period: string): string {
 }
 
 export const getCashflowScreen = cache(async function getCashflowScreen(): Promise<CashflowScreen | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: scenario, error: scenarioError } = await supabase
     .from("scenarios")

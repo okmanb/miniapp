@@ -22,8 +22,9 @@ const HEALTH: Record<string, { label: string; bg: string; fg: string; border: st
   sin_datos: { label: "Sin resumen", bg: "#F2F5F1", fg: "#5C6B65", border: "#DEE3DD" },
 };
 
-export default async function DebtDetailPage({ params }: { params: { id: string } }) {
-  const debt = await getDebtDetail(params.id);
+export default async function DebtDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const debt = await getDebtDetail(id);
   if (!debt) notFound();
 
   const health = HEALTH[debt.health];

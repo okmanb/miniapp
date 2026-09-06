@@ -12,8 +12,14 @@ export const dynamic = "force-dynamic";
  * dirección si esa persona usa la app, que en una app de deudas no es un
  * detalle menor.
  */
-export default function RecoverPage({ searchParams }: { searchParams: { enviado?: string } }) {
-  if (searchParams.enviado) {
+export default async function RecoverPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ enviado?: string }>;
+}) {
+  const query = await searchParams;
+
+  if (query.enviado) {
     return (
       <AuthShell
         title="Listo"

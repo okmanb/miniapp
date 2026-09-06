@@ -24,7 +24,7 @@ interface Row extends ExpenseLike {
 }
 
 export default async function ExpensesPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: scenario } = await supabase
     .from("scenarios")

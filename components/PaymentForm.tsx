@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
 import {
   createPayment,
   EMPTY_PAYMENT_STATE,
@@ -15,7 +15,7 @@ export function PaymentForm({
   debts: { id: string; name: string }[];
   defaultDebtId?: string;
 }) {
-  const [state, formAction] = useFormState<PaymentState, FormData>(
+  const [state, formAction, pending] = useActionState<PaymentState, FormData>(
     createPayment,
     EMPTY_PAYMENT_STATE
   );
@@ -96,13 +96,12 @@ export function PaymentForm({
         </p>
       )}
 
-      <Submit />
+      <Submit pending={pending} />
     </form>
   );
 }
 
-function Submit() {
-  const { pending } = useFormStatus();
+function Submit({ pending }: { pending: boolean }) {
   return (
     <button
       type="submit"
