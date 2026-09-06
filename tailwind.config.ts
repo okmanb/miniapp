@@ -48,6 +48,19 @@ const config: Config = {
         "border-input": "#D3DAD2",
         "border-row": "#E2E7E1",
         "border-dash": "#CBD2C9",
+        /**
+         * Rampa de severidad del flujo de caja, medida del prototipo. No es
+         * decorativa: cada escalón es un umbral de plata sobre el saldo
+         * acumulado (ver severityOf en lib/calc/cashflow.ts). Va de "colchón
+         * cómodo" a "el rojo más profundo", pasando por gold cuando todavía
+         * es positivo pero se adelgaza.
+         */
+        "sev-ok": "#25835D",
+        "sev-justo": "#A77530",
+        "sev-rojo1": "#C9735B",
+        "sev-rojo2": "#B05441",
+        "sev-rojo3": "#94362A",
+
         // Utilitarios
         track: "#E7EBE6",
         skeleton: "#DFE5DF",

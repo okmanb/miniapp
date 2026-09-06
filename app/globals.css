@@ -35,6 +35,20 @@
   h1 {
     @apply text-screen;
   }
+
+  /*
+   * Tiras que scrollean en horizontal dentro de la pantalla. Se oculta la
+   * barra nativa porque el corte de la última tarjeta ya dice que hay más, y
+   * en el celular no se dibuja igual. El contenedor sigue siendo scrolleable
+   * con rueda, gesto y teclado: no se toca overflow.
+   */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /**
