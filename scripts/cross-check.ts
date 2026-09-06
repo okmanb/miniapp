@@ -12,6 +12,8 @@
  */
 
 import { amortize } from "../lib/calc/amortize";
+// La comparación de la pantalla 03 sale del mismo módulo, a propósito: si el
+// motor cambia, este control tiene que moverse con él.
 import { closeStatement } from "../lib/calc/statement";
 import { parseMoney, formatMoney } from "../lib/calc/money";
 import { compareFixedPaymentScenarios } from "../lib/debt-engine/schedule";
@@ -117,6 +119,53 @@ for (const pagado of [minimo, minimo - 300000, 0]) {
   }
 }
 
+console.log("=== 3. Pantalla 03 contra las cifras que muestra el prototipo ===\n");
+
+// Leidas de la pantalla 03 del prototipo para la Patagonia.
+const SCREEN_03 = {
+  saldo: 3386911,
+  tna: 83.8,
+  interesDelMes: 236519,
+  minimo: 290017,
+  mesesAlMinimo: 26,
+  interesTotalAlMinimo: 3875621,
+  mesesAlDoble: 8,
+  ahorro: 2757627,
+};
+
+function check(label: string, mine: number | null, theirs: number) {
+  const ok = mine === theirs;
+  console.log(
+    `  ${ok ? "=" : "DIFIERE"}  ${label}: nuestro ${mine ?? "—"} · prototipo ${theirs}`
+  );
+  if (!ok) note(`Pantalla 03 — ${label}: nuestro ${mine ?? "—"}, prototipo ${theirs}.`);
+}
+
+const interesMes = Math.round(SCREEN_03.saldo * (SCREEN_03.tna / 100 / 12));
+check("interés del mes", interesMes, SCREEN_03.interesDelMes);
+
+const alMinimo = amortize({
+  balance: SCREEN_03.saldo,
+  annualRate: SCREEN_03.tna,
+  payment: SCREEN_03.minimo,
+});
+check("meses pagando el mínimo", alMinimo.months, SCREEN_03.mesesAlMinimo);
+check("interés total al mínimo", alMinimo.interest, SCREEN_03.interesTotalAlMinimo);
+
+const alDoble = amortize({
+  balance: SCREEN_03.saldo,
+  annualRate: SCREEN_03.tna,
+  payment: SCREEN_03.minimo * 2,
+});
+check("meses pagando el doble", alDoble.months, SCREEN_03.mesesAlDoble);
+
+const ahorro =
+  alMinimo.interest != null && alDoble.interest != null
+    ? alMinimo.interest - alDoble.interest
+    : null;
+check("ahorro pagando el doble", ahorro, SCREEN_03.ahorro);
+
+console.log("");
 console.log("=== Diferencias encontradas ===\n");
 if (differences.length === 0) {
   console.log("Ninguna: los dos motores dan lo mismo en este caso.");
