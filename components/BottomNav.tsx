@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AddSheet } from "./AddSheet";
 
 /**
  * Barra inferior. Valores medidos sobre el prototipo: degradado
@@ -42,21 +43,7 @@ export function BottomNav({ alertCount = 0 }: { alertCount?: number }) {
         ))}
 
         <li className="flex items-center px-1">
-          <Link
-            href="/dashboard/expenses/new"
-            data-ondark
-            aria-label="Agregar un gasto"
-            className="flex h-11 w-11 items-center justify-center rounded-pill bg-mint text-pine transition-colors duration-150 ease-sd hover:bg-selection"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-              <path
-                d="M9 3.75v10.5M3.75 9h10.5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </Link>
+          <AddSheet />
         </li>
 
         {ITEMS.slice(2).map((item) => (

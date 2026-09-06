@@ -33,6 +33,16 @@ export interface DashboardDebt {
   monthlyDue: number;
   /** Si el atajo del mínimo ya se aplicó este mes. */
   minimumPaidThisMonth: boolean;
+  /** Total pagado a esta deuda, de todos los meses. */
+  paid: number;
+  /**
+   * Fracción saldada, entre 0 y 1. Se deriva de pagado / (pagado + saldo) y
+   * no de una columna: al registrar un pago tiene que moverse sola.
+   */
+  paidFraction: number;
+  /** Cuántas compras en cuotas activas trae y cuánto suman. */
+  installmentCount: number;
+  installmentTotal: number;
 }
 
 export type AlertKind =
@@ -86,7 +96,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
   if (scenarioError) throw scenarioError;
   if (!scenario) return null;
 
-  const [debtsRes, expensesRes, paymentsRes, statementsRes, incomesRes, scheduleRes] =
+  const [debtsRes, expensesRes, paymentsRes, statementsRes, incomesRes, scheduleRes, plansRes] =
     await Promise.all([
       supabase
         .from("debts")
@@ -114,9 +124,14 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
         .from("debt_schedule_entries")
         .select("debt_id, period, amount")
         .eq("scenario_id", scenario.id),
+      supabase
+        .from("card_installment_plans")
+        .select("debt_id, first_period, total_installments, installment_amount")
+        .eq("scenario_id", scenario.id)
+        .eq("is_active", true),
     ]);
 
-  for (const res of [debtsRes, expensesRes, paymentsRes, statementsRes, incomesRes, scheduleRes]) {
+  for (const res of [debtsRes, expensesRes, paymentsRes, statementsRes, incomesRes, scheduleRes, plansRes]) {
     if (res.error) throw res.error;
   }
 
@@ -126,6 +141,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
   const statements = statementsRes.data ?? [];
   const incomes = (incomesRes.data ?? []) as IncomeLike[];
   const schedule = scheduleRes.data ?? [];
+  const plans = plansRes.data ?? [];
 
   const period = currentPeriod();
 
@@ -145,7 +161,25 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
     const latest = statements.find((s) => s.debt_id === d.id);
     const minimumPayment = latest?.minimum_payment != null ? Number(latest.minimum_payment) : null;
 
+    const paid = payments
+      .filter((p) => p.debt_id === d.id)
+      .reduce((sum, p) => sum + Number(p.amount), 0);
+    const totalEverOwed = paid + balance;
+
+    // Cuotas que corren este mes: una que ya terminó no se "incluye" en nada.
+    const activePlans = plans.filter((p) => {
+      if (p.debt_id !== d.id) return false;
+      const [fy, fm] = p.first_period.split("-").map(Number);
+      const [cy, cm] = period.split("-").map(Number);
+      const elapsed = (cy - fy) * 12 + (cm - fm) + 1;
+      return elapsed >= 1 && elapsed <= p.total_installments;
+    });
+
     return {
+      paid,
+      paidFraction: totalEverOwed > 0 ? paid / totalEverOwed : 0,
+      installmentCount: activePlans.length,
+      installmentTotal: activePlans.reduce((sum, p) => sum + Number(p.installment_amount), 0),
       id: d.id,
       name: d.name,
       kind: d.kind,

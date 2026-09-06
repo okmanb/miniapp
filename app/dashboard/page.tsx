@@ -140,11 +140,49 @@ export default async function DashboardPage() {
                               <MetaChip>TNA {debt.annualRate.toLocaleString("es-AR")}%</MetaChip>
                             )}
                           </div>
+                          {debt.installmentCount > 0 && (
+                            <p className="mt-1.5 text-[11px] text-muted">
+                              incluye {debt.installmentCount}{" "}
+                              {debt.installmentCount === 1 ? "compra en cuotas" : "compras en cuotas"}:{" "}
+                              {formatMoney(debt.installmentTotal)}
+                            </p>
+                          )}
                         </div>
-                        <Amount className="shrink-0 text-card-lg text-ink">
-                          {formatMoney(debt.balance)}
-                        </Amount>
+                        <div className="shrink-0 text-right">
+                          <div className="text-label uppercase text-muted">Saldo</div>
+                          <Amount className="text-card-lg text-ink">
+                            {formatMoney(debt.balance)}
+                          </Amount>
+                        </div>
                       </div>
+
+                      {/*
+                        El progreso se deriva de pagado / (pagado + saldo). Sin
+                        pagos registrados no hay barra: una en cero no informa,
+                        solo ocupa lugar y sugiere que se empezó algo.
+                      */}
+                      {debt.paid > 0 && (
+                        <div className="mt-2.5">
+                          <div className="flex items-baseline justify-between gap-3">
+                            <span className="text-[11px] text-muted">
+                              {formatMoney(debt.paid)} pagado
+                            </span>
+                            <span className="font-mono text-[11px] text-leaf-deep">
+                              {Math.round(debt.paidFraction * 100)}%
+                            </span>
+                          </div>
+                          <div
+                            className="mt-1 h-1 w-full overflow-hidden rounded-pill bg-track"
+                            role="img"
+                            aria-label={`${Math.round(debt.paidFraction * 100)}% saldado`}
+                          >
+                            <div
+                              className="h-full rounded-pill bg-leaf"
+                              style={{ width: `${Math.min(debt.paidFraction * 100, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
 
                       {debt.growth && (
                         <p className="mt-2 border-t border-border-row pt-2 text-[11.5px] text-brick-ink">
