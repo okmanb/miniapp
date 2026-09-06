@@ -80,7 +80,7 @@ export default async function DebtDetailPage({ params }: { params: { id: string 
             title="Falta el mínimo para comparar"
             note="La comparación arranca del mínimo del resumen. Cargá un resumen de esta tarjeta y podemos decirte cuánto tardarías pagando el mínimo y cuánto pagando el doble."
             action={
-              <PrimaryButton href={`/dashboard/debts/${debt.id}/statement`}>
+              <PrimaryButton href={`/dashboard/statements/new?deuda=${debt.id}`}>
                 Cargar un resumen
               </PrimaryButton>
             }
@@ -166,7 +166,7 @@ export default async function DebtDetailPage({ params }: { params: { id: string 
 
       <div className="mt-6 space-y-2">
         <ActionLink href={`/dashboard/debts/${debt.id}/edit`}>Editar esta deuda</ActionLink>
-        <ActionLink href={`/dashboard/debts/${debt.id}/statement`}>Cargar un resumen</ActionLink>
+        <ActionLink href={`/dashboard/statements/new?deuda=${debt.id}`}>Cargar un resumen</ActionLink>
       </div>
     </Screen>
   );
