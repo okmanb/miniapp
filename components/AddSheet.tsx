@@ -18,7 +18,7 @@ const OPTIONS = [
   { href: "/dashboard/statements/new", label: "Cargar resumen", note: "Subir el PDF del mes", glyph: "↑" },
   { href: "/dashboard/expenses/new", label: "Agregar gasto", note: "Gasto fijo o consumo del mes", glyph: "−" },
   { href: "/dashboard/payments/new", label: "Registrar un pago", note: "Bajá el saldo de una deuda", glyph: "✓" },
-  { href: "/dashboard/incomes/new", label: "Agregar ingreso", note: "Sueldo, alquiler, freelance", glyph: "↓" },
+  { href: "/dashboard/incomes", label: "Agregar ingreso", note: "Sueldo, alquiler, freelance", glyph: "↓" },
 ];
 
 export function AddSheet() {

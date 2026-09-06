@@ -104,11 +104,36 @@ saldo anterior y los consumos por separado, nunca el total del resumen.
 
 ---
 
+### El motor coincide con el prototipo en dos pantallas distintas
+
+`npx tsx scripts/cross-check.ts` verifica, además de lo de arriba, las cinco cifras que la
+pantalla 03 del prototipo muestra para la Patagonia. Las cinco dan igual **al peso**:
+
+| | Nuestro | Prototipo |
+|---|---|---|
+| Interés del mes | $236.519 | $236.519 |
+| Meses pagando el mínimo | 26 | 26 |
+| Interés total al mínimo | $3.875.621 | $3.875.621 |
+| Meses pagando el doble | 8 | 8 |
+| Ahorro pagando el doble | $2.757.627 | $2.757.627 |
+
+Y en la pantalla 02, los seis valores del gráfico de disponible por mes (−0.6M, −0.6M,
+−0.8M, −1.1M, −1.3M) también coinciden.
+
 ## 3. Pendiente
 
-- **Las 19 pantallas.** El sistema visual, el esquema y el motor están; las pantallas se
-  construyen en el orden de `SCREENS.md` (01, 02, 03 y 05 primero). Nada de esto se mergea
-  a `main` hasta que la rama `reset` corra completa.
+- **Verificar las pantallas con datos reales.** Todas están construidas y el build de
+  producción pasa limpio (24 rutas, ningún enlace roto), pero solo se compararon contra el
+  prototipo usando `app/dev-preview/`, que existe únicamente en desarrollo. Para verlas con
+  datos de verdad hace falta una sesión iniciada, y no creo cuentas ni manejo contraseñas.
+  Creá tu usuario en `/signup` y la app queda lista para cargar el primer escenario.
+- **Falta el parser de PDF en la pantalla 06.** La carga del resumen es manual: cuatro
+  números escritos a mano. `lib/statement-parser/` está intacto y funciona, pero engancharlo
+  a la pantalla necesita subida de archivo y `pdfjs` en el servidor, que es un pedazo aparte.
+  Las reglas 3 y 6 (archivar y avisar del doble conteo) ya funcionan con la carga manual.
+- **Onboarding de tres pasos.** La pantalla 00 quedó como una sola: los tres pasos se
+  muestran juntos en vez de en secuencia. Con tres tarjetas cortas, hacer pasar por tres
+  pantallas agrega fricción sin agregar información.
 - **Borrar `backup_pre_reset` cuando el modelo nuevo esté verificado.** El esquema ya se
   aplicó a `miniapp_deb` (`udhqdbpjhifeotgoqaoa`). El proyecto **no estaba vacío**: tenía
   33 deudas, 28 líneas de consumo, 3 resúmenes y 2 escenarios reales, contra lo que asumía

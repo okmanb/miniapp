@@ -1,5 +1,8 @@
-import { signup } from "@/app/auth-actions";
 import Link from "next/link";
+import { signup } from "@/app/auth-actions";
+import { AuthShell, AuthField, AuthSubmit, AuthError } from "@/components/AuthShell";
+
+export const dynamic = "force-dynamic";
 
 export default function SignupPage({
   searchParams,
@@ -8,54 +11,50 @@ export default function SignupPage({
 }) {
   if (searchParams.check_email) {
     return (
-      <main style={{ maxWidth: 400, margin: "80px auto", padding: "0 24px" }}>
-        <h1>Revisá tu email</h1>
-        <p>
-          Te mandamos un link de confirmación. Hacé click ahí para activar tu
-          cuenta y después volvé a <Link href="/login">iniciar sesión</Link>.
+      <AuthShell
+        title="Revisá tu mail"
+        note="Te mandamos un link para confirmar la cuenta. Sin ese paso no podemos guardar nada tuyo."
+      >
+        <p className="mt-6 rounded-surface border border-border bg-surface px-4 py-3 text-[12px] text-muted">
+          Si no llega en unos minutos, mirá en spam. El link vence, así que si se pasó el
+          tiempo pedí otro creando la cuenta de nuevo con el mismo mail.
         </p>
-      </main>
+        <Link
+          href="/login"
+          className="mt-5 inline-flex min-h-touch items-center text-[12px] text-pine underline underline-offset-2"
+        >
+          Volver a entrar
+        </Link>
+      </AuthShell>
     );
   }
 
   return (
-    <main style={{ maxWidth: 400, margin: "80px auto", padding: "0 24px" }}>
-      <h1>Crear cuenta</h1>
+    <AuthShell
+      title="Crear cuenta"
+      note="Vas a cargar deudas y sueldos, así que esto queda en tu cuenta y no en el navegador."
+    >
+      <form action={signup} className="mt-6">
+        <AuthField id="email" label="Mail" type="email" autoComplete="email" />
+        <AuthField
+          id="password"
+          label="Clave"
+          type="password"
+          autoComplete="new-password"
+          help="Al menos seis caracteres. Usá una que no uses en el banco."
+        />
 
-      {searchParams.error && (
-        <p style={{ color: "var(--led-red)", fontSize: 14 }}>{searchParams.error}</p>
-      )}
+        {searchParams.error && <AuthError message={searchParams.error} />}
 
-      <form action={signup} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <label>
-          Email
-          <input
-            type="email"
-            name="email"
-            required
-            style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-          />
-        </label>
-
-        <label>
-          Contraseña
-          <input
-            type="password"
-            name="password"
-            required
-            minLength={6}
-            style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-          />
-        </label>
-
-        <button type="submit" style={{ padding: 10, marginTop: 8, cursor: "pointer" }}>
-          Registrarme
-        </button>
+        <AuthSubmit>Crear cuenta</AuthSubmit>
       </form>
 
-      <p style={{ marginTop: 16, fontSize: 14 }}>
-        ¿Ya tenés cuenta? <Link href="/login">Iniciá sesión</Link>
+      <p className="mt-5 text-[12px] text-muted">
+        ¿Ya tenés una?{" "}
+        <Link href="/login" className="text-pine underline underline-offset-2">
+          Entrar
+        </Link>
       </p>
-    </main>
+    </AuthShell>
   );
 }

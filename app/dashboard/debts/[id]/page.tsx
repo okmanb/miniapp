@@ -100,7 +100,7 @@ export default async function DebtDetailPage({ params }: { params: { id: string 
             title="Todavía no registraste pagos"
             note="Cada pago que cargues baja el saldo de esta deuda y queda con su fecha."
             action={
-              <PrimaryButton href={`/dashboard/debts/${debt.id}/payments/new`}>
+              <PrimaryButton href={`/dashboard/payments/new?deuda=${debt.id}`}>
                 Registrar un pago
               </PrimaryButton>
             }

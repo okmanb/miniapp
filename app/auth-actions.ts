@@ -46,3 +46,23 @@ export async function logout() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+/**
+ * Recuperar la clave (pantalla 14).
+ *
+ * La respuesta es la misma exista o no la cuenta. Decir "ese mail no está
+ * registrado" le confirma a cualquiera que pruebe una dirección si esa persona
+ * usa la app, que en una app de deudas no es un detalle menor.
+ */
+export async function requestPasswordReset(formData: FormData) {
+  const supabase = createClient();
+  const email = String(formData.get("email") ?? "").trim();
+
+  if (email) {
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+    });
+  }
+
+  redirect("/recuperar?enviado=1");
+}
