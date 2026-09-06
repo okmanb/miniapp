@@ -51,10 +51,16 @@ export default async function DashboardPage() {
       </header>
 
       {data === null ? (
+        /*
+          Sin escenario activo no se puede cargar nada: las deudas, los gastos
+          y los ingresos cuelgan de uno. Por eso el primer paso lleva a crear
+          el escenario y no a cargar una deuda — mandar a la pantalla de deuda
+          sería un callejón sin salida, porque ahí también hace falta uno.
+        */
         <EmptyState
-          title="Todavía no hay nada que simular"
-          note="Cargá tu primera deuda y la app arma la proyección, las alertas y el plan desde ahí. No hace falta que estén todas: con una alcanza para empezar a ver el mes."
-          action={<PrimaryButton href="/dashboard/debts/new">Cargar mi primera deuda</PrimaryButton>}
+          title="Empecemos por tu plan base"
+          note="Todo lo que cargues vive dentro de un escenario, así podés probar cambios sin ensuciar tu plan real. Creá el primero y desde ahí sumás deudas, ingresos y gastos."
+          action={<PrimaryButton href="/dashboard/scenarios">Crear mi plan base</PrimaryButton>}
         />
       ) : (
         <>

@@ -97,7 +97,7 @@ export default async function ScenariosPage() {
         </ul>
       )}
 
-      <NewScenarioForm />
+      <NewScenarioForm isFirst={list.length === 0} />
     </Screen>
   );
 }

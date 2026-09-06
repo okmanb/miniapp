@@ -98,17 +98,20 @@ export function ScenarioActions({
   );
 }
 
-export function NewScenarioForm() {
+export function NewScenarioForm({ isFirst = false }: { isFirst?: boolean }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   return (
     <section className="mt-6">
-      <h2 className="text-[15px] font-semibold text-ink">Crear uno vacío</h2>
+      <h2 className="text-[15px] font-semibold text-ink">
+        {isFirst ? "Crear tu plan base" : "Crear uno vacío"}
+      </h2>
       <p className="help mt-1">
-        Arranca sin deudas ni gastos. Si querés partir de lo que ya tenés, copiá un escenario
-        en vez de crear uno.
+        {isFirst
+          ? "Es el de todos los días: el que refleja tu situación real. Después vas a poder copiarlo para probar cambios sin tocarlo."
+          : "Arranca sin deudas ni gastos. Si querés partir de lo que ya tenés, copiá un escenario en vez de crear uno."}
       </p>
 
       <form
@@ -125,6 +128,7 @@ export function NewScenarioForm() {
         <input
           name="name"
           required
+          defaultValue={isFirst ? "Plan base" : ""}
           placeholder="Plan de contingencia"
           aria-label="Nombre del escenario"
           className="min-h-touch flex-1 rounded-surface border border-border-input bg-surface px-3 text-[13px] text-ink outline-none placeholder:text-muted"
@@ -141,7 +145,9 @@ export function NewScenarioForm() {
 
       {done && (
         <p role="status" className="mt-2 text-[11.5px] text-leaf-deep">
-          Listo. Está en la lista de arriba, todavía sin activar.
+          {isFirst
+            ? "Listo, y quedó activo. Ya podés cargar tu primera deuda."
+            : "Listo. Está en la lista de arriba, todavía sin activar."}
         </p>
       )}
       {error && (

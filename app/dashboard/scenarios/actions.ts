@@ -45,14 +45,25 @@ export async function createScenario(formData: FormData): Promise<ScenarioResult
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { ok: false, message: "Poné un nombre para distinguirlo." };
 
+  // El primero se activa solo. Crear el primer escenario y dejarlo apagado
+  // deja la app en un callejón sin salida: el dashboard pide un escenario
+  // activo y no hay ninguno que activar salvo volviendo acá.
+  const { count } = await supabase
+    .from("scenarios")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", auth.user.id);
+
+  const isFirst = (count ?? 0) === 0;
+
   const { error } = await supabase.from("scenarios").insert({
     user_id: auth.user.id,
     name,
-    is_active: false,
+    is_active: isFirst,
   });
 
   if (error) return { ok: false, message: "No pudimos crear el escenario." };
 
+  revalidatePath("/dashboard");
   revalidatePath("/dashboard/scenarios");
   return { ok: true };
 }
