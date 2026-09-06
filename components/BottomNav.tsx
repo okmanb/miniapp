@@ -42,7 +42,12 @@ export function BottomNav({ alertCount = 0 }: { alertCount?: number }) {
           <NavItem key={item.href} {...item} pathname={pathname} />
         ))}
 
-        <li className="flex items-center px-1">
+        {/*
+          El botón central es más alto que los ítems de texto y se apoya
+          arriba, no centrado: así sobresale del borde de la barra en vez de
+          flotar en el medio. Es lo que le da el relieve.
+        */}
+        <li className="flex items-start px-1">
           <AddSheet />
         </li>
 

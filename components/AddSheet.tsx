@@ -13,6 +13,18 @@ import { useEffect, useRef, useState } from "react";
  * el título.
  */
 
+/**
+ * Valores del botón central, medidos sobre el prototipo. El relleno no es
+ * mint plano: es un degradado con la luz arriba a la izquierda, que es lo que
+ * le da volumen. La sombra son dos capas — un pelo de mint por fuera del
+ * anillo y un resplandor mint hacia abajo.
+ */
+const FAB_RING = "#0E3A31";
+const FAB_FILL =
+  "radial-gradient(120% 120% at 30% 10%, #B6ECCF 0%, #97DCBA 55%, #6FC7A0 100%)";
+const FAB_SHADOW =
+  "0 0 0 1px rgba(151,220,186,.35), 0 14px 26px -10px rgba(111,199,160,.65)";
+
 const OPTIONS = [
   { href: "/dashboard/debts/new", label: "Agregar deuda", note: "Tarjeta, préstamo, servicio atrasado", glyph: "+" },
   { href: "/dashboard/statements/new", label: "Cargar resumen", note: "Subir el PDF del mes", glyph: "↑" },
@@ -51,11 +63,24 @@ export function AddSheet() {
         aria-haspopup="menu"
         aria-label="Agregar"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-11 w-11 items-center justify-center rounded-pill bg-mint text-pine transition-transform duration-200 ease-sd hover:bg-selection"
-        style={{ transform: open ? "rotate(45deg)" : "none" }}
+        className="flex h-[58px] w-[58px] items-center justify-center rounded-pill text-pine"
+        style={{
+          // El borde grueso en pine es lo que hace el anillo: recorta el botón
+          // contra la barra en vez de apoyarlo encima. Sin él, el FAB es un
+          // círculo pegado y pierde el relieve.
+          border: `5px solid ${FAB_RING}`,
+          backgroundImage: FAB_FILL,
+          boxShadow: FAB_SHADOW,
+          marginBottom: 8,
+        }}
       >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-          <path d="M9 3.75v10.5M3.75 9h10.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path
+            d="M12 5v14M5 12h14"
+            stroke="currentColor"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+          />
         </svg>
       </button>
 
