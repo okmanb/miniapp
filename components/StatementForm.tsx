@@ -7,7 +7,7 @@ import {
   type StatementState,
 } from "@/app/dashboard/statements/actions";
 import { parseStatementPdf, type ParseResult } from "@/app/dashboard/statements/parse-actions";
-import { formatMoney } from "@/lib/calc/money";
+import { formatMoney, formatUsd } from "@/lib/calc/money";
 import { Spinner } from "./ui";
 
 /**
@@ -290,8 +290,9 @@ function ParseSummary({ parsed }: { parsed: ParseResult }) {
 
       {parsed.usdExcluded != null && parsed.usdExcluded > 0 && (
         <p className="mt-2 text-[11px] text-gold-ink">
-          Hay {formatMoney(parsed.usdExcluded)} en consumos en dólares que NO sumamos: la
-          cotización cambia y preferimos que los cargues vos.
+          Hay {formatUsd(parsed.usdExcluded)} en consumos en dólares que NO sumamos: se
+          convierten a la cotización del cierre, que no tenemos. Cargalos a mano si querés
+          que cuenten.
         </p>
       )}
 

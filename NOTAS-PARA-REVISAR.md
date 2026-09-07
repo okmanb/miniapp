@@ -136,8 +136,17 @@ Y en la pantalla 02, los seis valores del gráfico de disponible por mes (−0.6
   suma de los consumos, que es como se detectaría que alguien "arregló" el parser
   volviendo a calcularlo.
 
-  Lo que sigue faltando ahí: probarlo con un PDF real. Las regex se ejercitan contra un
-  layout reconstruido a partir de los valores del respaldo, no contra un archivo del banco.
+  **Probado contra un resumen real de Visa BBVA (septiembre 2026), y encontró un bug de
+  verdad.** BBVA renombró el producto: las refinanciaciones ahora vienen como
+  `FINANC DE SALDO` y ya no como `VISA PLAN V`. El parser no solo las perdía —como tampoco
+  las excluía de los consumos, las contaba como gasto del mes—. En ese resumen inflaba los
+  consumos de $738.668 a $3.277.001: un 344% de más, porque $2.538.333 de refinanciación
+  entraban como si fueran compras del mes.
+
+  Arreglado en `bbva.ts`, con dos capas: se reconoce el nombre nuevo, y además se descarta
+  de los consumos cualquier línea que traiga `(TNA ...)` al lado. Esa segunda es la red
+  para la próxima vez que el banco le cambie el nombre: un consumo del mes nunca trae su
+  propia tasa. Queda como regresión en `scripts/parser-check.ts`.
 - **La pantalla 00 estaba mal y se rehizo.** Lo que había construido era una landing de
   marketing con tres tarjetas explicativas, y **eso no existe en el prototipo**. El
   onboarding real es un alta guiada de la primera deuda en tres pasos, y ahora está

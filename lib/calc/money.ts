@@ -30,3 +30,12 @@ export function formatMoney(n: number): string {
   const sign = rounded < 0 ? "-" : "";
   return `${sign}$ ${Math.abs(rounded).toLocaleString("es-AR")}`;
 }
+
+/**
+ * Dólares. Va aparte de formatMoney porque el parser devuelve los consumos en
+ * USD en su moneda original, y mostrarlos con signo de peso los haría ver
+ * ridículamente baratos: "$ 102" cuando son 102 dólares.
+ */
+export function formatUsd(n: number): string {
+  return `US$ ${n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}

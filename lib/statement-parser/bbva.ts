@@ -144,13 +144,19 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
 
   // --- Líneas de Plan V ---
   // Formato: "26-Nov-25   VISA PLAN V 9-18 (TNA 98,03)   288032   482.069,57"
-  // CUOTIFICACION es el mismo producto (compra/saldo refinanciado en
-  // cuotas con interés) pero con la etiqueta que usa BBVA para
-  // Mastercard en vez de Visa — mismo layout de columnas, mismo
+  // CUOTIFICACION y FINANC DE SALDO son el mismo producto (compra o
+  // saldo refinanciado en cuotas con interés) con otra etiqueta: BBVA
+  // usa CUOTIFICACION en Mastercard, y desde 2026 pasó a FINANC DE
+  // SALDO en los resúmenes de Visa. Mismo layout de columnas, mismo
   // regex, solo cambia el nombre del producto.
+  //
+  // Verificado contra un resumen real de septiembre 2026: las cinco
+  // refinanciaciones venían como "FINANC DE SALDO n-m (TNA x)" y el
+  // parser no solo las perdía, sino que además las contaba como
+  // consumos nuevos, inflando el total del mes en $2.538.333.
   const planVEntries: ParsedPlanVEntry[] = [];
   const planVRegex =
-    /^(\d{2}-\w{3}-\d{2})\s+(?:VISA PLAN V|CUOTIFICACION)\s+(\d+)-(\d+)\s+\(TNA\s+([\d,]+)\)\s+(\d{6})\s+(-?[\d.,]+)\s*$/i;
+    /^(\d{2}-\w{3}-\d{2})\s+(?:VISA PLAN V|CUOTIFICACION|FINANC DE SALDO)\s+(\d+)-(\d+)\s+\(TNA\s+([\d,]+)\)\s+(\d{6})\s+(-?[\d.,]+)\s*$/i;
 
   for (const line of lines) {
     const match = line.match(planVRegex);
@@ -230,6 +236,12 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
 
     if (line.includes("VISA PLAN V")) continue; // ya procesado arriba
     if (line.includes("CUOTIFICACION")) continue; // ya procesado arriba
+    if (line.includes("FINANC DE SALDO")) continue; // ya procesado arriba
+    // Red de seguridad para cuando el banco vuelva a renombrar el
+    // producto: un consumo nuevo nunca trae su propia tasa al lado. Si
+    // la línea dice "(TNA ...)", es financiación y no un gasto del mes,
+    // se llame como se llame.
+    if (/\(TNA\s/i.test(line)) continue;
     if (/\bC\.\d{2}\/\d{2}\b/.test(line)) continue; // ya procesado arriba (cuotas fijas)
     if (line.includes("TOTAL CONSUMOS")) continue;
     if (line.includes("NRO. CUPÓN")) continue; // encabezado de tabla
