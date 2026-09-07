@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { getDashboard } from "@/lib/data/dashboard";
-import { Card, EmptyState, PrimaryButton, Screen } from "@/components/ui";
+import { nextDueDate, type AlertDebt } from "@/lib/calc/alerts";
+import { monthlyRateFromAnnual } from "@/lib/calc/money";
+import { EmptyState, PrimaryButton, Screen } from "@/components/ui";
+import { AlertCard, SnoozedRow } from "@/components/AlertCard";
+import { AlertSettingsPanel, type UpcomingNotice } from "@/components/AlertSettingsPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -8,104 +12,149 @@ export const dynamic = "force-dynamic";
  * Alertas (pantalla 10).
  *
  * Se derivan del modelo en cada lectura, no salen de una tabla que alguien
- * tenga que mantener al día. Por eso no hay botón de "recalcular": si hiciera
- * falta apretarlo, la lista podría estar vieja sin que se note.
+ * tenga que mantener al día. Por eso no hay botón de "recalcular": el
+ * prototipo lo tiene porque ahí las alertas viven en un estado que se llena a
+ * pedido, y acá se calculan al abrir. Un botón que no cambia nada sería peor
+ * que no tenerlo, porque enseñaría a desconfiar de la lista.
  *
- * Cada alerta lleva a la pantalla donde se resuelve. Una alerta que solo
- * informa y no ofrece a dónde ir es una preocupación sin salida, que es
- * justo lo que esta app no quiere producir.
+ * Cada alerta lleva su cifra y el lugar donde se resuelve. Una alerta que solo
+ * informa y no ofrece a dónde ir es una preocupación sin salida, que es justo
+ * lo que esta app no quiere producir.
  */
 
-const SEVERITY = {
-  brick: { bg: "#FDF0EC", border: "#EFCDC3", fg: "#B14D3B", ink: "#823123" },
-  gold: { bg: "#FCF4E7", border: "#EBD9B8", fg: "#A77530", ink: "#7A5116" },
-} as const;
+const MONTHS_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
-const KIND_EXPLAINS: Record<string, string> = {
-  saldo_creciente:
-    "El pago del mes no alcanza a cubrir lo que la deuda genera, así que el saldo sube en vez de bajar.",
-  vencimiento_hoy: "Está por vencer. Pagar después de la fecha suma punitorios sobre lo que falte.",
-  tasa_mas_cara:
-    "Es la que más caro te cobra por peso adeudado. Volcar acá lo que te sobre es lo que menos interés paga.",
-  mes_no_reflejado:
-    "El saldo real cargado no coincide con lo que la proyección esperaba para ese mes.",
-};
+function shortDate(date: Date): string {
+  return `${String(date.getDate()).padStart(2, "0")}-${MONTHS_SHORT[date.getMonth()]}`;
+}
 
 export default async function AlertsPage() {
   const data = await getDashboard();
 
+  if (!data) {
+    return (
+      <Screen>
+        <Header />
+        <div className="mt-4">
+          <EmptyState
+            title="Todavía no hay nada que mirar"
+            note="Las alertas salen de tus deudas y de la proyección del escenario activo. Con cargar una deuda ya empiezan a tener de dónde salir."
+            action={<PrimaryButton href="/dashboard/debts/new">Cargar una deuda</PrimaryButton>}
+          />
+        </div>
+      </Screen>
+    );
+  }
+
+  const now = new Date();
+
+  // Los avisos que saldrían con la anticipación elegida, ordenados por
+  // vencimiento. Son los mismos vencimientos que agrupa la alerta de arriba,
+  // vistos como calendario en vez de como resumen.
+  const upcoming: UpcomingNotice[] = data.debts
+    .map((debt) => {
+      const alertDebt: AlertDebt = {
+        id: debt.id,
+        name: debt.name,
+        kind: debt.kind,
+        balance: debt.balance,
+        annualRate: debt.annualRate,
+        monthlyRate: monthlyRateFromAnnual(debt.annualRate),
+        dueDay: debt.dueDay,
+        minimumPayment: debt.minimumPayment,
+      };
+      const due = nextDueDate(alertDebt, now);
+      if (!due || debt.balance <= 0) return null;
+
+      const noticeAt = new Date(due.getTime() - data.alertSettings.leadDays * 86_400_000);
+      const late = noticeAt.getTime() <= now.getTime();
+      const isToday = noticeAt.toDateString() === now.toDateString();
+
+      return {
+        debtId: debt.id,
+        debtName: debt.name,
+        dueLabel: shortDate(due),
+        amount: debt.minimumPayment ?? 0,
+        noticeLabel: late ? "ahora" : isToday ? "hoy" : shortDate(noticeAt),
+        late,
+        sortKey: due.getTime(),
+      };
+    })
+    .filter((n): n is UpcomingNotice & { sortKey: number } => n !== null)
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .map(({ sortKey, ...rest }) => rest);
+
   return (
     <Screen>
+      <Header />
+
+      <details className="group mt-2">
+        <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
+          Qué detectamos solo
+          <span
+            className="transition-transform duration-200 ease-sd group-open:rotate-180"
+            aria-hidden
+          >
+            ⌄
+          </span>
+        </summary>
+        {/*
+          Nombrar las que NO se calculan solas es parte del contrato. La lista
+          anterior de esta pantalla anunciaba "mes no reflejado" como si la
+          app lo mirara, y no lo miraba: el tipo existía en el enum y nunca se
+          emitía.
+        */}
+        <p className="help mt-1">
+          Escenario: {data.scenarioName}. Solo se calculan solas el saldo que crece, los
+          vencimientos apilados, el mes en que la caja no cierra, el peso de las cuotas fijas y
+          la deuda más cara. El resto —doble conteo, gasto no capturado, mes no reflejado— hay
+          que detectarlas a ojo por ahora.
+        </p>
+      </details>
+
+      <AlertSettingsPanel
+        initial={data.alertSettings}
+        debts={data.debts.map((d) => ({ id: d.id, name: d.name }))}
+        upcoming={upcoming}
+      />
+
+      <SnoozedRow count={data.snoozedCount} />
+
+      {data.alerts.length === 0 ? (
+        <div className="mt-4">
+          <EmptyState
+            title={data.snoozedCount > 0 ? "Nada activo ahora mismo" : "Nada urgente esta semana"}
+            note={
+              data.snoozedCount > 0
+                ? "Lo que había está pospuesto. Vuelve solo cuando se cumpla el plazo."
+                : "No hay vencimientos cerca ni saldos creciendo. Si cargás un resumen o cambia un pago, esto se actualiza solo."
+            }
+            action={<PrimaryButton href="/dashboard">Volver al dashboard</PrimaryButton>}
+          />
+        </div>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {data.alerts.map((alert) => (
+            <li key={`${alert.kind}:${alert.subjectId}`}>
+              <AlertCard alert={alert} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </Screen>
+  );
+}
+
+function Header() {
+  return (
+    <>
       <Link
         href="/dashboard"
         className="inline-flex min-h-touch items-center gap-1.5 text-[12px] text-muted hover:text-leaf"
       >
         <span aria-hidden>←</span> Volver al dashboard
       </Link>
-
       <h1 className="mt-2 text-screen text-ink">Alertas</h1>
-      <p className="help mt-1">
-        Se recalculan solas cada vez que abrís esta pantalla, con tus deudas y el escenario
-        activo.
-      </p>
-
-      {!data || data.alerts.length === 0 ? (
-        <div className="mt-4">
-          <EmptyState
-            title="Nada urgente esta semana"
-            note="No hay vencimientos cerca ni saldos creciendo. Si cargás un resumen o cambia un pago, esto se actualiza solo."
-            action={<PrimaryButton href="/dashboard">Volver al dashboard</PrimaryButton>}
-          />
-        </div>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {data.alerts.map((alert, i) => {
-            const c = SEVERITY[alert.severity];
-            const href = alert.debtId ? `/dashboard/debts/${alert.debtId}` : "/dashboard";
-
-            return (
-              <li key={`${alert.kind}-${alert.debtId ?? i}`}>
-                <Link href={href} className="block">
-                  <div
-                    data-motion
-                    className="animate-card-in rounded-surface-lg px-4 py-3 transition-opacity duration-150 ease-sd hover:opacity-90"
-                    style={{ backgroundColor: c.bg, border: `1px solid ${c.border}` }}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-card" style={{ color: c.fg }}>
-                          {alert.title}
-                        </div>
-                        <p className="mt-1 text-[11.5px]" style={{ color: c.ink }}>
-                          {KIND_EXPLAINS[alert.kind]}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-[18px] leading-none" style={{ color: c.fg }} aria-hidden>
-                        ›
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      <Card className="mt-6 px-4 py-4">
-        <h2 className="text-card text-ink">Qué miramos</h2>
-        <ul className="mt-2 space-y-2">
-          {Object.entries(KIND_EXPLAINS).map(([kind, explain]) => (
-            <li key={kind} className="text-[11.5px] text-muted">
-              <span className="font-mono text-[10.5px] uppercase text-ink">
-                {kind.replace(/_/g, " ")}
-              </span>
-              <br />
-              {explain}
-            </li>
-          ))}
-        </ul>
-      </Card>
-    </Screen>
+    </>
   );
 }

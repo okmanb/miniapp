@@ -126,7 +126,12 @@ export default async function DashboardPage() {
                     ? "brick"
                     : "gold"
               }
-              headline={data.alerts[0]?.title ?? "Nada vence en los próximos 3 días."}
+              headline={
+                data.alerts[0]?.title ??
+                (data.alertSettings.leadDays === 0
+                  ? "Nada vence hoy."
+                  : `Nada vence en los próximos ${data.alertSettings.leadDays} ${data.alertSettings.leadDays === 1 ? "día" : "días"}.`)
+              }
               action={
                 payable && (
                   <PayMinimumButton

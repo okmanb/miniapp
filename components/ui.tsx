@@ -5,7 +5,7 @@
  */
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 /* -------------------------------------------------------------------------- */
 /* Tarjeta                                                                     */
@@ -101,11 +101,17 @@ export function SecondaryButton({
 export function Amount({
   children,
   className = "",
+  style,
 }: {
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
 }) {
-  return <span className={`font-mono tabular-nums ${className}`}>{children}</span>;
+  return (
+    <span className={`font-mono tabular-nums ${className}`} style={style}>
+      {children}
+    </span>
+  );
 }
 
 export function FieldLabel({ children }: { children: ReactNode }) {
