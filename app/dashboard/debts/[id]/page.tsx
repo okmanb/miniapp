@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDebtDetail } from "@/lib/data/debt";
 import { formatMoney } from "@/lib/calc/money";
-import { Card, Screen, Amount, PrimaryButton, EmptyState, MetaChip } from "@/components/ui";
+import { Card, Screen, Amount, PrimaryButton, EmptyState } from "@/components/ui";
 import { PayoffComparison } from "@/components/PayoffComparison";
 
 export const dynamic = "force-dynamic";
@@ -125,48 +125,17 @@ export default async function DebtDetailPage({ params }: { params: Promise<{ id:
         </ul>
       )}
 
-      <h2 className="mt-6 text-[15px] font-semibold text-ink">Cuotas de esta deuda</h2>
-      {debt.installments.length === 0 ? (
-        <p className="help mt-2">
-          Esta deuda no tiene compras en cuotas cargadas. Aparecen solas al cargar un resumen que
-          las traiga.
-        </p>
-      ) : (
-        <ul className="mt-3 space-y-2">
-          {debt.installments.map((plan) => (
-            <li key={plan.id}>
-              <Card className="px-4 py-3">
-                <div className="text-card text-ink">{plan.description}</div>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <MetaChip>
-                    cuota {plan.current}/{plan.total}
-                  </MetaChip>
-                  <MetaChip>termina {plan.endsOn}</MetaChip>
-                  {/*
-                    Una cuota sin interés es un dato conocido (el comercio lo
-                    subsidia), no un dato que falte. Por eso 0% se muestra y no
-                    se esconde: es de las pocas buenas noticias de la pantalla.
-                  */}
-                  {plan.tna != null && (
-                    <MetaChip>{plan.tna === 0 ? "sin interés" : `TNA ${plan.tna}%`}</MetaChip>
-                  )}
-                </div>
-                <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-border-row pt-2">
-                  <span className="text-label uppercase text-muted">
-                    {plan.finished ? "Terminada" : `Quedan ${plan.remaining}`}
-                  </span>
-                  <Amount className="text-[15px] font-semibold text-ink">
-                    {formatMoney(plan.amount)}
-                  </Amount>
-                </div>
-              </Card>
-            </li>
-          ))}
-        </ul>
-      )}
-
+      {/*
+        Las cuotas tienen pantalla propia: cada compra es su propia deuda, con
+        su plazo y su tasa, y listarlas acá abajo del historial de pagos las
+        mezclaba con el ritmo del saldo de la tarjeta, que es otro.
+      */}
       <div className="mt-6 space-y-2">
         <ActionLink href={`/dashboard/debts/${debt.id}/edit`}>Editar esta deuda</ActionLink>
+        <ActionLink href={`/dashboard/debts/${debt.id}/cuotas`}>
+          Ver cuotas de esta deuda
+          {debt.installments.length > 0 ? ` (${debt.installments.length})` : ""}
+        </ActionLink>
         <ActionLink href={`/dashboard/statements/new?deuda=${debt.id}`}>Cargar un resumen</ActionLink>
       </div>
     </Screen>
