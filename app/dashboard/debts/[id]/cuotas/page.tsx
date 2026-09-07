@@ -4,8 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { currentPeriod } from "@/lib/data/dashboard";
 import { formatMoney } from "@/lib/calc/money";
 import { viewInstallmentPlan, type InstallmentPlanRow, type InstallmentPlanView } from "@/lib/calc/installments";
-import { Screen, Card, Amount, EmptyState, MetaChip } from "@/components/ui";
+import { Screen, Card, Amount, EmptyState } from "@/components/ui";
 import { InstallmentPlanForm } from "@/components/InstallmentPlanForm";
+import { InstallmentGroup } from "@/components/InstallmentGroup";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +109,7 @@ export default async function InstallmentsPage({
           )}
 
           {financed.length > 0 && (
-            <Group
+            <InstallmentGroup
               title="Con costo financiero"
               count={financed.length}
               hint="mayor a menor tasa"
@@ -118,7 +119,7 @@ export default async function InstallmentsPage({
           )}
 
           {free.length > 0 && (
-            <Group
+            <InstallmentGroup
               title="Sin costo financiero"
               count={free.length}
               note="Pagarlas antes no ahorra un peso: el comercio ya subsidió el interés. Lo único que cambia es cuándo se libera la cuota."
@@ -126,70 +127,13 @@ export default async function InstallmentsPage({
             />
           )}
 
-          {done.length > 0 && <Group title="Terminadas" count={done.length} plans={done} />}
+          {done.length > 0 && (
+            <InstallmentGroup title="Terminadas" count={done.length} plans={done} />
+          )}
         </>
       )}
 
       <InstallmentPlanForm debtId={id} />
     </Screen>
-  );
-}
-
-function Group({
-  title,
-  count,
-  hint,
-  note,
-  plans,
-}: {
-  title: string;
-  count: number;
-  hint?: string;
-  note?: string;
-  plans: InstallmentPlanView[];
-}) {
-  return (
-    <section className="mt-6">
-      <div className="flex items-center gap-2">
-        <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
-        <span className="rounded-pill bg-track px-2 py-0.5 font-mono text-[10.5px] font-bold text-muted">
-          {count}
-        </span>
-        {hint && <span className="text-[11px] text-muted">· {hint}</span>}
-      </div>
-      {note && <p className="help mt-1">{note}</p>}
-
-      <ul className="mt-3 space-y-2">
-        {plans.map((plan) => (
-          <li key={plan.id}>
-            <Card className="px-4 py-3">
-              <div className="text-card text-ink">{plan.description}</div>
-              <div className="mt-1 text-[11.5px] text-muted">
-                {plan.finished
-                  ? `cuota ${plan.total}/${plan.total} · terminada`
-                  : `cuota ${plan.current}/${plan.total} · termina ${plan.endsOn} · ${formatMoney(plan.amount)} por mes`}
-              </div>
-
-              <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-border-row pt-2">
-                <span className="text-label uppercase text-muted">Saldo</span>
-                <Amount className="text-[15px] font-semibold text-ink">
-                  {formatMoney(plan.balance)}
-                </Amount>
-              </div>
-
-              <div className="mt-1.5">
-                {plan.finished ? (
-                  <MetaChip>✓ pagada por completo</MetaChip>
-                ) : (plan.tna ?? 0) > 0 ? (
-                  <MetaChip>{plan.tna!.toLocaleString("es-AR")}% TNA</MetaChip>
-                ) : (
-                  <MetaChip>cuota sin interés</MetaChip>
-                )}
-              </div>
-            </Card>
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 }

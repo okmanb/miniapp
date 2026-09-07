@@ -74,12 +74,19 @@ export function ScenarioComparison({ scenarios }: { scenarios: ComparisonScenari
 
       {open && (
         <div className="mt-2 overflow-x-auto rounded-surface-lg border border-border bg-surface">
+          {/*
+            La tabla no se achica: scrollea. Envolver "−$ 2.900.000" en dos
+            renglones a 375px la vuelve ilegible justo donde hay que comparar
+            dos cifras de un vistazo.
+          */}
           <table className="w-full border-collapse text-[12px]">
             <thead>
               <tr>
-                <th className="px-3 py-2 text-left text-label uppercase text-muted">Métrica</th>
+                <th className="whitespace-nowrap px-3 py-2 text-left text-label uppercase text-muted">
+                  Métrica
+                </th>
                 {usable.map((s) => (
-                  <th key={s.id} className="px-3 py-2 text-right text-[11.5px] font-semibold text-ink">
+                  <th key={s.id} className="whitespace-nowrap px-3 py-2 text-right text-[11.5px] font-semibold text-ink">
                     {s.isActive && (
                       <span className="mr-1 text-leaf-deep" aria-label="escenario activo">
                         ●
@@ -95,13 +102,13 @@ export function ScenarioComparison({ scenarios }: { scenarios: ComparisonScenari
                 const best = Math.max(...usable.map(row.score));
                 return (
                   <tr key={row.label} className="border-t border-border-row">
-                    <td className="px-3 py-2 text-[11.5px] text-muted">{row.label}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11.5px] text-muted">{row.label}</td>
                     {usable.map((s) => {
                       const isBest = row.score(s) === best;
                       return (
                         <td
                           key={s.id}
-                          className="px-3 py-2 text-right font-mono text-[12px] tabular-nums"
+                          className="whitespace-nowrap px-3 py-2 text-right font-mono text-[12px] tabular-nums"
                           style={{
                             backgroundColor: isBest ? "#E0F4E9" : undefined,
                             color: isBest ? "#175F42" : "#12211D",

@@ -24,10 +24,16 @@ export function parseMoney(v: number | string | null | undefined): number {
   return Number(String(v).replace(/[^0-9]/g, "")) || 0;
 }
 
-/** Pesos sin decimales, separador de miles con punto. */
+/**
+ * Pesos sin decimales, separador de miles con punto.
+ *
+ * El menos es U+2212 y no un guion, como en el prototipo: en una tipografia
+ * de cifras tabulares el menos matematico tiene el ancho de un digito y el
+ * guion no, asi que una columna de montos con signo se desalinea sola.
+ */
 export function formatMoney(n: number): string {
   const rounded = Math.round(n);
-  const sign = rounded < 0 ? "-" : "";
+  const sign = rounded < 0 ? "−" : "";
   return `${sign}$ ${Math.abs(rounded).toLocaleString("es-AR")}`;
 }
 
