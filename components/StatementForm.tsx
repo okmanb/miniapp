@@ -7,6 +7,7 @@ import { parseStatementPdf, type ParseResult } from "@/app/dashboard/statements/
 import { formatMoney, formatUsd, parseMoney } from "@/lib/calc/money";
 import { closeStatement } from "@/lib/calc/statement";
 import { Spinner } from "./ui";
+import { CalendarField } from "./CalendarField";
 
 /**
  * Carga del resumen del mes (pantalla 06).
@@ -180,18 +181,18 @@ export function StatementForm({
           </p>
         )}
 
-        <label htmlFor="period" className="mt-5 block text-label uppercase text-muted">
-          Mes del resumen
-        </label>
-        <input
-          id="period"
-          name="period"
-          type="month"
-          required
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 font-mono text-[15px] text-ink outline-none"
-        />
+        <div className="mt-5">
+          <CalendarField
+            id="period"
+            name="period"
+            label="Mes del resumen"
+            mode="month"
+            value={period}
+            onChange={setPeriod}
+            kicker="Mes del resumen"
+            note="El período que cierra este resumen."
+          />
+        </div>
 
         <MoneyField
           id="new_charges"

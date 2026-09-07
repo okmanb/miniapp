@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { saveDebt } from "@/app/dashboard/debts/actions";
 import { EMPTY_STATE, type DebtFormState } from "@/app/dashboard/debts/form-state";
 import { DEBT_KINDS } from "@/app/dashboard/debts/validation";
 import { Spinner } from "./ui";
+import { CalendarField } from "./CalendarField";
 
 /**
  * Formulario de deuda, compartido por el alta y la edición.
@@ -30,6 +31,7 @@ export interface DebtFormValues {
 export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
   const [state, formAction, pending] = useActionState<DebtFormState, FormData>(saveDebt, EMPTY_STATE);
   const editing = Boolean(initial.id);
+  const [dueDay, setDueDay] = useState(initial.dueDay != null ? String(initial.dueDay) : "");
 
   return (
     <form action={formAction} className="mt-4">
@@ -122,22 +124,22 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         <MoneyInput id="monthly_payment" name="monthly_payment" defaultValue={initial.monthlyPayment} />
       </Field>
 
-      <Field
-        id="due_day"
-        label="Día de vencimiento"
-        error={state.errors.dueDay}
-        help="Solo el día del mes. Si cae 31, en los meses cortos se usa el último día."
-      >
-        <input
+      <div className="mt-5">
+        <CalendarField
           id="due_day"
           name="due_day"
-          inputMode="numeric"
-          autoComplete="off"
-          defaultValue={initial.dueDay ?? ""}
-          placeholder="10"
-          className="min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 font-mono text-[15px] text-ink outline-none placeholder:text-muted"
+          label="Día de vencimiento"
+          mode="day"
+          value={dueDay}
+          onChange={setDueDay}
+          kicker="Día de vencimiento"
+          note="Se repite todos los meses. Elegí el día en que cierra el resumen."
+          help="Si cae 31, en los meses cortos se usa el último día. Un préstamo con cuota fija puede no tener día: dejalo vacío."
         />
-      </Field>
+        {state.errors.dueDay && (
+          <p className="mt-1.5 text-[11.5px] text-brick-ink">{state.errors.dueDay}</p>
+        )}
+      </div>
 
       <fieldset className="mt-6">
         <legend className="text-label uppercase text-muted">Plazo (si lo tiene)</legend>

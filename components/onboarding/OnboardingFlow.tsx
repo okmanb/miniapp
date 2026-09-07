@@ -16,6 +16,7 @@ import {
 } from "@/lib/onboarding/draft";
 import { formatMoney } from "@/lib/calc/money";
 import { nextDueDate, formatDayMonth, daysUntil, dueInLabel } from "@/lib/calc/dates";
+import { CalendarField } from "@/components/CalendarField";
 
 /**
  * Onboarding (pantalla 00): tres pasos que terminan con algo accionable.
@@ -220,23 +221,15 @@ function StepDebt({
             className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 font-mono text-[15px] text-ink outline-none"
           />
         </div>
-        <div>
-          <label htmlFor="dueDay" className="block text-label uppercase text-muted">
-            Día de vto.
-          </label>
-          <select
-            id="dueDay"
-            value={draft.dueDay}
-            onChange={(e) => onPatch({ dueDay: Number(e.target.value) })}
-            className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
-          >
-            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-              <option key={d} value={d}>
-                Día {d}
-              </option>
-            ))}
-          </select>
-        </div>
+        <CalendarField
+          id="dueDay"
+          label="Día de vto."
+          mode="day"
+          value={String(draft.dueDay)}
+          onChange={(v) => onPatch({ dueDay: Number(v) })}
+          kicker="Día de vencimiento"
+          note="Se repite todos los meses. Elegí el día en que cierra el resumen."
+        />
       </div>
       <p className="help mt-1.5">
         Prellenamos la tasa típica de {type.label.toLowerCase()}. Si no la sabés, dejala así:

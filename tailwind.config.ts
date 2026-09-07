@@ -97,6 +97,13 @@ const config: Config = {
           "0%": { opacity: "0", transform: "scale(.96)" },
           "100%": { opacity: "1", transform: "none" },
         },
+        // Las salidas son mas cortas que las entradas: al cerrar ya se decidio,
+        // y esperar a que la animacion termine se siente como que la app duda.
+        sdCardOut: {
+          "0%": { opacity: "1", transform: "none" },
+          "100%": { opacity: "0", transform: "translateY(6px)" },
+        },
+        sdFadeOut: { "0%": { opacity: "1" }, "100%": { opacity: "0" } },
         sdSpin: { "100%": { transform: "rotate(360deg)" } },
         sdSlide: {
           "0%": { transform: "translateX(-100%)" },
@@ -111,6 +118,8 @@ const config: Config = {
         "screen-in": "sdScreenIn 130ms cubic-bezier(.23,1,.32,1) both",
         "card-in": "sdCardIn 210ms cubic-bezier(.23,1,.32,1) both",
         "banner-in": "sdBannerIn 190ms cubic-bezier(.23,1,.32,1) both",
+        "card-out": "sdCardOut 140ms cubic-bezier(.23,1,.32,1) both",
+        "fade-out": "sdFadeOut 140ms cubic-bezier(.23,1,.32,1) both",
         spin: "sdSpin 700ms linear infinite",
         slide: "sdSlide 620ms cubic-bezier(.23,1,.32,1) infinite",
         shimmer: "sdShimmer 1200ms cubic-bezier(.23,1,.32,1) infinite",

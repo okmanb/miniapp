@@ -33,6 +33,7 @@ export async function saveDebt(
   }
 
   const id = String(formData.get("id") ?? "");
+  let newId = "";
 
   const values = {
     name: input.name,
@@ -59,18 +60,34 @@ export async function saveDebt(
       return { errors: {}, message: "No hay un escenario activo donde guardar la deuda." };
     }
 
-    const { error } = await supabase.from("debts").insert({
-      ...values,
-      user_id: auth.user.id,
-      scenario_id: scenario.id,
-      base_balance_at: new Date().toISOString().slice(0, 10),
-    });
-    if (error) return { errors: {}, message: "No pudimos crear la deuda." };
+    const { data: created, error } = await supabase
+      .from("debts")
+      .insert({
+        ...values,
+        user_id: auth.user.id,
+        scenario_id: scenario.id,
+        base_balance_at: new Date().toISOString().slice(0, 10),
+      })
+      .select("id")
+      .single();
+
+    if (error || !created) return { errors: {}, message: "No pudimos crear la deuda." };
+    newId = created.id;
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/cashflow");
-  redirect(id ? `/dashboard/debts/${id}` : "/dashboard");
+
+  if (id) redirect(`/dashboard/debts/${id}`);
+
+  // Una tarjeta recién creada sigue derecho al resumen: el PDF trae el saldo,
+  // el mínimo y las cuotas de una, y cargarlos a mano es el trabajo que esta
+  // app existe para ahorrar. Se puede saltear desde ahí.
+  redirect(
+    input.kind === "tarjeta"
+      ? `/dashboard/statements/new?deuda=${newId}&nueva=1`
+      : `/dashboard/debts/${newId}`
+  );
 }
 
 /**

@@ -5,11 +5,7 @@ import { useActionState } from "react";
 import { createIncome } from "@/app/dashboard/incomes/actions";
 import { EMPTY_INCOME_STATE, type IncomeState } from "@/app/dashboard/incomes/form-state";
 import { Spinner } from "./ui";
-
-const MONTHS_ES = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-];
+import { CalendarField } from "./CalendarField";
 
 /**
  * Alta de un ingreso. El selector de mes solo aparece para un bono: para el
@@ -21,6 +17,7 @@ export function IncomeForm() {
     createIncome,
     EMPTY_INCOME_STATE
   );
+  const [bonusMonth, setBonusMonth] = useState("");
   const [kind, setKind] = useState("mensual");
 
   return (
@@ -70,25 +67,18 @@ export function IncomeForm() {
       </select>
 
       {kind === "bono" && (
-        <>
-          <label htmlFor="bonus_month" className="mt-5 block text-label uppercase text-muted">
-            En qué mes
-          </label>
-          <select
+        <div className="mt-5">
+          <CalendarField
             id="bonus_month"
             name="bonus_month"
-            required
-            defaultValue=""
-            className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
-          >
-            <option value="">Elegí uno</option>
-            {MONTHS_ES.map((m, i) => (
-              <option key={m} value={i + 1}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </>
+            label="En qué mes"
+            mode="monthOfYear"
+            value={bonusMonth}
+            onChange={setBonusMonth}
+            kicker="Mes del bono"
+            note="Entra una vez al año, en el mes que elijas."
+          />
+        </div>
       )}
 
       <p className="help mt-1.5">

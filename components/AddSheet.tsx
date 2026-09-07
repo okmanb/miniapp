@@ -35,8 +35,31 @@ const OPTIONS = [
 
 export function AddSheet() {
   const [open, setOpen] = useState(false);
+  // El panel sigue montado mientras sale. Sin esto, cerrar es un corte seco:
+  // la hoja desaparece de un frame al otro y el gesto queda sin respuesta.
+  const [closing, setClosing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function close() {
+    if (closeTimer.current) return;
+    setClosing(true);
+    closeTimer.current = setTimeout(() => {
+      setOpen(false);
+      setClosing(false);
+      closeTimer.current = null;
+    }, 140);
+  }
+
+  function toggle() {
+    if (open) close();
+    else setOpen(true);
+  }
+
+  useEffect(() => () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }, []);
 
   // Escape cierra y el foco vuelve al botón: si no, el foco queda perdido en
   // una hoja que ya no está.
@@ -44,7 +67,7 @@ export function AddSheet() {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setOpen(false);
+        close();
         triggerRef.current?.focus();
       }
     };
@@ -62,8 +85,11 @@ export function AddSheet() {
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label="Agregar"
-        onClick={() => setOpen((v) => !v)}
-        className="flex h-[58px] w-[58px] items-center justify-center rounded-pill text-pine"
+        onClick={toggle}
+        // El scale al presionar es la unica respuesta que llega en el mismo
+        // frame del toque. Sin el, el primer feedback es la hoja 200ms despues
+        // y el boton se siente muerto.
+        className="flex h-[58px] w-[58px] items-center justify-center rounded-pill text-pine transition-transform duration-150 ease-sd active:scale-[0.93]"
         style={{
           // El borde grueso en pine es lo que hace el anillo: recorta el botón
           // contra la barra en vez de apoyarlo encima. Sin él, el FAB es un
@@ -107,15 +133,20 @@ export function AddSheet() {
           <button
             type="button"
             aria-label="Cerrar"
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-30 bg-pine/20"
+            data-motion
+            onClick={close}
+            className={`fixed inset-0 z-30 bg-pine/20 ${
+              closing ? "animate-fade-out" : "animate-banner-in"
+            }`}
           />
 
           <div
             ref={panelRef}
             role="menu"
             data-motion
-            className="animate-card-in fixed inset-x-0 bottom-[89px] z-40 mx-auto max-w-[430px] px-[18px]"
+            className={`fixed inset-x-0 bottom-[89px] z-40 mx-auto max-w-[430px] px-[18px] ${
+              closing ? "animate-card-out" : "animate-card-in"
+            }`}
           >
             <div className="rounded-surface-lg border border-border bg-surface p-2 shadow-card">
               <div className="flex items-baseline justify-between px-2 pb-1 pt-1">
@@ -128,7 +159,7 @@ export function AddSheet() {
                   key={option.href}
                   href={option.href}
                   role="menuitem"
-                  onClick={() => setOpen(false)}
+                  onClick={close}
                   className="flex min-h-touch items-center gap-3 rounded-row px-2 py-2.5 transition-colors duration-150 ease-sd hover:bg-surface-sunken"
                 >
                   <span

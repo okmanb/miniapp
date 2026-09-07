@@ -5,16 +5,7 @@ import { createBridgeLoan } from "@/app/dashboard/bridge-loans/actions";
 import { bridgeCost, compareAgainstWorstDebt, monthsBetween } from "@/lib/calc/bridge";
 import { formatMoney, parseMoney } from "@/lib/calc/money";
 import { Spinner } from "./ui";
-
-const MONTHS_ES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
-];
-
-function periodTitle(period: string): string {
-  const [year, month] = period.split("-");
-  return `${MONTHS_ES[Number(month) - 1]} de ${year}`;
-}
+import { CalendarField } from "./CalendarField";
 
 function addMonths(period: string, delta: number): string {
   const [y, m] = period.split("-").map(Number);
@@ -137,25 +128,24 @@ export function BridgeLoanForm({
           />
         </div>
 
-        <label htmlFor="repay_period" className="mt-5 block text-label uppercase text-muted">
-          Lo devolvés en
-        </label>
-        <input
-          id="repay_period"
-          name="repay_period"
-          type="month"
-          required
-          min={addMonths(currentPeriod, 1)}
-          value={repayPeriod}
-          onChange={(e) => setRepayPeriod(e.target.value)}
-          className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 font-mono text-[14px] text-ink outline-none"
-        />
-        <p className="help mt-1.5">
-          {periodTitle(repayPeriod)}.{" "}
-          {months === 1
-            ? "Un mes de puente: devolvés el mes que viene."
-            : `${months} meses de puente — la tasa corre todo ese tiempo.`}
-        </p>
+        <div className="mt-5">
+          <CalendarField
+            id="repay_period"
+            name="repay_period"
+            label="Lo devolvés en"
+            mode="month"
+            value={repayPeriod}
+            onChange={setRepayPeriod}
+            min={addMonths(currentPeriod, 1)}
+            kicker="Mes de devolución"
+            note="Cuándo devolvés el puente completo."
+            help={
+              months === 1
+                ? "Un mes de puente: devolvés el mes que viene."
+                : `${months} meses de puente — la tasa corre todo ese tiempo.`
+            }
+          />
+        </div>
 
         <label
           htmlFor="monthly_interest_rate"

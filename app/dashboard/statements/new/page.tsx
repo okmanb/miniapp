@@ -16,7 +16,7 @@ function previousPeriod(): string {
 export default async function NewStatementPage({
   searchParams,
 }: {
-  searchParams: Promise<{ deuda?: string }>;
+  searchParams: Promise<{ deuda?: string; nueva?: string }>;
 }) {
   const query = await searchParams;
   const supabase = await createClient();
@@ -47,6 +47,26 @@ export default async function NewStatementPage({
       </Link>
 
       <h1 className="mt-2 text-screen text-ink">Agregar resumen del mes</h1>
+
+      {/*
+        Llegar acá recién creada la tarjeta es el camino corto: el PDF trae el
+        saldo, el mínimo y las cuotas de una. Pero no puede ser obligatorio —
+        el resumen puede no estar a mano — así que la salida está a la vista.
+      */}
+      {query.nueva && query.deuda && (
+        <div className="mt-3 rounded-surface border border-border bg-mint-wash px-4 py-3">
+          <p className="text-[12px] text-leaf-deep">
+            Tarjeta creada. Si tenés el PDF del resumen a mano, subilo acá: de ahí salen el saldo,
+            el pago mínimo y las compras en cuotas, sin cargar nada a mano.
+          </p>
+          <Link
+            href={`/dashboard/debts/${query.deuda}`}
+            className="mt-2 inline-flex min-h-touch items-center text-[12px] text-pine underline underline-offset-2"
+          >
+            Saltear por ahora
+          </Link>
+        </div>
+      )}
 
       <details className="group mt-2">
         <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">

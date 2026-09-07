@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createPayment } from "@/app/dashboard/payments/actions";
 import { EMPTY_PAYMENT_STATE, type PaymentState } from "@/app/dashboard/payments/form-state";
 import { Spinner } from "./ui";
+import { CalendarField } from "./CalendarField";
 
 export function PaymentForm({
   debts,
@@ -16,6 +17,14 @@ export function PaymentForm({
     createPayment,
     EMPTY_PAYMENT_STATE
   );
+
+  // Hoy por defecto: un pago se registra el día que se hizo, y corregir la
+  // fecha es la excepción.
+  const [paidOn, setPaidOn] = useState(() => {
+    const now = new Date();
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+  });
 
   return (
     <form action={formAction} className="mt-4">
@@ -54,16 +63,18 @@ export function PaymentForm({
         />
       </div>
 
-      <label htmlFor="paid_on" className="mt-5 block text-label uppercase text-muted">
-        Cuándo
-      </label>
-      <input
-        id="paid_on"
-        name="paid_on"
-        type="date"
-        defaultValue={new Date().toISOString().slice(0, 10)}
-        className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 font-mono text-[15px] text-ink outline-none"
-      />
+      <div className="mt-5">
+        <CalendarField
+          id="paid_on"
+          name="paid_on"
+          label="Cuándo"
+          mode="date"
+          value={paidOn}
+          onChange={setPaidOn}
+          kicker="Fecha del pago"
+          note="Cuándo salió la plata de tu cuenta."
+        />
+      </div>
 
       <label htmlFor="kind" className="mt-5 block text-label uppercase text-muted">
         Qué tipo de pago
