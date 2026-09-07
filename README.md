@@ -1,4 +1,4 @@
-# Simuladeudas
+# ¿Llegás?
 
 Mirá el mes que viene antes de que llegue. No promete salir de deuda rápido: muestra en
 qué mes te quedás sin plata, por qué crece cada saldo, y qué cambia si pagás distinto.

@@ -67,7 +67,7 @@ export function OnboardingFlow() {
           className="font-mono text-[12px] uppercase text-leaf-deep"
           style={{ letterSpacing: ".08em" }}
         >
-          Simuladeudas
+          ¿Llegás?
         </p>
         <p
           className="font-mono text-[10.5px] uppercase text-muted"

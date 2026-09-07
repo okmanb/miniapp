@@ -78,7 +78,7 @@ export interface OnboardingDraft {
   fixedExpenses: number;
 }
 
-export const STORAGE_KEY = "simuladeudas.onboarding.v1";
+export const STORAGE_KEY = "llegas.onboarding.v1";
 
 export function emptyDraft(): OnboardingDraft {
   const card = DEBT_TYPES[0];

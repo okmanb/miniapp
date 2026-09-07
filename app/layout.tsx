@@ -17,8 +17,11 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Simuladeudas",
-  description: "Simulá cómo salir de tus deudas, mes a mes.",
+  // El nombre es la pregunta que la app contesta. Sin los signos se leería
+  // como una afirmación, y la respuesta honesta a veces es que no.
+  title: "¿Llegás?",
+  description:
+    "Mirá el mes que viene antes de que llegue: en qué mes te quedás sin plata, por qué crece cada saldo, y qué cambia si pagás distinto.",
 };
 
 export const viewport: Viewport = {

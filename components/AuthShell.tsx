@@ -19,7 +19,7 @@ export function AuthShell({
   return (
     <main data-motion className="animate-screen-in mx-auto w-full max-w-[430px] px-[18px] py-10">
       <Link href="/" className="font-mono text-[12px] uppercase text-leaf-deep" style={{ letterSpacing: ".08em" }}>
-        Simuladeudas
+        ¿Llegás?
       </Link>
 
       <h1 className="mt-6 text-screen text-ink">{title}</h1>
