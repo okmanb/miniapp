@@ -17,6 +17,7 @@ import {
 import { formatMoney } from "@/lib/calc/money";
 import { nextDueDate, formatDayMonth, daysUntil, dueInLabel } from "@/lib/calc/dates";
 import { CalendarField } from "@/components/CalendarField";
+import { StatementImport } from "@/components/StatementImport";
 
 /**
  * Onboarding (pantalla 00): tres pasos que terminan con algo accionable.
@@ -244,12 +245,28 @@ function StepDebt({
         Continuar <span aria-hidden>→</span>
       </button>
 
-      <Link
-        href="/dashboard/statements/new"
-        className="mt-3 flex min-h-touch w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
-      >
-        Importar resumen de tarjeta
-      </Link>
+      {/*
+        Antes esto era un link a /dashboard/statements/new, que pide sesion y
+        una tarjeta ya creada: desde el onboarding rebotaba al login. Ahora el
+        PDF se lee acá mismo y llena los campos de arriba, que es lo que el
+        boton prometia.
+      */}
+      <div className="mt-5">
+        <StatementImport
+          title="Importar resumen de tarjeta"
+          note="Si tenés el PDF a mano, de ahí salen el saldo, la tasa y el día de vencimiento. No sale de tu navegador hasta que crees la cuenta."
+          onParsed={(parsed) => {
+            const next: Partial<OnboardingDraft> = { kind: "tarjeta" };
+            if (parsed.statementBalance != null) next.balance = Math.round(parsed.statementBalance);
+            if (parsed.annualRate != null) next.annualRate = parsed.annualRate;
+            if (parsed.dueDate) {
+              const day = Number(parsed.dueDate.slice(8, 10));
+              if (day >= 1 && day <= 31) next.dueDay = day;
+            }
+            onPatch(next);
+          }}
+        />
+      </div>
     </>
   );
 }

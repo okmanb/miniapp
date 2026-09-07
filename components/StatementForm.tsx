@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { saveStatement } from "@/app/dashboard/statements/actions";
 import { EMPTY_STATEMENT_STATE, type StatementState } from "@/app/dashboard/statements/form-state";
 import { parseStatementPdf, type ParseResult } from "@/app/dashboard/statements/parse-actions";
@@ -8,6 +8,7 @@ import { formatMoney, formatUsd, parseMoney } from "@/lib/calc/money";
 import { closeStatement } from "@/lib/calc/statement";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
+import { takeParsedStatement } from "./StatementImport";
 
 /**
  * Carga del resumen del mes (pantalla 06).
@@ -59,6 +60,17 @@ export function StatementForm({
   const [payKind, setPayKind] = useState<PayKind>("variable");
 
   const needsConfirm = Boolean(state.pendingDuplicates?.length);
+
+  // Si el PDF ya se leyo al crear la tarjeta, no se vuelve a pedir: los
+  // campos llegan cargados y solo hay que confirmarlos.
+  useEffect(() => {
+    const handed = takeParsedStatement();
+    if (!handed?.ok) return;
+    setParsed(handed);
+    if (handed.period) setPeriod(handed.period);
+    if (handed.newCharges != null) setNewCharges(String(Math.round(handed.newCharges)));
+    if (handed.minimumPayment != null) setMinimum(String(Math.round(handed.minimumPayment)));
+  }, []);
 
   const card = cards.find((c) => c.id === debtId) ?? null;
 

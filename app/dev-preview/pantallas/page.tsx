@@ -195,6 +195,10 @@ export default function ScreensPreview() {
         />
       </Section>
 
+      <Section title="04 · Agregar deuda — tarjeta nueva">
+        <DebtForm />
+      </Section>
+
       <Section title="06 · Resumen del mes">
         <StatementForm
           cards={[

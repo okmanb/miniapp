@@ -6,6 +6,7 @@ import { EMPTY_STATE, type DebtFormState } from "@/app/dashboard/debts/form-stat
 import { DEBT_KINDS } from "@/app/dashboard/debts/validation";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
+import { StatementImport, stashParsedStatement } from "./StatementImport";
 
 /**
  * Formulario de deuda, compartido por el alta y la edición.
@@ -32,10 +33,58 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
   const [state, formAction, pending] = useActionState<DebtFormState, FormData>(saveDebt, EMPTY_STATE);
   const editing = Boolean(initial.id);
   const [dueDay, setDueDay] = useState(initial.dueDay != null ? String(initial.dueDay) : "");
+  const [kind, setKind] = useState(initial.kind ?? "tarjeta");
+
+  // Lo que el PDF prellena. Son controlados solo desde que se importa: antes
+  // van sin valor para que el navegador conserve lo tipeado si la pagina se
+  // rehidrata.
+  const [name, setName] = useState(initial.name ?? "");
+  const [balance, setBalance] = useState(
+    initial.baseBalance != null ? String(Math.round(initial.baseBalance)) : ""
+  );
+  const [rate, setRate] = useState(initial.annualRate != null ? String(initial.annualRate) : "");
+  const [monthlyPayment, setMonthlyPayment] = useState(
+    initial.monthlyPayment != null ? String(Math.round(initial.monthlyPayment)) : ""
+  );
 
   return (
     <form action={formAction} className="mt-4">
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
+
+      {/*
+        Importar va primero porque es el camino corto: seis campos que salen
+        del PDF en vez de copiarse a mano del resumen. Solo para tarjetas
+        nuevas — una deuda ya creada se actualiza cargando su resumen, que es
+        otra pantalla, y un prestamo no tiene resumen que leer.
+      */}
+      {!editing && kind === "tarjeta" && (
+        <div className="mb-6">
+          <StatementImport
+            title="Importar resumen"
+            note="Si tenés el PDF a mano, de ahí salen el nombre, el saldo, la tasa y el día de vencimiento. Podés cargarlos a mano igual."
+            onParsed={(parsed) => {
+              if (parsed.cardName) {
+                setName(
+                  parsed.accountLast4
+                    ? `${parsed.cardName} …${parsed.accountLast4}`
+                    : parsed.cardName
+                );
+              }
+              if (parsed.statementBalance != null) {
+                setBalance(String(Math.round(parsed.statementBalance)));
+              }
+              if (parsed.annualRate != null) setRate(String(parsed.annualRate));
+              if (parsed.dueDate) {
+                const day = Number(parsed.dueDate.slice(8, 10));
+                if (day >= 1 && day <= 31) setDueDay(String(day));
+              }
+              // El resto del resumen viaja a la pantalla siguiente: pedir el
+              // mismo PDF dos veces es justo el trabajo manual que esto evita.
+              stashParsedStatement(parsed);
+            }}
+          />
+        </div>
+      )}
 
       {/*
         Las tres secciones salen del prototipo. No son decoración: separan lo
@@ -54,7 +103,8 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
           id="name"
           name="name"
           required
-          defaultValue={initial.name}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           autoComplete="off"
           className="min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
         />
@@ -64,7 +114,8 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         <select
           id="kind"
           name="kind"
-          defaultValue={initial.kind ?? "tarjeta"}
+          value={kind}
+          onChange={(e) => setKind(e.target.value)}
           className="min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
         >
           {DEBT_KINDS.map((k) => (
@@ -83,7 +134,7 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         error={state.errors.baseBalance}
         help="El del último resumen. Los gastos que cargues después se suman solos; no hace falta actualizarlo a mano."
       >
-        <MoneyInput id="base_balance" name="base_balance" defaultValue={initial.baseBalance} />
+        <MoneyInput id="base_balance" name="base_balance" value={balance} onChange={setBalance} />
       </Field>
 
       <Section title="Tasa y pago" />
@@ -100,7 +151,8 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
             name="annual_interest_rate"
             inputMode="decimal"
             autoComplete="off"
-            defaultValue={initial.annualRate ?? ""}
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
             placeholder="98,03"
             className="min-h-touch w-full bg-transparent font-mono text-[15px] text-ink outline-none placeholder:text-muted"
           />
@@ -121,7 +173,13 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         error={state.errors.monthlyPayment}
         help="Para un préstamo, la cuota que pagás todos los meses. Una tarjeta no lo necesita: su mínimo sale del resumen y pisa este valor."
       >
-        <MoneyInput id="monthly_payment" name="monthly_payment" defaultValue={initial.monthlyPayment} />
+        <MoneyInput
+          id="monthly_payment"
+          name="monthly_payment"
+          value={monthlyPayment}
+          onChange={setMonthlyPayment}
+          optional
+        />
       </Field>
 
       <div className="mt-5">
@@ -200,11 +258,15 @@ function SubmitButton({ editing, pending }: { editing: boolean; pending: boolean
 function MoneyInput({
   id,
   name,
-  defaultValue,
+  value,
+  onChange,
+  optional = false,
 }: {
   id: string;
   name: string;
-  defaultValue?: number | null;
+  value: string;
+  onChange: (value: string) => void;
+  optional?: boolean;
 }) {
   return (
     <div className="flex items-center rounded-surface border border-border-input bg-surface px-3">
@@ -214,10 +276,11 @@ function MoneyInput({
       <input
         id={id}
         name={name}
-        required
+        required={!optional}
         inputMode="numeric"
         autoComplete="off"
-        defaultValue={defaultValue ?? ""}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         placeholder="0"
         className="min-h-touch w-full bg-transparent px-2 font-mono text-[15px] text-ink outline-none placeholder:text-muted"
       />
