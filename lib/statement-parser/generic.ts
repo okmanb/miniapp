@@ -105,6 +105,8 @@ export function parseGenericStatement(layoutText: string): ParsedStatement {
     cierreActual: null,
     vencimientoActual,
     saldoActual,
+    // Banco no reconocido: no sabemos dónde buscar la columna de dólares.
+    saldoActualUsd: null,
     pagoMinimo,
     saldoAnterior: null,
     planVEntries: [],

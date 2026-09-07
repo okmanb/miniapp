@@ -1,87 +1,107 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { getActiveScenario } from "@/lib/scenarios";
+import { createClient } from "@/lib/supabase/server";
+import { parseArgNumber } from "@/app/dashboard/debts/validation";
+import { currentPeriod } from "@/lib/data/dashboard";
+import { monthsBetween } from "@/lib/calc/bridge";
 
-export async function createBridgeLoan(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+export type BridgeResult = { ok: true } | { ok: false; message: string };
 
-  const source = (formData.get("source") as string)?.trim();
-  const amount = Number(formData.get("amount"));
-  const receivedMonth = formData.get("received_month") as string;
-  const repayMonth = formData.get("repay_month") as string;
-  const estimatedRate = formData.get("estimated_rate") ? Number(formData.get("estimated_rate")) : null;
-  const chainedFromId = (formData.get("chained_from_id") as string) || null;
+/** Las tres pantallas que cambian cuando cambia un puente tomado. */
+function revalidateBridge() {
+  revalidatePath("/dashboard/bridge-loans");
+  revalidatePath("/dashboard/cashflow");
+  revalidatePath("/dashboard");
+}
 
-  if (!source || !amount || amount <= 0 || !receivedMonth || !repayMonth) {
-    redirect(`/dashboard/bridge-loans?error=${encodeURIComponent("Revisá los datos del préstamo puente.")}`);
+export async function createBridgeLoan(formData: FormData): Promise<BridgeResult> {
+  const supabase = await createClient();
+
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
+
+  const lender = String(formData.get("lender") ?? "").trim();
+  if (!lender) return { ok: false, message: "Poné de dónde sale la plata." };
+
+  const amount = parseArgNumber(String(formData.get("amount") ?? ""));
+  if (amount === null || amount <= 0) return { ok: false, message: "Escribí un monto válido." };
+
+  const takenPeriod = String(formData.get("taken_period") || currentPeriod());
+  const repayPeriod = String(formData.get("repay_period") ?? "").trim();
+
+  // Un puente sin mes de devolución es plata que entra y nunca sale: la
+  // proyección quedaría más optimista de lo que es. Es el dato que hace que
+  // esta pantalla sirva para algo.
+  if (!repayPeriod) return { ok: false, message: "Falta en qué mes lo devolvés." };
+  if (monthsBetween(takenPeriod, repayPeriod) < 1) {
+    return { ok: false, message: "La devolución tiene que caer después del mes en que entra." };
   }
 
-  const scenario = await getActiveScenario(supabase, user.id);
+  // La tasa es mensual y opcional: un préstamo de un familiar suele no cobrar.
+  const rawRate = String(formData.get("monthly_interest_rate") ?? "").replace(",", ".").trim();
+  const rate = rawRate === "" ? null : Number(rawRate);
+  if (rate !== null && (!Number.isFinite(rate) || rate < 0)) {
+    return { ok: false, message: "La tasa mensual tiene que ser un número, o vacía." };
+  }
 
+  const { data: scenario } = await supabase
+    .from("scenarios")
+    .select("id")
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!scenario) return { ok: false, message: "No hay un escenario activo." };
+
+  // Nace simulado. Tomarlo es un segundo acto deliberado, porque es el que
+  // mueve la proyección.
   const { error } = await supabase.from("bridge_loans").insert({
-    user_id: user.id,
+    user_id: auth.user.id,
     scenario_id: scenario.id,
-    source,
+    lender,
     amount,
-    received_month: `${receivedMonth}-01`,
-    repay_month: `${repayMonth}-01`,
-    estimated_rate: estimatedRate,
-    chained_from_id: chainedFromId,
+    taken_period: takenPeriod,
+    repay_period: repayPeriod,
+    monthly_interest_rate: rate,
+    is_taken: false,
+    note: String(formData.get("note") ?? "").trim() || null,
   });
 
-  if (error) {
-    redirect(`/dashboard/bridge-loans?error=${encodeURIComponent(error.message)}`);
-  }
+  if (error) return { ok: false, message: "No pudimos guardar el puente." };
 
-  revalidatePath("/dashboard/bridge-loans");
-  revalidatePath("/dashboard/cashflow");
-  redirect("/dashboard/bridge-loans");
+  revalidateBridge();
+  return { ok: true };
 }
 
-export async function markBridgeLoanRepaid(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+/**
+ * Simulado ⇄ tomado.
+ *
+ * Es el único interruptor de la pantalla que cambia números en otras: un
+ * puente tomado entra en el flujo del mes en que llega y sale entero, con su
+ * costo, en el mes en que se devuelve.
+ */
+export async function toggleBridgeTaken(id: string, taken: boolean): Promise<BridgeResult> {
+  const supabase = await createClient();
 
-  const id = formData.get("id") as string;
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
 
-  const { error } = await supabase
-    .from("bridge_loans")
-    .update({ repaid: true })
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const { error } = await supabase.from("bridge_loans").update({ is_taken: taken }).eq("id", id);
+  if (error) return { ok: false, message: "No pudimos cambiar el estado del puente." };
 
-  if (error) {
-    redirect(`/dashboard/bridge-loans?error=${encodeURIComponent(error.message)}`);
-  }
-
-  revalidatePath("/dashboard/bridge-loans");
+  revalidateBridge();
+  return { ok: true };
 }
 
-export async function deleteBridgeLoan(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+export async function deleteBridgeLoan(id: string): Promise<BridgeResult> {
+  const supabase = await createClient();
 
-  const id = formData.get("id") as string;
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
 
-  const { error } = await supabase.from("bridge_loans").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase.from("bridge_loans").delete().eq("id", id);
+  if (error) return { ok: false, message: "No pudimos borrar el puente." };
 
-  if (error) {
-    redirect(`/dashboard/bridge-loans?error=${encodeURIComponent(`No se pudo borrar: ${error.message}`)}`);
-  }
-
-  revalidatePath("/dashboard/bridge-loans");
-  revalidatePath("/dashboard/cashflow");
+  revalidateBridge();
+  return { ok: true };
 }

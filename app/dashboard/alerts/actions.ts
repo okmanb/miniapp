@@ -1,90 +1,149 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { getActiveScenario, scenarioFilter } from "@/lib/scenarios";
-import { computeAlerts, type AlertType } from "@/lib/alerts";
-import type { DebtScheduleEntry } from "@/lib/debt-engine/schedule";
+import { createClient } from "@/lib/supabase/server";
+import { nextDueDate, snoozeUntil, type AlertKind } from "@/lib/calc/alerts";
+import type { AlertChannel } from "@/lib/data/alert-settings";
 
-// Tipos que este archivo sabe calcular solo — ver lib/alerts. Al
-// refrescar, solo tocamos alertas de ESTOS tipos (las que el
-// usuario pueda haber cargado a mano de otro tipo quedan intactas).
-const AUTO_COMPUTED_TYPES: AlertType[] = ["saldo_creciente", "vencimiento_hoy", "tasa_mas_cara"];
+export type AlertActionResult = { ok: true } | { ok: false; message: string };
 
-export async function refreshAlerts(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const scenario = await getActiveScenario(supabase, user.id);
-  const filter = scenarioFilter(scenario);
-
-  const { data: debts } = await supabase.from("debts").select("*").eq("is_active", true).or(filter);
-  const debtIds = (debts ?? []).map((d) => d.id);
-
-  const { data: entries } =
-    debtIds.length > 0
-      ? await supabase.from("debt_schedule_entries").select("*").in("debt_id", debtIds)
-      : { data: [] as DebtScheduleEntry[] };
-
-  const scheduleEntriesByDebt = new Map<string, DebtScheduleEntry[]>();
-  for (const entry of entries ?? []) {
-    const list = scheduleEntriesByDebt.get(entry.debt_id) ?? [];
-    list.push(entry as DebtScheduleEntry);
-    scheduleEntriesByDebt.set(entry.debt_id, list);
-  }
-
-  const computed = computeAlerts({ debts: debts ?? [], scheduleEntriesByDebt });
-
-  // Los auto-generados anteriores que ya se resolvieron quedan
-  // como registro histórico; solo se limpian los que seguían sin
-  // resolver, para no duplicar la misma alerta cada vez que se
-  // refresca.
-  await supabase
-    .from("alerts")
-    .delete()
-    .eq("scenario_id", scenario.id)
-    .eq("resolved", false)
-    .in("alert_type", AUTO_COMPUTED_TYPES);
-
-  if (computed.length > 0) {
-    await supabase.from("alerts").insert(
-      computed.map((a) => ({
-        user_id: user.id,
-        scenario_id: scenario.id,
-        debt_id: a.debt_id,
-        alert_type: a.alert_type,
-        severity: a.severity,
-        message: a.message,
-      }))
-    );
-  }
-
+function revalidateAlerts() {
   revalidatePath("/dashboard/alerts");
-  redirect("/dashboard/alerts");
+  revalidatePath("/dashboard");
 }
 
-export async function resolveAlert(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+/**
+ * Posponer no descarta.
+ *
+ * La alerta vuelve mañana, o antes si el vencimiento aprieta: posponer no
+ * puede tapar el aviso justo el día que importa. Por eso lo que se guarda es
+ * hasta cuándo, y no un "vista" que la apague para siempre.
+ */
+export async function snoozeAlert(
+  kind: AlertKind,
+  subjectId: string,
+  debtId: string | null
+): Promise<AlertActionResult> {
+  const supabase = await createClient();
 
-  const id = formData.get("id") as string;
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
 
-  const { error } = await supabase
-    .from("alerts")
-    .update({ resolved: true, resolved_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const { data: scenario } = await supabase
+    .from("scenarios")
+    .select("id")
+    .eq("is_active", true)
+    .maybeSingle();
 
-  if (error) {
-    redirect(`/dashboard/alerts?error=${encodeURIComponent(error.message)}`);
+  if (!scenario) return { ok: false, message: "No hay un escenario activo." };
+
+  let dueDate: Date | null = null;
+  if (debtId) {
+    const { data: debt } = await supabase
+      .from("debts")
+      .select("id, name, kind, due_day")
+      .eq("id", debtId)
+      .maybeSingle();
+
+    if (debt) {
+      dueDate = nextDueDate(
+        {
+          id: debt.id,
+          name: debt.name,
+          kind: debt.kind,
+          balance: 0,
+          annualRate: null,
+          monthlyRate: 0,
+          dueDay: debt.due_day,
+          minimumPayment: null,
+        },
+        new Date()
+      );
+    }
   }
 
-  revalidatePath("/dashboard/alerts");
+  const until = snoozeUntil({ dueDate });
+
+  const { error } = await supabase.from("alert_dismissals").upsert(
+    {
+      user_id: auth.user.id,
+      scenario_id: scenario.id,
+      kind,
+      subject_id: subjectId,
+      dismissed_at: new Date().toISOString(),
+      snoozed_until: until.toISOString(),
+    },
+    { onConflict: "scenario_id,kind,subject_id" }
+  );
+
+  if (error) return { ok: false, message: "No pudimos posponer esa alerta." };
+
+  revalidateAlerts();
+  return { ok: true };
+}
+
+export async function unsnoozeAllAlerts(): Promise<AlertActionResult> {
+  const supabase = await createClient();
+
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
+
+  const { data: scenario } = await supabase
+    .from("scenarios")
+    .select("id")
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!scenario) return { ok: false, message: "No hay un escenario activo." };
+
+  const { error } = await supabase
+    .from("alert_dismissals")
+    .delete()
+    .eq("scenario_id", scenario.id);
+
+  if (error) return { ok: false, message: "No pudimos reactivar las alertas." };
+
+  revalidateAlerts();
+  return { ok: true };
+}
+
+export async function saveAlertSettings(settings: {
+  leadDays: number;
+  channels: AlertChannel[];
+  scope: "todas" | "algunas";
+  onlyDebtIds: string[];
+}): Promise<AlertActionResult> {
+  const supabase = await createClient();
+
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
+
+  if (![0, 1, 3, 7].includes(settings.leadDays)) {
+    return { ok: false, message: "Esa anticipación no es una de las opciones." };
+  }
+  // Una preferencia sin canales no es una preferencia: es no avisar, y para eso
+  // están las alertas pospuestas.
+  if (settings.channels.length === 0) {
+    return { ok: false, message: "Dejá al menos un canal activo." };
+  }
+  if (settings.scope === "algunas" && settings.onlyDebtIds.length === 0) {
+    return { ok: false, message: "Elegí al menos una deuda." };
+  }
+
+  const { error } = await supabase.from("alert_settings").upsert(
+    {
+      user_id: auth.user.id,
+      lead_days: settings.leadDays,
+      channels: settings.channels,
+      scope: settings.scope,
+      only_debt_ids: settings.scope === "algunas" ? settings.onlyDebtIds : [],
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+
+  if (error) return { ok: false, message: "No pudimos guardar las preferencias." };
+
+  revalidateAlerts();
+  return { ok: true };
 }

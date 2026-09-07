@@ -1,26 +1,20 @@
-import Link from "next/link";
-import { WalletIcon } from "@/lib/icons";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 
-export default function Home() {
-  return (
-    <main style={{ maxWidth: 480, margin: "80px auto", padding: "0 24px" }}>
-      <h1 style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <WalletIcon width={28} height={28} style={{ color: "var(--primary)" }} />
-        Simulador de deudas
-      </h1>
-      <p style={{ color: "var(--on-surface-variant)", lineHeight: 1.5 }}>
-        Cargá tus deudas y gastos y mantené el estado de tu situación
-        financiera actualizado automáticamente a medida que cambian los
-        datos reales — sin recalcular nada a mano.
-      </p>
-      <p style={{ marginTop: 24, display: "flex", gap: 12 }}>
-        <Link href="/login">
-          <button type="button">Iniciar sesión</button>
-        </Link>
-        <Link href="/signup">
-          <button type="button" style={{ background: "white" }}>Crear cuenta</button>
-        </Link>
-      </p>
-    </main>
-  );
+export const dynamic = "force-dynamic";
+
+/**
+ * Pantalla 00. La raíz ES el onboarding, no una presentación del producto:
+ * el prototipo abre pidiendo la primera deuda, sin cuenta y sin explicar de
+ * qué se trata la app. Alguien que llega acá ya sabe que debe plata.
+ */
+export default async function HomePage() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+
+  // Quien ya tiene sesión no vuelve a pasar por el alta guiada.
+  if (data.user) redirect("/dashboard");
+
+  return <OnboardingFlow />;
 }

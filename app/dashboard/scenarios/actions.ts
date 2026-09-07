@@ -1,180 +1,137 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { ACTIVE_SCENARIO_COOKIE_NAME } from "@/lib/scenarios";
+import { createClient } from "@/lib/supabase/server";
+import { parseArgNumber } from "@/app/dashboard/debts/validation";
 
-export async function updateStartingBalance(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+export type ScenarioResult = { ok: true } | { ok: false; message: string };
 
-  const scenarioId = formData.get("scenario_id") as string;
-  const amount = Number(formData.get("starting_cash_balance"));
+/** Tope de la nota, el mismo que muestra el contador de la pantalla. */
+const NOTE_MAX = 200;
 
-  if (Number.isNaN(amount)) {
-    redirect(`/dashboard/cashflow?error=${encodeURIComponent("Ingresá un saldo válido.")}`);
-  }
-
-  const { error } = await supabase
-    .from("scenarios")
-    .update({ starting_cash_balance: amount })
-    .eq("id", scenarioId)
-    .eq("user_id", user.id);
-
-  if (error) {
-    redirect(`/dashboard/cashflow?error=${encodeURIComponent(error.message)}`);
-  }
-
-  revalidatePath("/dashboard/cashflow");
-  redirect("/dashboard/cashflow");
-}
-
-export async function setActiveScenario(formData: FormData) {
-  const scenarioId = formData.get("scenario_id") as string;
-  const returnTo = (formData.get("return_to") as string) || "/dashboard";
-
-  cookies().set(ACTIVE_SCENARIO_COOKIE_NAME, scenarioId, {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-  });
-
+function revalidateScenarios() {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/cashflow");
   revalidatePath("/dashboard/scenarios");
-  redirect(returnTo);
 }
 
-// Copia deudas + su cronograma de un escenario a otro, recién
-// creado — es lo que permite "arrancar el plan de contingencia
-// desde donde está hoy el plan base" en vez de cargar todo de cero.
-// Los padres (tarjetas) se clonan antes que sus hijas (Plan V) para
-// poder remapear parent_debt_id al id nuevo.
-async function cloneScenarioData(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  fromScenarioId: string,
-  toScenarioId: string
-) {
-  const { data: sourceDebts } = await supabase.from("debts").select("*").eq("scenario_id", fromScenarioId);
-  if (!sourceDebts || sourceDebts.length === 0) return;
+/**
+ * Activar un escenario. La base garantiza que haya uno solo activo por usuario
+ * con un índice único parcial, así que hay que apagar el anterior antes de
+ * prender el nuevo — si no, el índice rechaza el segundo.
+ */
+export async function activateScenario(id: string): Promise<ScenarioResult> {
+  const supabase = await createClient();
 
-  const idMap = new Map<string, string>();
-  const parents = sourceDebts.filter((d) => !d.parent_debt_id);
-  const children = sourceDebts.filter((d) => d.parent_debt_id);
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
 
-  for (const debt of [...parents, ...children]) {
-    const { id, created_at, updated_at, scenario_id, parent_debt_id, ...rest } = debt;
-
-    const { data: cloned, error } = await supabase
-      .from("debts")
-      .insert({
-        ...rest,
-        user_id: userId,
-        scenario_id: toScenarioId,
-        parent_debt_id: parent_debt_id ? idMap.get(parent_debt_id) ?? null : null,
-      })
-      .select()
-      .single();
-
-    if (error || !cloned) continue;
-    idMap.set(id, cloned.id);
-
-    const { data: entries } = await supabase.from("debt_schedule_entries").select("*").eq("debt_id", id);
-    if (entries && entries.length > 0) {
-      await supabase.from("debt_schedule_entries").insert(
-        entries.map((e) => ({
-          debt_id: cloned.id,
-          month: e.month,
-          amount: e.amount,
-          kind: e.kind,
-          is_estimate: e.is_estimate,
-          note: e.note,
-        }))
-      );
-    }
-  }
-}
-
-export async function createScenario(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const name = (formData.get("name") as string)?.trim();
-  const notes = (formData.get("notes") as string)?.trim() || null;
-  const cloneFromId = (formData.get("clone_from") as string) || null;
-
-  if (!name) {
-    redirect(`/dashboard/scenarios?error=${encodeURIComponent("Ponele un nombre al escenario.")}`);
-  }
-
-  const sourceScenario = cloneFromId
-    ? (await supabase.from("scenarios").select("starting_cash_balance").eq("id", cloneFromId).maybeSingle()).data
-    : null;
-
-  const { data: scenario, error } = await supabase
+  const { error: offError } = await supabase
     .from("scenarios")
-    .insert({
-      user_id: user.id,
-      name,
-      notes,
-      is_base: false,
-      starting_cash_balance: sourceScenario?.starting_cash_balance ?? 0,
-    })
-    .select()
-    .single();
+    .update({ is_active: false })
+    .eq("user_id", auth.user.id)
+    .eq("is_active", true);
 
-  if (error || !scenario) {
-    redirect(
-      `/dashboard/scenarios?error=${encodeURIComponent(error?.message ?? "Error creando el escenario.")}`
-    );
-  }
+  if (offError) return { ok: false, message: "No pudimos cambiar de escenario." };
 
-  if (cloneFromId) {
-    await cloneScenarioData(supabase, user.id, cloneFromId, scenario!.id);
-  }
+  const { error } = await supabase.from("scenarios").update({ is_active: true }).eq("id", id);
+  if (error) return { ok: false, message: "No pudimos activar ese escenario." };
 
-  revalidatePath("/dashboard/scenarios");
-  redirect("/dashboard/scenarios");
+  revalidateScenarios();
+  return { ok: true };
 }
 
-export async function deleteScenario(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+/**
+ * Crear un escenario, con o sin plan del que copiar las deudas.
+ *
+ * Lo hace la función create_scenario_from de la base y no cinco inserts acá:
+ * tiene que ser atómica. Un escenario copiado a medias —con las deudas del
+ * original y también con sus ingresos— proyecta el doble de plata entrando y
+ * parece completo, que es peor que no copiarlo.
+ */
+export async function createScenario(formData: FormData): Promise<ScenarioResult> {
+  const supabase = await createClient();
 
-  const scenarioId = formData.get("scenario_id") as string;
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
 
-  const { data: scenario } = await supabase
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { ok: false, message: "Ponele un nombre al escenario." };
+
+  const note = String(formData.get("note") ?? "").trim().slice(0, NOTE_MAX) || null;
+  const seed = String(formData.get("seed") ?? "").trim();
+  const startBalance = parseArgNumber(String(formData.get("starting_balance") ?? "")) ?? 0;
+  const monthlyIncome = parseArgNumber(String(formData.get("monthly_income") ?? "")) ?? 0;
+  const monthlyFixed = parseArgNumber(String(formData.get("monthly_fixed") ?? "")) ?? 0;
+
+  const { count } = await supabase
     .from("scenarios")
-    .select("is_base")
-    .eq("id", scenarioId)
-    .eq("user_id", user.id)
-    .single();
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", auth.user.id);
+  const isFirst = (count ?? 0) === 0;
 
-  if (scenario?.is_base) {
-    redirect(`/dashboard/scenarios?error=${encodeURIComponent("No se puede borrar el plan base.")}`);
+  // Un escenario sin ingresos no es optimista: es incalculable. Se deja crear
+  // igual —hay que poder empezar por las deudas— pero la lista lo va a marcar
+  // como "sin datos para proyectar" en vez de mostrarle un colchón de cero.
+  const { data: newId, error } = await supabase.rpc("create_scenario_from", {
+    source_id: seed || null,
+    new_name: name,
+    new_note: note,
+    start_balance: startBalance,
+    monthly_income: monthlyIncome,
+    monthly_fixed: monthlyFixed,
+  });
+
+  if (error) return { ok: false, message: "No pudimos crear el escenario." };
+
+  // El primero se activa solo. Crear el primero y dejarlo apagado deja la app
+  // en un callejón sin salida: el dashboard pide un escenario activo y no hay
+  // ninguno que activar salvo volviendo acá.
+  if (isFirst && newId) {
+    await supabase.from("scenarios").update({ is_active: true }).eq("id", newId);
   }
 
-  const { error } = await supabase.from("scenarios").delete().eq("id", scenarioId).eq("user_id", user.id);
+  revalidateScenarios();
+  return { ok: true };
+}
 
-  if (error) {
-    redirect(`/dashboard/scenarios?error=${encodeURIComponent(error.message)}`);
-  }
+export async function updateScenarioNote(id: string, note: string): Promise<ScenarioResult> {
+  const supabase = await createClient();
 
-  // Si el escenario borrado era el activo, la cookie queda apuntando
-  // a un id que ya no existe — getActiveScenario cae al base solo
-  // porque el select no encuentra la fila, así que no hace falta
-  // borrar la cookie a mano acá.
-  revalidatePath("/dashboard/scenarios");
-  redirect("/dashboard/scenarios");
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
+
+  const { error } = await supabase
+    .from("scenarios")
+    .update({ note: note.trim().slice(0, NOTE_MAX) || null })
+    .eq("id", id);
+
+  if (error) return { ok: false, message: "No pudimos guardar la nota." };
+
+  revalidateScenarios();
+  return { ok: true };
+}
+
+/**
+ * Copiar un escenario tal cual, con todos sus datos — incluidos los ingresos.
+ * Es distinto de crear uno nuevo copiando las deudas: acá no se reemplaza nada.
+ */
+export async function duplicateScenario(formData: FormData): Promise<ScenarioResult> {
+  const supabase = await createClient();
+
+  const sourceId = String(formData.get("source_id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!sourceId) return { ok: false, message: "Falta el escenario a copiar." };
+  if (!name) return { ok: false, message: "Poné un nombre para la copia." };
+
+  const { error } = await supabase.rpc("copy_scenario", {
+    source_id: sourceId,
+    new_name: name,
+  });
+
+  if (error) return { ok: false, message: "No pudimos copiar el escenario." };
+
+  revalidateScenarios();
+  return { ok: true };
 }

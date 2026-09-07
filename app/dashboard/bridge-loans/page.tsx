@@ -1,212 +1,191 @@
-import { createClient } from "@/lib/supabase/server";
-import { getActiveScenario } from "@/lib/scenarios";
-import { createBridgeLoan, markBridgeLoanRepaid, deleteBridgeLoan } from "./actions";
-import { BridgeIcon, CheckIcon } from "@/lib/icons";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { currentPeriod } from "@/lib/data/dashboard";
+import { deriveBalance, type ExpenseLike } from "@/lib/calc/balance";
+import { monthlyRateFromAnnual } from "@/lib/calc/money";
+import { bridgeCost, compareAgainstWorstDebt, monthsBetween } from "@/lib/calc/bridge";
+import { BRIDGE_COLUMNS, type BridgeLoanRow } from "@/lib/data/bridges";
+import { EmptyState, Screen } from "@/components/ui";
+import { BridgeLoanForm, type WorstDebt } from "@/components/BridgeLoanForm";
+import { BridgeLoanCard, type BridgeCardData } from "@/components/BridgeLoanCard";
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0,
-  }).format(amount);
+export const dynamic = "force-dynamic";
+
+const MONTHS_ES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+function monthTitle(period: string): string {
+  const [year, month] = period.split("-");
+  return `${MONTHS_ES[Number(month) - 1]} ${year}`;
 }
 
-function currentMonthInput() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
+/**
+ * Préstamos puente (pantalla 11).
+ *
+ * Un puente no es una deuda más: entra entero en un mes y hay que devolverlo
+ * entero en otro. Y hay dos estados que no son lo mismo — simulado y tomado —
+ * porque mirar cuánto costaría un préstamo no puede mover la proyección solo.
+ */
+export default async function BridgeLoansPage() {
+  const supabase = await createClient();
+  const period = currentPeriod();
 
-export default async function BridgeLoansPage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
-}) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { data: scenario } = await supabase
+    .from("scenarios")
+    .select("id, name")
+    .eq("is_active", true)
+    .maybeSingle();
 
-  const scenario = await getActiveScenario(supabase, user.id);
+  if (!scenario) {
+    return (
+      <Screen>
+        <Header scenarioName={null} />
+        <div className="mt-4">
+          <EmptyState
+            title="Falta un escenario activo"
+            note="Un puente pertenece a un escenario, para que puedas simularlo sin ensuciar tu plan base."
+          />
+        </div>
+      </Screen>
+    );
+  }
 
-  const { data: loans } = await supabase
-    .from("bridge_loans")
-    .select("*")
-    .eq("scenario_id", scenario.id)
-    .order("received_month");
+  const [loansRes, debtsRes, expensesRes, paymentsRes] = await Promise.all([
+    supabase
+      .from("bridge_loans")
+      .select(BRIDGE_COLUMNS)
+      .eq("scenario_id", scenario.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("debts")
+      .select("id, name, base_balance, annual_interest_rate, tem")
+      .eq("scenario_id", scenario.id)
+      .eq("is_active", true),
+    supabase
+      .from("expenses")
+      .select("debt_id, amount, is_archived, is_recurring, period, ended_period")
+      .eq("scenario_id", scenario.id),
+    supabase
+      .from("debt_payments")
+      .select("debt_id, amount, period, kind")
+      .eq("scenario_id", scenario.id),
+  ]);
 
-  const loansById = new Map((loans ?? []).map((l) => [l.id, l]));
+  const loans = (loansRes.data ?? []) as BridgeLoanRow[];
+  const expenses = (expensesRes.data ?? []) as ExpenseLike[];
+  const payments = paymentsRes.data ?? [];
+
+  // La deuda más cara con saldo abierto: es contra ella que se compara el
+  // costo del puente, porque no pedirlo significa dejar esa plata financiada ahí.
+  const worstDebt: WorstDebt | null = (debtsRes.data ?? [])
+    .map((d) => ({
+      name: d.name,
+      balance: deriveBalance(
+        {
+          id: d.id,
+          base_balance: Number(d.base_balance),
+          annual_interest_rate: d.annual_interest_rate,
+          tem: d.tem,
+        },
+        expenses,
+        payments
+      ),
+      monthlyRate: d.tem != null ? Number(d.tem) : monthlyRateFromAnnual(d.annual_interest_rate),
+      annualRatePercent: d.annual_interest_rate != null ? Number(d.annual_interest_rate) : 0,
+    }))
+    .filter((d) => d.balance > 0 && d.monthlyRate > 0)
+    .sort((a, b) => b.monthlyRate - a.monthlyRate)
+    .map(({ name, monthlyRate, annualRatePercent }) => ({ name, monthlyRate, annualRatePercent }))[0] ?? null;
+
+  const cards: BridgeCardData[] = loans.map((loan) => {
+    const amount = Number(loan.amount);
+    const months = loan.repay_period
+      ? Math.max(1, monthsBetween(loan.taken_period, loan.repay_period))
+      : 1;
+    const ratePercent = loan.monthly_interest_rate != null ? Number(loan.monthly_interest_rate) : null;
+    const cost = bridgeCost({ amount, months, ratePercent });
+    const comparison = worstDebt
+      ? compareAgainstWorstDebt({
+          amount,
+          months,
+          worstMonthlyRate: worstDebt.monthlyRate,
+          bridgeInterest: cost.interest,
+        })
+      : null;
+
+    return {
+      id: loan.id,
+      lender: loan.lender,
+      amount,
+      months,
+      ratePercent,
+      interest: cost.interest,
+      total: cost.total,
+      isTaken: loan.is_taken,
+      repayLabel: loan.repay_period ? monthTitle(loan.repay_period) : "sin fecha",
+      note: loan.note,
+      saving: comparison ? comparison.saving : null,
+      worstDebtName: worstDebt?.name ?? null,
+    };
+  });
 
   return (
-    <main style={{ maxWidth: 560, margin: "60px auto", padding: "0 24px" }}>
-      <p>
-        <Link href="/dashboard/cashflow">← Volver a flujo de caja</Link>
-      </p>
-      <h1 style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <BridgeIcon width={26} height={26} />
-        Préstamos puente
-      </h1>
-      <p style={{ color: "var(--ink-muted)" }}>
-        Un préstamo corto para tapar un mes específico, con devolución programada — a veces
-        encadenado (tomás uno para devolver el anterior). Escenario: {scenario.name}.
-      </p>
+    <Screen>
+      <Header scenarioName={scenario.name} />
 
-      {searchParams.error && <p style={{ color: "var(--led-red)", fontSize: 14 }}>{searchParams.error}</p>}
-
-      {loans && loans.some((l) => !l.repaid) && (
-        <p style={{ marginTop: 20, marginBottom: 0 }}>
-          <span className="stamp-total stamp-total--negative">
-            PENDIENTE DE DEVOLVER: {formatCurrency(loans.filter((l) => !l.repaid).reduce((sum, l) => sum + Number(l.amount), 0))}
-          </span>
-        </p>
+      {cards.length === 0 ? (
+        <div className="mt-4">
+          <EmptyState
+            title="Todavía no agregaste ningún préstamo puente"
+            note="Cargalo abajo cuando tomes uno para tapar un mes específico."
+          />
+        </div>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {cards.map((loan) => (
+            <li key={loan.id}>
+              <BridgeLoanCard loan={loan} />
+            </li>
+          ))}
+        </ul>
       )}
 
-      <section style={{ marginTop: 24 }}>
-        {(!loans || loans.length === 0) && (
-          <p style={{ color: "var(--ink-muted)" }}>Todavía no agregaste ningún préstamo puente.</p>
-        )}
+      <BridgeLoanForm currentPeriod={period} worstDebt={worstDebt} />
+    </Screen>
+  );
+}
 
-        {loans && loans.length > 0 && (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ textAlign: "left", borderBottom: "1px solid var(--board-seam)" }}>
-                <th style={{ padding: "8px 4px" }}>Fuente</th>
-                <th style={{ padding: "8px 4px" }}>Monto</th>
-                <th style={{ padding: "8px 4px" }}>Recibido</th>
-                <th style={{ padding: "8px 4px" }}>Devuelve</th>
-                <th style={{ padding: "8px 4px" }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {loans.map((loan) => {
-                const chainedFrom = loan.chained_from_id ? loansById.get(loan.chained_from_id) : null;
-                return (
-                  <tr key={loan.id} style={{ borderBottom: "1px solid var(--board-seam)" }}>
-                    <td style={{ padding: "8px 4px" }}>
-                      {loan.source}
-                      {chainedFrom && (
-                        <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--ink-muted)" }}>
-                          ← encadenado de {chainedFrom.source}
-                        </p>
-                      )}
-                    </td>
-                    <td style={{ padding: "8px 4px" }}>{formatCurrency(Number(loan.amount))}</td>
-                    <td style={{ padding: "8px 4px" }}>{loan.received_month.slice(0, 7)}</td>
-                    <td style={{ padding: "8px 4px" }}>
-                      {loan.repay_month.slice(0, 7)}
-                      {loan.repaid && (
-                        <span
-                          style={{
-                            color: "var(--led-green)",
-                            fontSize: 12,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                            marginTop: 2,
-                          }}
-                        >
-                          <CheckIcon width={11} height={11} /> devuelto
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: "8px 4px", whiteSpace: "nowrap" }}>
-                      {!loan.repaid && (
-                        <form action={markBridgeLoanRepaid} style={{ display: "inline" }}>
-                          <input type="hidden" name="id" value={loan.id} />
-                          <button type="submit" style={{ background: "none", border: "none", color: "var(--led-green)", cursor: "pointer" }}>
-                            Marcar devuelto
-                          </button>
-                        </form>
-                      )}
-                      <form action={deleteBridgeLoan} style={{ display: "inline", marginLeft: 8 }}>
-                        <input type="hidden" name="id" value={loan.id} />
-                        <button type="submit" style={{ background: "none", border: "none", color: "var(--led-red)", cursor: "pointer" }}>
-                          Borrar
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </section>
+function Header({ scenarioName }: { scenarioName: string | null }) {
+  return (
+    <>
+      <Link
+        href="/dashboard/cashflow"
+        className="inline-flex min-h-touch items-center gap-1.5 text-[12px] text-muted hover:text-leaf"
+      >
+        <span aria-hidden>←</span> Volver a flujo de caja
+      </Link>
 
-      <hr className="ticket-divider" />
+      <h1 className="mt-2 text-screen text-ink">Préstamos puente</h1>
 
-      <section style={{ marginTop: 32 }}>
-        <h2>+ Nuevo préstamo puente</h2>
-        <form action={createBridgeLoan} style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 360 }}>
-          <label>
-            Fuente
-            <input
-              type="text"
-              name="source"
-              required
-              placeholder="ej: MercadoPago, Brubank"
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-            />
-          </label>
-          <label>
-            Monto
-            <input
-              type="number"
-              name="amount"
-              required
-              step="0.01"
-              min="0"
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-            />
-          </label>
-          <label>
-            Mes en que lo recibís
-            <input
-              type="month"
-              name="received_month"
-              required
-              defaultValue={currentMonthInput()}
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-            />
-          </label>
-          <label>
-            Mes en que lo devolvés
-            <input
-              type="month"
-              name="repay_month"
-              required
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-            />
-          </label>
-          <label>
-            Tasa estimada % mensual (opcional)
-            <input
-              type="number"
-              name="estimated_rate"
-              step="0.01"
-              min="0"
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}
-            />
-          </label>
-          <label>
-            ¿Se toma para devolver otro préstamo puente? (opcional)
-            <select name="chained_from_id" defaultValue="" style={{ display: "block", width: "100%", padding: 8, marginTop: 4 }}>
-              <option value="">No, es independiente</option>
-              {(loans ?? [])
-                .filter((l) => !l.repaid)
-                .map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.source} — {formatCurrency(Number(l.amount))} (devuelve {l.repay_month.slice(0, 7)})
-                  </option>
-                ))}
-            </select>
-          </label>
-          <button type="submit" style={{ padding: 10, cursor: "pointer" }}>
-            Agregar préstamo puente
-          </button>
-        </form>
-      </section>
-    </main>
+      <details className="group mt-2">
+        <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
+          Cómo se calcula
+          <span
+            className="transition-transform duration-200 ease-sd group-open:rotate-180"
+            aria-hidden
+          >
+            ⌄
+          </span>
+        </summary>
+        <p className="help mt-1">
+          Un préstamo corto para tapar un mes específico, con devolución programada — a veces
+          encadenado (tomás uno para devolver el anterior). El interés es simple sobre la tasa
+          mensual: un puente de dos meses al 5% cuesta 10%, no 10,25%.
+          {scenarioName ? ` Escenario: ${scenarioName}.` : ""}
+        </p>
+      </details>
+    </>
   );
 }

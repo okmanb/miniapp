@@ -1,121 +1,94 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { extractFormValues, validateDebtForm } from "./validation";
-import { getActiveScenario } from "@/lib/scenarios";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { readDebtInput, validateDebt, hasErrors, type FieldErrors } from "./validation";
 
-export async function createDebt(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const values = extractFormValues(formData);
-  const result = validateDebtForm(values);
-
-  if (!result.valid) {
-    // Mandamos los errores por campo y los valores ya tipeados de
-    // vuelta al form, codificados en la URL, para que el usuario no
-    // pierda lo que ya había cargado.
-    const params = new URLSearchParams({
-      errors: JSON.stringify(result.errors),
-      values: JSON.stringify(values),
-    });
-    redirect(`/dashboard/debts/new?${params.toString()}`);
-  }
-
-  const scenario = await getActiveScenario(supabase, user.id);
-
-  const { error } = await supabase.from("debts").insert({
-    user_id: user.id,
-    scenario_id: scenario.id,
-    ...result.data,
-  });
-
-  if (error) {
-    // Esto ahora solo debería pasar por errores inesperados de DB/red,
-    // no por datos mal formados (ya los filtramos arriba).
-    const params = new URLSearchParams({
-      errors: JSON.stringify({ name: `Error guardando: ${error.message}` }),
-      values: JSON.stringify(values),
-    });
-    redirect(`/dashboard/debts/new?${params.toString()}`);
-  }
-
-  revalidatePath("/dashboard");
-  redirect("/dashboard");
+export interface DebtFormState {
+  errors: FieldErrors;
+  message: string | null;
 }
 
-export async function updateDebt(debtId: string, formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export const EMPTY_STATE: DebtFormState = { errors: {}, message: null };
 
-  if (!user) redirect("/login");
+/**
+ * Alta y edición de una deuda.
+ *
+ * La validación corre acá aunque el formulario ya haya validado en el
+ * cliente: lo del cliente es una cortesía para no hacer ida y vuelta, y un
+ * POST puede llegar sin pasar por él.
+ *
+ * Nunca se escribe un saldo derivado. base_balance es el punto de partida —
+ * el saldo del último resumen— y el saldo vigente sale de sumarle los gastos
+ * abiertos y restarle los pagos.
+ */
+export async function saveDebt(
+  _prev: DebtFormState,
+  formData: FormData
+): Promise<DebtFormState> {
+  const supabase = await createClient();
 
-  const values = extractFormValues(formData);
-  const result = validateDebtForm(values);
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { errors: {}, message: "Tenés que iniciar sesión." };
 
-  if (!result.valid) {
-    const params = new URLSearchParams({
-      errors: JSON.stringify(result.errors),
-      values: JSON.stringify(values),
-    });
-    redirect(`/dashboard/debts/${debtId}/edit?${params.toString()}`);
+  const input = readDebtInput(formData);
+  const errors = validateDebt(input);
+  if (hasErrors(errors)) {
+    return { errors, message: "Revisá los campos marcados." };
   }
 
-  const { error } = await supabase
-    .from("debts")
-    .update(result.data)
-    .eq("id", debtId)
-    .eq("user_id", user.id); // defensa en profundidad además de RLS
+  const id = String(formData.get("id") ?? "");
 
-  if (error) {
-    const params = new URLSearchParams({
-      errors: JSON.stringify({ name: `Error guardando: ${error.message}` }),
-      values: JSON.stringify(values),
+  const values = {
+    name: input.name,
+    kind: input.kind,
+    base_balance: input.baseBalance,
+    annual_interest_rate: input.annualRate,
+    due_day: input.dueDay,
+    installments_total: input.installmentsTotal,
+    installments_paid: input.installmentsPaid ?? 0,
+  };
+
+  if (id) {
+    const { error } = await supabase.from("debts").update(values).eq("id", id);
+    if (error) return { errors: {}, message: "No pudimos guardar los cambios." };
+  } else {
+    const { data: scenario } = await supabase
+      .from("scenarios")
+      .select("id")
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!scenario) {
+      return { errors: {}, message: "No hay un escenario activo donde guardar la deuda." };
+    }
+
+    const { error } = await supabase.from("debts").insert({
+      ...values,
+      user_id: auth.user.id,
+      scenario_id: scenario.id,
+      base_balance_at: new Date().toISOString().slice(0, 10),
     });
-    redirect(`/dashboard/debts/${debtId}/edit?${params.toString()}`);
+    if (error) return { errors: {}, message: "No pudimos crear la deuda." };
   }
 
   revalidatePath("/dashboard");
-  redirect("/dashboard");
+  revalidatePath("/dashboard/cashflow");
+  redirect(id ? `/dashboard/debts/${id}` : "/dashboard");
 }
 
-export async function deleteDebt(formData: FormData) {
-  const supabase = createClient();
-  const debtId = formData.get("debt_id") as string;
+/**
+ * Archivar una deuda. No se borra: sus pagos y resúmenes son historial real, y
+ * borrarla los dejaría huérfanos o se los llevaría puestos.
+ */
+export async function archiveDebt(id: string): Promise<{ ok: boolean; message?: string }> {
+  const supabase = await createClient();
 
-  // RLS ya garantiza que solo puede borrar sus propias deudas, pero
-  // igual filtramos por user_id como defensa en profundidad.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  // Borrar una tarjeta se lleva puestas sus cuotas/refinanciaciones
-  // hijas — no quedan sueltas. El aviso de DeleteDebtButton ya le
-  // dio al usuario la chance de cancelar si no quería perderlas.
-  const { error: childrenError } = await supabase
-    .from("debts")
-    .delete()
-    .eq("parent_debt_id", debtId)
-    .eq("user_id", user.id);
-
-  if (childrenError) {
-    redirect(`/dashboard?error=${encodeURIComponent(`No se pudieron borrar las cuotas vinculadas: ${childrenError.message}`)}`);
-  }
-
-  const { error } = await supabase.from("debts").delete().eq("id", debtId).eq("user_id", user.id);
-
-  if (error) {
-    redirect(`/dashboard?error=${encodeURIComponent(`No se pudo borrar la deuda: ${error.message}`)}`);
-  }
+  const { error } = await supabase.from("debts").update({ is_active: false }).eq("id", id);
+  if (error) return { ok: false, message: "No pudimos archivarla." };
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/cashflow");
+  return { ok: true };
 }

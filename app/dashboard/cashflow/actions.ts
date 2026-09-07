@@ -1,213 +1,55 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { getActiveScenario } from "@/lib/scenarios";
+import { createClient } from "@/lib/supabase/server";
 
-const INCOME_KINDS = ["sueldo", "adelanto", "bono", "aguinaldo", "changa", "otro"] as const;
+export type SaveResult = { ok: true } | { ok: false; message: string };
 
-function validateAmount(raw: string, label: string): string | null {
-  const amount = Number(raw);
-  if (!raw || Number.isNaN(amount)) return `Ingresá un ${label} válido.`;
-  if (amount <= 0) return `El ${label} tiene que ser mayor a 0.`;
-  if (amount > 1_000_000_000_000) return `Ese ${label} parece demasiado alto, revisalo.`;
-  return null;
-}
+/**
+ * Saldo real de partida del escenario activo: cuenta + efectivo de hoy.
+ *
+ * Es el punto desde el que se encadena toda la proyección, así que vive en el
+ * escenario y no en el usuario — el plan de contingencia puede partir de otro
+ * colchón. Se guarda tal como lo escribe la persona: es un dato duro que ella
+ * confirma, no una estimación nuestra.
+ */
+export async function setStartingBalance(formData: FormData): Promise<SaveResult> {
+  const supabase = await createClient();
 
-function currentMonthInput(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
 
-export async function createIncome(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const raw = String(formData.get("starting_balance") ?? "").trim();
+  // Formato argentino: se aceptan puntos de miles y coma decimal.
+  const normalized = raw.replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, "");
+  const value = Number(normalized);
 
-  const name = (formData.get("name") as string)?.trim();
-  const amount = formData.get("amount") as string;
-  const kindRaw = (formData.get("kind") as string) || "otro";
-  const kind = (INCOME_KINDS as readonly string[]).includes(kindRaw) ? kindRaw : "otro";
-  const month = (formData.get("month") as string) || currentMonthInput();
-  const isRecurring = formData.get("is_recurring") === "on";
-
-  const amountError = validateAmount(amount, "monto");
-  if (!name || amountError) {
-    redirect(`/dashboard/cashflow?error=${encodeURIComponent(amountError ?? "Ingresá un nombre.")}`);
+  if (raw === "" || Number.isNaN(value)) {
+    return { ok: false, message: "Escribí un monto, aunque sea 0." };
+  }
+  if (value < 0) {
+    return {
+      ok: false,
+      message: "El saldo de partida no puede ser negativo: si estás en rojo, cargalo como deuda.",
+    };
   }
 
-  const scenario = await getActiveScenario(supabase, user.id);
+  const { data: scenario } = await supabase
+    .from("scenarios")
+    .select("id")
+    .eq("is_active", true)
+    .maybeSingle();
 
-  const { error } = await supabase.from("incomes").insert({
-    user_id: user.id,
-    scenario_id: scenario.id,
-    name,
-    kind,
-    month: `${month}-01`,
-    amount: Number(amount),
-    is_recurring: isRecurring,
-  });
-
-  if (error) {
-    redirect(`/dashboard/cashflow?error=${encodeURIComponent(error.message)}`);
-  }
-
-  revalidatePath("/dashboard/cashflow");
-  redirect("/dashboard/cashflow");
-}
-
-export async function updateIncome(id: string, formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const name = (formData.get("name") as string)?.trim();
-  const amount = formData.get("amount") as string;
-  const kindRaw = (formData.get("kind") as string) || "otro";
-  const kind = (INCOME_KINDS as readonly string[]).includes(kindRaw) ? kindRaw : "otro";
-  const month = (formData.get("month") as string) || currentMonthInput();
-  const isRecurring = formData.get("is_recurring") === "on";
-
-  const amountError = validateAmount(amount, "monto");
-  if (!name || amountError) {
-    redirect(
-      `/dashboard/cashflow/income/${id}/edit?error=${encodeURIComponent(amountError ?? "Ingresá un nombre.")}`
-    );
-  }
+  if (!scenario) return { ok: false, message: "No hay un escenario activo." };
 
   const { error } = await supabase
-    .from("incomes")
-    .update({
-      name,
-      kind,
-      month: `${month}-01`,
-      amount: Number(amount),
-      is_recurring: isRecurring,
-    })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .from("scenarios")
+    .update({ starting_balance: value })
+    .eq("id", scenario.id);
 
-  if (error) {
-    redirect(`/dashboard/cashflow/income/${id}/edit?error=${encodeURIComponent(error.message)}`);
-  }
+  if (error) return { ok: false, message: "No pudimos guardar el saldo." };
 
   revalidatePath("/dashboard/cashflow");
-  redirect("/dashboard/cashflow");
-}
-
-export async function deleteIncome(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const id = formData.get("id") as string;
-  const { error } = await supabase.from("incomes").delete().eq("id", id).eq("user_id", user.id);
-
-  if (error) {
-    redirect(`/dashboard/cashflow?error=${encodeURIComponent(`No se pudo borrar el ingreso: ${error.message}`)}`);
-  }
-
-  revalidatePath("/dashboard/cashflow");
-}
-
-export async function createExpense(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const name = (formData.get("name") as string)?.trim();
-  const amount = formData.get("amount") as string;
-  const month = (formData.get("month") as string) || currentMonthInput();
-  const isRecurring = formData.get("is_recurring") === "on";
-  const paidViaDebtId = (formData.get("paid_via_debt_id") as string) || null;
-
-  const amountError = validateAmount(amount, "monto");
-  if (!name || amountError) {
-    redirect(`/dashboard/cashflow?error=${encodeURIComponent(amountError ?? "Ingresá un nombre.")}`);
-  }
-
-  const scenario = await getActiveScenario(supabase, user.id);
-
-  const { error } = await supabase.from("fixed_expenses").insert({
-    user_id: user.id,
-    scenario_id: scenario.id,
-    name,
-    month: `${month}-01`,
-    amount: Number(amount),
-    is_recurring: isRecurring,
-    paid_via_debt_id: paidViaDebtId,
-  });
-
-  if (error) {
-    redirect(`/dashboard/cashflow?error=${encodeURIComponent(error.message)}`);
-  }
-
-  revalidatePath("/dashboard/cashflow");
-  redirect("/dashboard/cashflow");
-}
-
-export async function updateExpense(id: string, formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const name = (formData.get("name") as string)?.trim();
-  const amount = formData.get("amount") as string;
-  const month = (formData.get("month") as string) || currentMonthInput();
-  const isRecurring = formData.get("is_recurring") === "on";
-  const paidViaDebtId = (formData.get("paid_via_debt_id") as string) || null;
-
-  const amountError = validateAmount(amount, "monto");
-  if (!name || amountError) {
-    redirect(
-      `/dashboard/cashflow/expenses/${id}/edit?error=${encodeURIComponent(amountError ?? "Ingresá un nombre.")}`
-    );
-  }
-
-  const { error } = await supabase
-    .from("fixed_expenses")
-    .update({
-      name,
-      month: `${month}-01`,
-      amount: Number(amount),
-      is_recurring: isRecurring,
-      paid_via_debt_id: paidViaDebtId,
-    })
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    redirect(`/dashboard/cashflow/expenses/${id}/edit?error=${encodeURIComponent(error.message)}`);
-  }
-
-  revalidatePath("/dashboard/cashflow");
-  redirect("/dashboard/cashflow");
-}
-
-export async function deleteExpense(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const id = formData.get("id") as string;
-  const { error } = await supabase.from("fixed_expenses").delete().eq("id", id).eq("user_id", user.id);
-
-  if (error) {
-    redirect(`/dashboard/cashflow?error=${encodeURIComponent(`No se pudo borrar el gasto: ${error.message}`)}`);
-  }
-
-  revalidatePath("/dashboard/cashflow");
+  revalidatePath("/dashboard");
+  return { ok: true };
 }

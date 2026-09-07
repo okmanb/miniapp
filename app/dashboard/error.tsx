@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { FrownIcon } from "@/lib/icons";
+import { ErrorBanner, Screen, SecondaryButton } from "@/components/ui";
 
+/**
+ * Estado de error del dashboard.
+ *
+ * No inventa un saldo ni muestra el último conocido: si no se pudo leer, se
+ * dice que no se pudo leer. Una cifra vieja presentada como actual es peor
+ * que ninguna cifra en una app donde la gente decide cuánto pagar.
+ */
 export default function DashboardError({
   error,
   reset,
@@ -10,28 +16,19 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    // Lo dejamos en la consola del servidor/browser para poder
-    // diagnosticarlo — el usuario ve el mensaje amigable de abajo.
-    console.error("Error en el dashboard:", error);
-  }, [error]);
-
   return (
-    <main style={{ maxWidth: 480, margin: "80px auto", padding: "0 24px", textAlign: "center" }}>
-      <h1 style={{ fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-        <FrownIcon width={22} height={22} />
-        Algo salió mal
-      </h1>
-      <p style={{ color: "var(--ink-muted)" }}>
-        Hubo un error inesperado cargando esta pantalla. No debería haber
-        pasado nada con tus datos — probá de nuevo.
-      </p>
-      <button type="button" onClick={() => reset()} style={{ padding: "10px 20px", cursor: "pointer", marginTop: 12 }}>
-        Reintentar
-      </button>
-      <p style={{ marginTop: 24 }}>
-        <a href="/dashboard">Volver al dashboard</a>
-      </p>
-    </main>
+    <Screen>
+      <h1 className="mb-4 text-screen text-ink">No pudimos cargar tus deudas</h1>
+
+      <ErrorBanner
+        title="La lectura falló"
+        note="No llegamos a leer los datos de este escenario, así que no mostramos ningún saldo: preferimos no mostrarte una cifra que puede estar vieja. Tus datos están intactos."
+        action={<SecondaryButton onClick={reset}>Reintentar</SecondaryButton>}
+      />
+
+      {error.digest && (
+        <p className="mt-3 font-mono text-[11px] text-muted">Referencia: {error.digest}</p>
+      )}
+    </Screen>
   );
 }
