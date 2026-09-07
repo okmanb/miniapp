@@ -15,7 +15,8 @@ import { amortize } from "../lib/calc/amortize";
 // La comparación de la pantalla 03 sale del mismo módulo, a propósito: si el
 // motor cambia, este control tiene que moverse con él.
 import { closeStatement } from "../lib/calc/statement";
-import { parseMoney, formatMoney } from "../lib/calc/money";
+import { parseMoney, formatMoney, monthlyRateFromAnnual } from "../lib/calc/money";
+import { bridgeCost, compareAgainstWorstDebt } from "../lib/calc/bridge";
 import { compareFixedPaymentScenarios } from "../lib/debt-engine/schedule";
 import { calculateStatement } from "../lib/card-statements";
 
@@ -164,6 +165,39 @@ const ahorro =
     ? alMinimo.interest - alDoble.interest
     : null;
 check("ahorro pagando el doble", ahorro, SCREEN_03.ahorro);
+
+console.log("");
+console.log("=== 4. Pantalla 11 contra la cuenta del puente que muestra el prototipo ===\n");
+
+// El prototipo, con $ 800.000 a un mes al 5% mensual y la Visa (98,03% TNA)
+// como deuda mas cara, muestra: interes $ 40.000, total $ 840.000, la
+// alternativa de dejarlo ahi $ 65.353 y un ahorro de $ 25.353.
+const BRIDGE = {
+  monto: 800000,
+  meses: 1,
+  tasaMensual: 5,
+  interes: 40000,
+  total: 840000,
+  alternativa: 65353,
+  ahorro: 25353,
+};
+
+const puente = bridgeCost({
+  amount: BRIDGE.monto,
+  months: BRIDGE.meses,
+  ratePercent: BRIDGE.tasaMensual,
+});
+check("interes del puente", puente.interest, BRIDGE.interes);
+check("total a devolver", puente.total, BRIDGE.total);
+
+const contra = compareAgainstWorstDebt({
+  amount: BRIDGE.monto,
+  months: BRIDGE.meses,
+  worstMonthlyRate: monthlyRateFromAnnual(98.03),
+  bridgeInterest: puente.interest,
+});
+check("interes de dejarlo en la Visa", contra.alternativeInterest, BRIDGE.alternativa);
+check("ahorro del puente", contra.saving, BRIDGE.ahorro);
 
 console.log("");
 console.log("=== Diferencias encontradas ===\n");

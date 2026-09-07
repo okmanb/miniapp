@@ -128,6 +128,12 @@ export function CashflowBoard({
 
       <div className="mt-2 rounded-surface-lg border border-border bg-surface px-4 py-1">
         <BreakdownRow label="Ingresos" value={month.income} />
+        {/*
+          El puente sale como línea propia el mes que entra —es plata que no
+          es tuya y conviene que se note— pero la devolución vuelve adentro de
+          "Deudas del mes": para el mes que la sufre es una obligación más.
+        */}
+        {month.bridgeIn > 0 && <BreakdownRow label="Préstamo puente" value={month.bridgeIn} />}
         <BreakdownRow label="Gastos fijos" value={-month.expenses} />
         <BreakdownRow label="Deudas del mes" value={-month.debtDue} />
         <BreakdownRow label="Te queda" value={month.net} emphasis />

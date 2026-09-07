@@ -29,10 +29,27 @@ export interface CashflowMonth {
   period: string;
   income: number;
   expenses: number;
+  /** Incluye la devolución de los puentes que vencen este mes. */
   debtDue: number;
+  /** Plata de un préstamo puente que entra este mes. */
+  bridgeIn: number;
+  /** La parte de debtDue que es devolución de puentes. */
+  bridgeDue: number;
   net: number;
   cumulative: number;
   severity: Severity;
+}
+
+/**
+ * Un puente ya resuelto en dos movimientos: lo que entra y lo que hay que
+ * devolver. El costo ya viene sumado en repayTotal — acá no se calculan
+ * tasas, solo se ubican los dos movimientos en su mes.
+ */
+export interface BridgeFlow {
+  takenPeriod: string;
+  amount: number;
+  repayPeriod: string | null;
+  repayTotal: number;
 }
 
 export type Severity = "ok" | "justo" | "rojo1" | "rojo2" | "rojo3";
@@ -80,6 +97,11 @@ export function projectCashflow(params: {
   expenses: ExpenseLike[];
   /** Obligación de deuda por período: mínimos, cuotas y pagos comprometidos. */
   debtDueFor: (period: string) => number;
+  /**
+   * Puentes TOMADOS. Los simulados no van: mirar cuánto costaría un préstamo
+   * no puede mover la proyección solo.
+   */
+  bridges?: BridgeFlow[];
 }): CashflowResult {
   const months: CashflowMonth[] = [];
   let cumulative = params.startBalance;
@@ -95,8 +117,20 @@ export function projectCashflow(params: {
       .filter((e) => e.debt_id === null && expenseAppliesTo(e, period))
       .reduce((sum, e) => sum + Number(e.amount), 0);
 
-    const debtDue = params.debtDueFor(period);
-    const net = income - expenses - debtDue;
+    const bridges = params.bridges ?? [];
+    const bridgeIn = bridges
+      .filter((b) => b.takenPeriod === period)
+      .reduce((sum, b) => sum + b.amount, 0);
+
+    // La devolución del puente se suma a las deudas del mes y no sale como
+    // línea aparte: para el mes que la sufre es una obligación más, y el
+    // desglose ya la deja ver por el salto contra los otros meses.
+    const bridgeDue = bridges
+      .filter((b) => b.repayPeriod === period)
+      .reduce((sum, b) => sum + b.repayTotal, 0);
+
+    const debtDue = params.debtDueFor(period) + bridgeDue;
+    const net = income + bridgeIn - expenses - debtDue;
     cumulative += net;
 
     months.push({
@@ -104,6 +138,8 @@ export function projectCashflow(params: {
       income,
       expenses,
       debtDue,
+      bridgeIn,
+      bridgeDue,
       net,
       cumulative,
       severity: severityOf(cumulative),

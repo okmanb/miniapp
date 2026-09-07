@@ -35,6 +35,9 @@ create table if not exists scenarios (
   -- del usuario: el plan de contingencia puede partir de otro colchón.
   starting_balance numeric(14, 2) not null default 0,
   is_active boolean not null default false,
+  -- Para acordarse después de qué se cambió en este plan. La lista de
+  -- escenarios los muestra todos parecidos; la nota es lo que los distingue.
+  note text,
   created_at timestamptz not null default now()
 );
 
@@ -332,7 +335,11 @@ create table if not exists bridge_loans (
   amount numeric(14, 2) not null,
   taken_period text not null check (taken_period ~ '^\d{4}-\d{2}$'),
   repay_period text check (repay_period ~ '^\d{4}-\d{2}$'),
-  annual_interest_rate numeric(8, 4),
+  -- Tasa MENSUAL y simple, como la pide la pantalla: costo = monto * tasa * meses.
+  monthly_interest_rate numeric(8, 4),
+  -- Simulado no es tomado: mirar cuanto costaria no puede mover la proyeccion
+  -- sola. Solo los tomados entran al flujo de caja.
+  is_taken boolean not null default false,
   note text,
   created_at timestamptz not null default now()
 );
@@ -354,7 +361,8 @@ create policy "puentes propios" on bridge_loans
 
 create type alert_kind as enum (
   'saldo_creciente', 'doble_conteo', 'mes_no_reflejado',
-  'gasto_no_capturado', 'vencimiento_hoy', 'tasa_mas_cara'
+  'gasto_no_capturado', 'vencimiento_hoy', 'tasa_mas_cara',
+  'mes_no_cierra', 'cuotas_fijas'
 );
 
 create table if not exists alert_dismissals (
@@ -366,12 +374,39 @@ create table if not exists alert_dismissals (
   -- silenciar toda una categoría de alerta de por vida.
   subject_id text not null,
   dismissed_at timestamptz not null default now(),
+  -- Posponer no descarta: la alerta vuelve manana, o antes si el vencimiento
+  -- aprieta. Lo que se guarda es hasta cuando.
+  snoozed_until timestamptz not null default now(),
   unique (scenario_id, kind, subject_id)
 );
 
 alter table alert_dismissals enable row level security;
 
 create policy "descartes propios" on alert_dismissals
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- -----------------------------------------------------------------------------
+-- Preferencias de aviso: cuándo, por dónde y sobre qué deudas.
+--
+-- Van por usuario y no por escenario: la preferencia es de la persona, y
+-- cambiar de escenario no debería cambiar cómo le avisamos.
+-- -----------------------------------------------------------------------------
+
+create table if not exists alert_settings (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  -- Cuántos días antes del vencimiento avisamos. 0 = el mismo día.
+  lead_days smallint not null default 3 check (lead_days in (0, 1, 3, 7)),
+  -- Al menos un canal: una preferencia vacía es no tener preferencia.
+  channels text[] not null default '{push}' check (array_length(channels, 1) >= 1),
+  -- 'todas' | 'algunas'. Con 'algunas' manda only_debt_ids.
+  scope text not null default 'todas' check (scope in ('todas', 'algunas')),
+  only_debt_ids uuid[] not null default '{}',
+  updated_at timestamptz not null default now()
+);
+
+alter table alert_settings enable row level security;
+
+create policy "preferencias propias" on alert_settings
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- -----------------------------------------------------------------------------
@@ -407,8 +442,8 @@ begin
     raise exception 'escenario inexistente o sin acceso';
   end if;
 
-  insert into scenarios (user_id, name, starting_balance, is_active)
-  select user_id, new_name, starting_balance, false
+  insert into scenarios (user_id, name, starting_balance, is_active, note)
+  select user_id, new_name, starting_balance, false, note
   from scenarios where id = source_id
   returning id into new_scen_id;
 
@@ -487,8 +522,15 @@ begin
   select user_id, new_scen_id, description, amount, kind, eligible_months, period, ended_period
   from incomes where scenario_id = source_id;
 
-  insert into bridge_loans (user_id, scenario_id, lender, amount, taken_period, repay_period, annual_interest_rate, note)
-  select user_id, new_scen_id, lender, amount, taken_period, repay_period, annual_interest_rate, note
+  -- Un puente simulado en el original sigue simulado en la copia: copiar un
+  -- plan para probar variantes no es tomar la plata.
+  insert into bridge_loans (
+    user_id, scenario_id, lender, amount, taken_period, repay_period,
+    monthly_interest_rate, is_taken, note
+  )
+  select
+    user_id, new_scen_id, lender, amount, taken_period, repay_period,
+    monthly_interest_rate, is_taken, note
   from bridge_loans where scenario_id = source_id;
 
   return new_scen_id;

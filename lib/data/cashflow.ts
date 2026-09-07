@@ -4,6 +4,7 @@ import { deriveBalance, type ExpenseLike } from "@/lib/calc/balance";
 import { projectCashflow, addMonths, type CashflowResult, type IncomeLike } from "@/lib/calc/cashflow";
 import { currentPeriod } from "@/lib/data/dashboard";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
+import { BRIDGE_COLUMNS, toBridgeFlows, type BridgeLoanRow } from "@/lib/data/bridges";
 
 /**
  * Lectura de la pantalla de flujo de caja.
@@ -64,7 +65,7 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
   if (scenarioError) throw scenarioError;
   if (!scenario) return null;
 
-  const [debtsRes, expensesRes, paymentsRes, incomesRes, scheduleRes, statementsRes, plansRes] =
+  const [debtsRes, expensesRes, paymentsRes, incomesRes, scheduleRes, statementsRes, plansRes, bridgesRes] =
     await Promise.all([
       supabase
         .from("debts")
@@ -97,9 +98,10 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
         .select("id, debt_id, description, cupon, first_period, total_installments, installment_amount")
         .eq("scenario_id", scenario.id)
         .eq("is_active", true),
+      supabase.from("bridge_loans").select(BRIDGE_COLUMNS).eq("scenario_id", scenario.id),
     ]);
 
-  for (const res of [debtsRes, expensesRes, paymentsRes, incomesRes, scheduleRes, statementsRes, plansRes]) {
+  for (const res of [debtsRes, expensesRes, paymentsRes, incomesRes, scheduleRes, statementsRes, plansRes, bridgesRes]) {
     if (res.error) throw res.error;
   }
 
@@ -110,6 +112,7 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
   const schedule = scheduleRes.data ?? [];
   const statements = statementsRes.data ?? [];
   const plans = plansRes.data ?? [];
+  const bridges = toBridgeFlows((bridgesRes.data ?? []) as BridgeLoanRow[]);
 
   const period = currentPeriod();
 
@@ -183,6 +186,7 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
     incomes,
     expenses,
     debtDueFor: (p) => scheduleByPeriod.get(p) ?? totalDue,
+    bridges,
   });
 
   return {

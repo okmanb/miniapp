@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { deriveBalance, recurringChargeFor, type ExpenseLike } from "@/lib/calc/balance";
 import { explainGrowth, type GrowthCause } from "@/lib/calc/statement";
+import { BRIDGE_COLUMNS, toBridgeFlows, type BridgeLoanRow } from "@/lib/data/bridges";
 import {
   projectCashflow,
   monthName,
@@ -103,7 +104,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
   if (scenarioError) throw scenarioError;
   if (!scenario) return null;
 
-  const [debtsRes, expensesRes, paymentsRes, statementsRes, incomesRes, scheduleRes, plansRes] =
+  const [debtsRes, expensesRes, paymentsRes, statementsRes, incomesRes, scheduleRes, plansRes, bridgesRes] =
     await Promise.all([
       supabase
         .from("debts")
@@ -136,9 +137,10 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
         .select("debt_id, first_period, total_installments, installment_amount")
         .eq("scenario_id", scenario.id)
         .eq("is_active", true),
+      supabase.from("bridge_loans").select(BRIDGE_COLUMNS).eq("scenario_id", scenario.id),
     ]);
 
-  for (const res of [debtsRes, expensesRes, paymentsRes, statementsRes, incomesRes, scheduleRes, plansRes]) {
+  for (const res of [debtsRes, expensesRes, paymentsRes, statementsRes, incomesRes, scheduleRes, plansRes, bridgesRes]) {
     if (res.error) throw res.error;
   }
 
@@ -243,6 +245,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
     incomes,
     expenses,
     debtDueFor,
+    bridges: toBridgeFlows((bridgesRes.data ?? []) as BridgeLoanRow[]),
   });
 
   const today = new Date().getDate();

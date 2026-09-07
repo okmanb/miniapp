@@ -29,6 +29,10 @@ export default function CashflowPreview() {
       income: INCOME,
       expenses: EXPENSES,
       debtDue: INCOME - EXPENSES - net,
+      // El prototipo muestra esta pantalla sin puentes tomados: la línea de
+      // "Préstamo puente" no aparece, y el banco de pruebas tiene que dar lo mismo.
+      bridgeIn: 0,
+      bridgeDue: 0,
       net,
       cumulative: CUMULATIVE[i],
       severity: severityOf(CUMULATIVE[i]),

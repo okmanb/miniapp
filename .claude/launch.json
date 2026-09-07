@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3000,
       "autoPort": false
+    },
+    {
+      "name": "prototipo",
+      "runtimeExecutable": "C:/Python314/python.exe",
+      "runtimeArgs": ["-m", "http.server", "8100", "--directory", "handoff"],
+      "port": 8100,
+      "autoPort": false
     }
   ]
 }
