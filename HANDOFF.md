@@ -1,20 +1,19 @@
 # Dónde quedó esto — para retomar
 
 Fecha: 7 de septiembre de 2026. Escrito al cerrar una sesión larga y actualizado al cerrar
-la siguiente, que comparó las pantallas 07 a 16 contra el prototipo.
+la siguiente, que comparó las dieciséis pantallas contra el prototipo, arregló lo que
+apareció y dejó la aplicación desplegada.
 
 ---
 
-## Lo primero: nada de esto está desplegado
+## Lo primero: esto ya está desplegado
 
-```
-main   →  bd19b15   el boilerplate viejo + handoff/     ← esto es lo que sirve Vercel
-reset  →  38 commits por delante                        ← esto es la aplicación
-```
+`reset` se mergeó a `main` y se pusheó. Vercel construyó y `mini-app-factory-okmanb.vercel.app`
+sirve la aplicación — detrás de la Deployment Protection, así que hoy solo la ve el dueño de
+la cuenta. Dos cosas que **no** se resolvieron solas y siguen pendientes: sacar esa
+protección, y asociar `llegas.vercel.app` al proyecto (ver pendientes 2 y 3).
 
-`main` **no tiene ni uno** de los archivos nuevos. La rama `reset` está completa, con el
-build limpio y `npm audit` en cero, pero sin mergear. Es la primera decisión pendiente y
-es del usuario.
+La rama `reset` se conserva apuntando al mismo commit.
 
 ## La app
 
@@ -98,16 +97,14 @@ Esta distinción importa más que la lista de pantallas, porque marca dónde bus
 | Los tres parsers de PDF | Resúmenes reales de BBVA y Patagonia |
 | El esquema | Probado en la base: `copy_scenario` con dos tarjetas homónimas |
 | La capa de datos | La app y Postgres derivan el mismo saldo |
-| Pantallas 07 a 11 | Medidas contra el prototipo renderizado, con su banco de pruebas propio |
+| Pantallas 04, 06 y 07 a 11 | Medidas contra el prototipo renderizado, con su banco de pruebas propio |
 | El puente, el plan y las cuotas | Sus cifras, contra las que muestra el prototipo, al peso |
 
 ### NO verificado — acá es donde hay bugs
 
-**Las pantallas 07 a 16 ya se compararon** contra el prototipo (sesión del 7 de septiembre,
-a la tarde). Lo que sigue sin mirarse:
+**Las dieciséis pantallas ya se compararon** contra el prototipo (sesión del 7 de
+septiembre, a la tarde). Lo que sigue sin mirarse:
 
-- Las pantallas **04** (editar deuda) y **06** (resumen del mes), que nunca entraron en
-  ninguna de las dos pasadas.
 - Todo lo nuevo de esta tanda **con datos reales**. El banco de pruebas
   (`/dev-preview/pantallas`) verifica el layout y las cifras con el dataset del prototipo,
   pero ninguna de estas pantallas se ejercitó con una sesión de verdad: no se probó cargar
@@ -115,30 +112,45 @@ a la tarde). Lo que sigue sin mirarse:
   otro, ni borrar todos los datos.
 - El flujo de **recuperar clave por código**, que depende de una plantilla de Supabase que
   todavía hay que tocar (ver pendientes).
+- El **deploy en sí**. `main` ya está desplegado, pero la URL está detrás de la Deployment
+  Protection de Vercel y no se puede abrir sin la cuenta.
 
 El patrón de la sesión anterior se repitió y conviene recordarlo: donde se comparó contra
 algo real apareció un bug; donde se razonó sin dato, se inventó. Los cinco que aparecieron
 esta vez están en la sección siguiente.
 
-## Lo que la comparación 07–16 encontró
+## Lo que la comparación de pantallas encontró
 
-Cinco bugs reales, no diferencias de gusto:
+Siete bugs reales, no diferencias de gusto. Los dos primeros aparecieron al mirar las
+pantallas 04 y 06, que eran las últimas sin comparar:
 
-1. **Los préstamos puente no llegaban al flujo.** `bridge_loans` se escribía y no lo leía
+1. **Cinco formularios rompían la pantalla entera antes de pintar nada.** Cuatro archivos
+   `"use server"` exportaban una constante además de sus funciones (`EMPTY_STATE` y
+   compañía). Eso compila, pero en el cliente la constante llega como `undefined`:
+   `useActionState` arranca sin estado y la primera lectura de `state.errors` revienta.
+   Caían agregar deuda, editar deuda, ingresos, registrar pago y cargar resumen. **Regla
+   para el futuro: un archivo `"use server"` solo puede exportar funciones asíncronas.**
+
+1. **Los préstamos entraban al flujo con cuota cero.** La obligación mensual salía del
+   mínimo del último resumen, y un préstamo no tiene resúmenes. La proyección los ignoraba
+   y el alcance del mes daba más holgado de lo que es. Lo destapó el campo "PAGO MENSUAL
+   ESTIMADO" del prototipo, que acá no existía.
+
+2. **Los préstamos puente no llegaban al flujo.** `bridge_loans` se escribía y no lo leía
    nadie: `projectCashflow` nunca supo de su existencia. La pantalla 11 estaba completa y
    era decorativa, y el mensaje de éxito del formulario decía "Miralo en el flujo".
 
-2. **El plan destructor numeraba en orden de ataque, no de cancelación.** Son dos órdenes
+3. **El plan destructor numeraba en orden de ataque, no de cancelación.** Son dos órdenes
    distintos: la deuda de tasa más alta suele ser la más grande y cae última. Con el orden
    de ataque, la frase "libera $X por mes para la siguiente" era falsa en cada fila.
 
-3. **La pantalla de alertas prometía un chequeo que la app no hacía.** `mes_no_reflejado`
+4. **La pantalla de alertas prometía un chequeo que la app no hacía.** `mes_no_reflejado`
    estaba en el enum y en la lista de "Qué miramos", y `deriveAlerts` nunca lo emitía.
 
-4. **Las alertas no traían ni cifra ni destino.** El prototipo da a cada una su número
+5. **Las alertas no traían ni cifra ni destino.** El prototipo da a cada una su número
    etiquetado y un botón al lugar donde se resuelve; la lista mostraba título y flecha.
 
-5. **El menos de `formatMoney` era un guion y no U+2212.** En cifras tabulares el menos
+6. **El menos de `formatMoney` era un guion y no U+2212.** En cifras tabulares el menos
    matemático mide lo mismo que un dígito y el guion no, así que cualquier columna de
    montos con signo se desalineaba sola. Afecta a toda la app.
 
@@ -154,27 +166,34 @@ Y dos diferencias que quedaron a propósito, con su razón:
 
 ## Pendientes concretos
 
-1. **Mergear `reset` a `main`** (o apuntar Vercel a `reset`). Nada se ve hasta que pase.
-   Era el paso siguiente al terminar la comparación de pantallas.
-2. **`llegas.vercel.app` devuelve `DEPLOYMENT_NOT_FOUND`.** El dominio ya está enrutado a
-   la cuenta pero sin deployment asociado; se resuelve solo en el próximo deploy a
-   producción. `mini-app-factory-okmanb.vercel.app` sigue sirviendo mientras tanto.
-3. **Deployment Protection está activa.** La URL redirige a `vercel.com/login`: hoy solo la
-   ve el dueño de la cuenta. Se saca en *Project Settings → Deployment Protection*.
+Ninguno bloquea a los demás; el 1 y el 2 son los que hacen que alguien más pueda verla.
+
+1. **`llegas.vercel.app` devuelve 404 y NO se arregla solo.** Se probó: se desplegó `main` a
+   producción y el dominio siguió en 404 cinco minutos después. No está asociado al
+   proyecto — hay que agregarlo en *Project Settings → Domains* de `mini-app-factory`. El
+   deploy sí funcionó: `mini-app-factory-okmanb.vercel.app` y su alias de `main` responden,
+   con la protección puesta.
+2. **Deployment Protection está activa.** La URL redirige al login de Vercel: hoy solo la ve
+   el dueño de la cuenta. Se saca en *Project Settings → Deployment Protection*.
+3. **La plantilla "Reset password" de Supabase tiene que incluir `{{ .Token }}`.** Recuperar
+   la clave pide un código de 6 dígitos, como el prototipo; con la plantilla por defecto
+   llega el link de siempre y la pantalla espera un código que nunca aparece. No se puede
+   hacer con el acceso que tuvo esta sesión: las plantillas son configuración de Auth, no
+   SQL, y viven detrás de la Management API con un personal access token. El `curl` está
+   más abajo.
 4. **Supabase → Authentication → URL Configuration**: agregar el dominio de producción a
-   Redirect URLs. Sin eso, confirmar mail y recuperar clave fallan en producción. (El
-   login con clave anda igual.) Los callbacks ya no dependen de `NEXT_PUBLIC_APP_URL`: se
-   derivan del request, así que funcionan en local, preview y producción sin configurar.
+   Redirect URLs. Sin eso, confirmar mail y recuperar clave fallan en producción. (El login
+   con clave anda igual.) Los callbacks ya no dependen de `NEXT_PUBLIC_APP_URL`: se derivan
+   del request, así que funcionan en local, preview y producción sin configurar.
 5. **Activar la protección de contraseñas filtradas** en Supabase Auth. El linter la marca
    desactivada.
-6. **La plantilla "Reset password" de Supabase tiene que incluir `{{ .Token }}`.** Recuperar
-   la clave ahora pide un código de 6 dígitos, como el prototipo. Con la plantilla por
-   defecto llega el link de siempre y la pantalla se queda esperando un código que nunca
-   aparece. Va en *Authentication → Email Templates → Reset password*.
-7. **Borrar el esquema `backup_pre_reset`** cuando el modelo nuevo esté verificado. Tiene
-   el snapshot de los datos viejos (33 deudas, 28 consumos) y es la única copia.
-8. **El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)** sigue en el repo como
+6. **Borrar el esquema `backup_pre_reset`** cuando el modelo nuevo esté verificado. Tiene el
+   snapshot de los datos viejos (33 deudas, 28 consumos) y es la única copia. Sigue ahí.
+7. **El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)** sigue en el repo como
    control cruzado. Decidir si se borra.
+8. **`public.rls_auto_enable()` es ejecutable por `anon`.** Lo marca el linter de Supabase.
+   Es un objeto de la plataforma, no nuestro, y es una función de event trigger: llamarla
+   por RPC falla sola. Bajo riesgo, pero conviene revocarle el EXECUTE.
 
 ---
 
@@ -192,6 +211,17 @@ como `supabase/migration_003_*.sql` y `_004_*.sql`. `supabase/schema.sql` quedó
 - `alert_kind`: se sumaron `mes_no_cierra` y `cuotas_fijas`.
 - Tabla nueva `alert_settings` (cuándo, por dónde y sobre qué deudas).
 - Función nueva `create_scenario_from`, y `copy_scenario` al día con las columnas nuevas.
+- `debts`: se sumó `monthly_payment` (migración 005), la cuota de una deuda sin resumen.
+
+### La plantilla del código de recuperación
+
+Va en *Authentication → Email Templates → Reset password*, o por la Management API con un
+token de https://supabase.com/dashboard/account/tokens:
+
+```bash
+curl -X PATCH "https://api.supabase.com/v1/projects/udhqdbpjhifeotgoqaoa/config/auth"   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"   -H "Content-Type: application/json"   -d '{"mailer_subjects_recovery":"Tu código para volver a entrar",
+       "mailer_templates_recovery_content":"<h2>Tu código</h2><p>Escribí este código en ¿Llegás? para poner una clave nueva:</p><p style=\"font-size:28px;letter-spacing:6px\"><b>{{ .Token }}</b></p><p>Vence en unos minutos. Si no lo pediste, ignorá este mail.</p>"}'
+```
 
 ## Diferencias de cálculo que hay que conocer
 
