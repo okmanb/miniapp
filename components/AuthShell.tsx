@@ -13,7 +13,8 @@ export function AuthShell({
   children,
 }: {
   title: string;
-  note: string;
+  /** Vacío cuando la bajada cambia con el paso y la pone el propio contenido. */
+  note?: string;
   children: ReactNode;
 }) {
   return (
@@ -23,7 +24,7 @@ export function AuthShell({
       </Link>
 
       <h1 className="mt-6 text-screen text-ink">{title}</h1>
-      <p className="help mt-1.5">{note}</p>
+      {note ? <p className="help mt-1.5">{note}</p> : null}
 
       {children}
     </main>

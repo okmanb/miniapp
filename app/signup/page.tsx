@@ -34,27 +34,37 @@ export default async function SignupPage({
   return (
     <AuthShell
       title="Crear cuenta"
-      note="Vas a cargar deudas y sueldos, así que esto queda en tu cuenta y no en el navegador."
+      note="Creás la cuenta y todo lo que cargues se guarda solo, sin volver a empezar."
     >
       <form action={signup} className="mt-6">
-        <AuthField id="email" label="Mail" type="email" autoComplete="email" />
+        <AuthField id="name" label="Nombre" type="text" autoComplete="name" />
+        <AuthField id="email" label="Email" type="email" autoComplete="email" />
         <AuthField
           id="password"
           label="Clave"
           type="password"
           autoComplete="new-password"
-          help="Al menos seis caracteres. Usá una que no uses en el banco."
+          help="Mínimo 8 caracteres. Usá una que no uses en el banco."
         />
+
+        <p className="help mt-4">
+          Guardamos tus deudas y tu plan en tu cuenta. No pedimos acceso a tu banco ni a tus
+          tarjetas.
+        </p>
 
         {query.error && <AuthError message={query.error} />}
 
-        <AuthSubmit>Crear cuenta</AuthSubmit>
+        <AuthSubmit>
+          Crear cuenta
+          <span className="ml-1" aria-hidden>
+            &rarr;
+          </span>
+        </AuthSubmit>
       </form>
 
       <p className="mt-5 text-[12px] text-muted">
-        ¿Ya tenés una?{" "}
         <Link href="/login" className="text-pine underline underline-offset-2">
-          Entrar
+          Ya tengo cuenta
         </Link>
       </p>
     </AuthShell>

@@ -13,32 +13,34 @@ export default async function LoginPage({
 
   return (
     <AuthShell
-      title="Entrar"
-      note="Tus deudas, tu proyección y tus escenarios te esperan donde los dejaste."
+      title="Ingresar"
+      note="Entrás y recuperás tus deudas, tu flujo y tu plan tal como los dejaste."
     >
       <form action={login} className="mt-6">
-        <AuthField id="email" label="Mail" type="email" autoComplete="email" />
+        <AuthField id="email" label="Email" type="email" autoComplete="email" />
         <AuthField id="password" label="Clave" type="password" autoComplete="current-password" />
 
         {query.error && <AuthError message={query.error} />}
 
-        <AuthSubmit>Entrar</AuthSubmit>
+        <div className="mt-2 text-right text-[12px]">
+          <Link href="/recuperar" className="text-pine underline underline-offset-2">
+            Olvidé mi clave
+          </Link>
+        </div>
+
+        <AuthSubmit>
+          Ingresar
+          <span className="ml-1" aria-hidden>
+            &rarr;
+          </span>
+        </AuthSubmit>
       </form>
 
-      <div className="mt-5 space-y-2 text-[12px]">
-        <p className="text-muted">
-          ¿Todavía no tenés cuenta?{" "}
-          <Link href="/signup" className="text-pine underline underline-offset-2">
-            Crear una
-          </Link>
-        </p>
-        <p className="text-muted">
-          ¿Te olvidaste la clave?{" "}
-          <Link href="/recuperar" className="text-pine underline underline-offset-2">
-            Recuperarla
-          </Link>
-        </p>
-      </div>
+      <p className="mt-5 text-[12px] text-muted">
+        <Link href="/signup" className="text-pine underline underline-offset-2">
+          Todavía no tengo cuenta
+        </Link>
+      </p>
     </AuthShell>
   );
 }

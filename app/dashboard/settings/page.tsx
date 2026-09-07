@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/auth-actions";
 import { Card, Screen, Amount } from "@/components/ui";
+import { DeleteAllDataForm } from "@/components/DeleteAllDataForm";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,14 @@ export default async function SettingsPage() {
   const supabase = await createClient();
 
   const { data: auth } = await supabase.auth.getUser();
+
+  // El nombre que se cargó al crear la cuenta, si se cargó. Encabezar Ajustes
+  // con una persona y no con una dirección de mail es todo lo que hace ese dato.
+  const fullName =
+    typeof auth.user?.user_metadata?.full_name === "string"
+      ? auth.user.user_metadata.full_name.trim()
+      : "";
+  const displayName = fullName || auth.user?.email || "Sin cuenta";
 
   const { data: scenario } = await supabase
     .from("scenarios")
@@ -46,7 +55,7 @@ export default async function SettingsPage() {
   ];
 
   const LINKS = [
-    { label: "Alertas", note: "Qué miramos y por qué", href: "/dashboard/alerts" },
+    { label: "Alertas y avisos", note: "Cuándo y por dónde te avisamos", href: "/dashboard/alerts" },
     { label: "Historial de pagos", note: "Todo lo que registraste", href: "/dashboard/payments" },
     { label: "Escenarios", note: "Con qué supuestos proyectamos", href: "/dashboard/scenarios" },
     { label: "Préstamos puente", note: "Plata que entra un mes y se devuelve en otro", href: "/dashboard/bridge-loans" },
@@ -64,12 +73,21 @@ export default async function SettingsPage() {
       <h1 className="mt-2 text-screen text-ink">Ajustes</h1>
 
       <Card className="mt-4 px-4 py-4">
-        <div className="text-card text-ink">{auth.user?.email ?? "Sin cuenta"}</div>
+        <div className="text-card text-ink">{displayName}</div>
         <p className="mt-1 text-[11.5px] text-muted">
+          {fullName ? `${auth.user?.email} · ` : ""}
           Escenario activo: {scenario?.name ?? "ninguno"}
         </p>
+      </Card>
 
-        <dl className="mt-3 grid grid-cols-2 gap-2 border-t border-border-row pt-3">
+      {/*
+        Los rotulos de seccion salen del prototipo y hacen falta: sin ellos la
+        pantalla es una lista de nueve cosas sin jerarquia, y la ultima —que
+        borra todo— queda al lado de un enlace cualquiera.
+      */}
+      <h2 className="mt-6 text-label uppercase text-muted">Tus datos</h2>
+      <Card className="mt-2 px-4 py-4">
+        <dl className="grid grid-cols-2 gap-2">
           {STATS.map((stat) => (
             <Link
               key={stat.label}
@@ -93,7 +111,8 @@ export default async function SettingsPage() {
         </dl>
       </Card>
 
-      <div className="mt-4 space-y-2">
+      <h2 className="mt-6 text-label uppercase text-muted">Preferencias</h2>
+      <div className="mt-2 space-y-2">
         {LINKS.map((link) => (
           <Link
             key={link.href}
@@ -111,7 +130,9 @@ export default async function SettingsPage() {
         ))}
       </div>
 
-      <form action={logout} className="mt-6">
+      <h2 className="mt-6 text-label uppercase text-muted">Cuenta</h2>
+
+      <form action={logout} className="mt-2">
         <button
           type="submit"
           className="flex min-h-touch w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
@@ -119,6 +140,8 @@ export default async function SettingsPage() {
           Cerrar sesión
         </button>
       </form>
+
+      <DeleteAllDataForm />
     </Screen>
   );
 }
