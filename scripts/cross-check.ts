@@ -17,6 +17,7 @@ import { amortize } from "../lib/calc/amortize";
 import { closeStatement } from "../lib/calc/statement";
 import { parseMoney, formatMoney, monthlyRateFromAnnual } from "../lib/calc/money";
 import { bridgeCost, compareAgainstWorstDebt } from "../lib/calc/bridge";
+import { simulatePayoff, formatMonthSpan } from "../lib/calc/payoff";
 import { compareFixedPaymentScenarios } from "../lib/debt-engine/schedule";
 import { calculateStatement } from "../lib/card-statements";
 
@@ -198,6 +199,56 @@ const contra = compareAgainstWorstDebt({
 });
 check("interes de dejarlo en la Visa", contra.alternativeInterest, BRIDGE.alternativa);
 check("ahorro del puente", contra.saving, BRIDGE.ahorro);
+
+console.log("");
+console.log("=== 5. Pantalla 08 contra el plan que muestra el prototipo ===\n");
+
+// El prototipo, con avalancha y $ 500.000 de extra sobre el dataset base,
+// muestra 2 anios y 7 meses, $ 78.862.408 de interes total, y este orden de
+// CANCELACION (que no es el de ataque: la mas cara suele caer ultima).
+const PLAN = {
+  extra: 500000,
+  plazo: "2 anos y 7 meses",
+  interes: 78862408,
+  orden: [
+    "Prestamo 1 BBVA",
+    "Mastercard Black ...3311",
+    "Prestamo 2 BBVA",
+    "Mastercard Banco Patagonia ...4139",
+    "Visa Signature ...2166",
+  ],
+};
+
+const plan = simulatePayoff({
+  debts: DEBTS.map((d, i) => ({
+    id: String(i),
+    name: d.name,
+    kind: /Prestamo/i.test(d.name) ? "prestamo_personal" : "tarjeta",
+    balance: d.saldo,
+    minimum: parseMoney(d.min),
+    monthlyRate: monthlyRateFromAnnual(d.tna),
+    recurringCharge: 0,
+  })),
+  extraPerMonth: PLAN.extra,
+  strategy: "avalancha",
+});
+
+check("interes total del plan", plan.totalInterest, PLAN.interes);
+
+const plazo = formatMonthSpan(plan.totalMonths).replace(/ñ/g, "n");
+console.log(
+  "  " + (plazo === PLAN.plazo ? "= " : "!=") + " plazo del plan: nuestro " + plazo + " . prototipo " + PLAN.plazo
+);
+if (plazo !== PLAN.plazo) note("Pantalla 08 - plazo: nuestro " + plazo + ", prototipo " + PLAN.plazo + ".");
+
+const orden = plan.debts
+  .filter((d) => d.clearedMonth !== null && d.clearedMonth > 0)
+  .sort((a, b) => a.clearedMonth! - b.clearedMonth! || a.order - b.order)
+  .map((d) => d.name.replace(/…/g, "..."));
+
+const mismoOrden = orden.length === PLAN.orden.length && orden.every((n, i) => n === PLAN.orden[i]);
+console.log("  " + (mismoOrden ? "= " : "!=") + " orden de cancelacion: " + orden.join(" > "));
+if (!mismoOrden) note("Pantalla 08 - orden de cancelacion: nuestro " + orden.join(" > ") + ".");
 
 console.log("");
 console.log("=== Diferencias encontradas ===\n");

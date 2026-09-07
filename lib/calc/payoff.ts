@@ -20,6 +20,8 @@ const MAX_MONTHS = 600;
 export interface PayoffDebtInput {
   id: string;
   name: string;
+  /** Tipo de deuda, para poder decirlo en la lista del plan. */
+  kind: string;
   balance: number;
   /** Pago mínimo mensual comprometido. */
   minimum: number;
@@ -32,9 +34,34 @@ export interface PayoffDebtInput {
 export interface PayoffDebtResult {
   id: string;
   name: string;
+  kind: string;
+  /**
+   * Lo que libera por mes al cancelarse: su mínimo. Es el motor del plan —el
+   * mínimo de la que cae se suma al pozo de la siguiente— y por eso va en el
+   * resultado y no se recalcula en la pantalla.
+   */
+  minimum: number;
   /** Mes (1-based) en que queda cancelada. null = no se cancela. */
   clearedMonth: number | null;
   order: number;
+}
+
+/**
+ * "31" -> "2 años y 7 meses". El plazo de un plan de deuda se piensa en años,
+ * no en meses: "31 meses" obliga a hacer la cuenta de cabeza justo cuando la
+ * cifra ya es difícil de mirar.
+ */
+export function formatMonthSpan(months: number | null): string {
+  if (months === null) return "más de 50 años";
+  if (months === 0) return "ya está en cero";
+
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  const restLabel = rest === 1 ? "1 mes" : `${rest} meses`;
+  if (years === 0) return restLabel;
+
+  const yearLabel = years === 1 ? "1 año" : `${years} años`;
+  return rest ? `${yearLabel} y ${restLabel}` : yearLabel;
 }
 
 export interface PayoffResult {
@@ -68,7 +95,14 @@ export function simulatePayoff(params: {
       strategy: params.strategy,
       totalMonths: 0,
       totalInterest: 0,
-      debts: debts.map((d, i) => ({ id: d.id, name: d.name, clearedMonth: 0, order: i })),
+      debts: debts.map((d, i) => ({
+        id: d.id,
+        name: d.name,
+        kind: d.kind,
+        minimum: d.minimum,
+        clearedMonth: 0,
+        order: i,
+      })),
       alreadyClear: debts.length,
     };
   }
@@ -124,6 +158,8 @@ export function simulatePayoff(params: {
     debts: order.map((d, i) => ({
       id: d.id,
       name: d.name,
+      kind: d.kind,
+      minimum: d.minimum,
       clearedMonth: d.cleared,
       order: i,
     })),
