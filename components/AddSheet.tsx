@@ -74,14 +74,31 @@ export function AddSheet() {
           marginBottom: 8,
         }}
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M12 5v14M5 12h14"
-            stroke="currentColor"
-            strokeWidth="2.6"
-            strokeLinecap="round"
-          />
-        </svg>
+        {/*
+          La rotación va en este span y no en el botón: el botón tiene su
+          propia transición para el estado presionado, y rotarlo entero
+          arrastraría también el anillo y la sombra. Acá gira solo el ícono,
+          que es lo que convierte el + en una ×.
+
+          180ms con la curva del sistema, medido del prototipo.
+        */}
+        <span
+          data-motion-move
+          className="flex"
+          style={{
+            transform: open ? "rotate(45deg)" : "rotate(0deg)",
+            transition: "transform 180ms cubic-bezier(.23,1,.32,1)",
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path
+              d="M12 5v14M5 12h14"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
       </button>
 
       {open && (

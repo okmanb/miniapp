@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { appOrigin } from "@/lib/app-url";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -30,7 +31,7 @@ export async function signup(formData: FormData) {
     options: {
       // A donde vuelve el usuario después de clickear el link de
       // confirmación que le llega por email.
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      emailRedirectTo: `${await appOrigin()}/auth/callback`,
     },
   });
 
@@ -60,7 +61,7 @@ export async function requestPasswordReset(formData: FormData) {
 
   if (email) {
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      redirectTo: `${await appOrigin()}/auth/callback`,
     });
   }
 
