@@ -11,9 +11,11 @@ import { InstallmentGroup } from "@/components/InstallmentGroup";
 import { AlertCard, SnoozedRow } from "@/components/AlertCard";
 import { BridgeLoanCard } from "@/components/BridgeLoanCard";
 import { ScenarioComparison } from "@/components/ScenarioComparison";
+import { DebtForm } from "@/components/DebtForm";
+import { StatementForm } from "@/components/StatementForm";
 
 /**
- * Banco de pruebas de las pantallas 07 a 11.
+ * Banco de pruebas de las pantallas 04, 06 y 07 a 11.
  *
  * Existe solo en desarrollo y sirve para una cosa: poner cada bloque nuevo al
  * lado del prototipo renderizado y compararlos sin necesidad de una sesión ni
@@ -176,6 +178,41 @@ export default function ScreensPreview() {
         y 7 meses con {formatMoney(78_862_408)} de interés, las cuotas {formatMoney(433_422)} de
         saldo total, y el puente {formatMoney(25_353)} de ahorro.
       </Note>
+
+      <Section title="04 · Editar deuda">
+        <DebtForm
+          initial={{
+            id: "preview",
+            name: "Prestamo 2 BBVA",
+            kind: "prestamo_personal",
+            baseBalance: 5_738_552,
+            annualRate: 74.9,
+            monthlyPayment: 716_569,
+            dueDay: null,
+            installmentsTotal: 24,
+            installmentsPaid: 7,
+          }}
+        />
+      </Section>
+
+      <Section title="06 · Resumen del mes">
+        <StatementForm
+          cards={[
+            {
+              id: "0",
+              name: "Mastercard Banco Patagonia …4139",
+              balance: 3_386_911,
+              monthlyRate: monthlyRateFromAnnual(83.8),
+            },
+          ]}
+          defaultDebtId="0"
+          defaultPeriod="2026-08"
+        />
+        <p className="help mt-2">
+          El prototipo muestra, con la Patagonia: saldo anterior $ 3.386.911, interés del mes
+          $ 236.519 y nuevo saldo $ 3.623.430 (+236.519).
+        </p>
+      </Section>
 
       <Section title="07 · Escenarios — comparación">
         <ScenarioComparison

@@ -89,6 +89,12 @@ create table if not exists debts (
   -- La letra chica del mínimo cambia por banco; el default vive en el código.
   min_payment_formula jsonb,
 
+  -- Cuota mensual de una deuda que no tiene resumen. Una tarjeta trae su
+  -- mínimo en el resumen; un préstamo no trae nada, y sin esto entraba al
+  -- flujo con cuota cero — la proyección lo ignoraba y el mes daba más
+  -- holgado de lo que es.
+  monthly_payment numeric(14, 2),
+
   account_last4 text,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
@@ -460,7 +466,7 @@ begin
       user_id, scenario_id, name, kind, base_balance, base_balance_at,
       annual_interest_rate, tem, credit_limit, due_day, closing_day,
       installments_total, installments_paid, min_payment_formula,
-      account_last4, is_active
+      monthly_payment, account_last4, is_active
     )
     values (
       old_debt.user_id, new_scen_id, old_debt.name, old_debt.kind,
@@ -468,7 +474,7 @@ begin
       old_debt.annual_interest_rate, old_debt.tem, old_debt.credit_limit,
       old_debt.due_day, old_debt.closing_day, old_debt.installments_total,
       old_debt.installments_paid, old_debt.min_payment_formula,
-      old_debt.account_last4, old_debt.is_active
+      old_debt.monthly_payment, old_debt.account_last4, old_debt.is_active
     )
     returning id into copied_debt_id;
 

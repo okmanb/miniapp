@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { saveDebt, EMPTY_STATE, type DebtFormState } from "@/app/dashboard/debts/actions";
+import { saveDebt } from "@/app/dashboard/debts/actions";
+import { EMPTY_STATE, type DebtFormState } from "@/app/dashboard/debts/form-state";
 import { DEBT_KINDS } from "@/app/dashboard/debts/validation";
 import { Spinner } from "./ui";
 
@@ -21,6 +22,7 @@ export interface DebtFormValues {
   baseBalance?: number | null;
   annualRate?: number | null;
   dueDay?: number | null;
+  monthlyPayment?: number | null;
   installmentsTotal?: number | null;
   installmentsPaid?: number | null;
 }
@@ -32,6 +34,13 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
   return (
     <form action={formAction} className="mt-4">
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
+
+      {/*
+        Las tres secciones salen del prototipo. No son decoración: separan lo
+        que identifica la deuda de lo que se calcula con ella, y sin ellas
+        siete campos seguidos se leen todos con el mismo peso.
+      */}
+      <Section title="Identificación" first />
 
       <Field
         id="name"
@@ -64,6 +73,8 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         </select>
       </Field>
 
+      <Section title="Montos" />
+
       <Field
         id="base_balance"
         label="Saldo actual"
@@ -72,6 +83,8 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
       >
         <MoneyInput id="base_balance" name="base_balance" defaultValue={initial.baseBalance} />
       </Field>
+
+      <Section title="Tasa y pago" />
 
       <Field
         id="annual_interest_rate"
@@ -93,6 +106,20 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
             %
           </span>
         </div>
+      </Field>
+
+      {/*
+        La cuota es el único dato que hace pesar a un préstamo en la
+        proyección: no tiene resumen del que sacarle un mínimo. Sin esto
+        entraba al flujo con cero y el mes daba más holgado de lo que es.
+      */}
+      <Field
+        id="monthly_payment"
+        label="Pago mensual estimado"
+        error={state.errors.monthlyPayment}
+        help="Para un préstamo, la cuota que pagás todos los meses. Una tarjeta no lo necesita: su mínimo sale del resumen y pisa este valor."
+      >
+        <MoneyInput id="monthly_payment" name="monthly_payment" defaultValue={initial.monthlyPayment} />
       </Field>
 
       <Field
@@ -193,6 +220,16 @@ function MoneyInput({
         className="min-h-touch w-full bg-transparent px-2 font-mono text-[15px] text-ink outline-none placeholder:text-muted"
       />
     </div>
+  );
+}
+
+function Section({ title, first = false }: { title: string; first?: boolean }) {
+  return (
+    <h2
+      className={`text-label uppercase text-muted ${first ? "" : "mt-8 border-t border-border-row pt-5"}`}
+    >
+      {title}
+    </h2>
   );
 }
 

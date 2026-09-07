@@ -5,14 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { closeStatement } from "@/lib/calc/statement";
 import { parseArgNumber } from "@/app/dashboard/debts/validation";
-
-export interface StatementState {
-  message: string | null;
-  /** Gastos cargados a mano que el resumen podría estar duplicando. */
-  pendingDuplicates?: { id: string; description: string; amount: number }[];
-}
-
-export const EMPTY_STATEMENT_STATE: StatementState = { message: null };
+import type { StatementState } from "./form-state";
 
 /** Lo que manda el formulario cuando el PDF detectó compras en cuotas. */
 interface ParsedInstallmentInput {

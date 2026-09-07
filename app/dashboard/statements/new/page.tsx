@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StatementForm } from "@/components/StatementForm";
+import { monthlyRateFromAnnual } from "@/lib/calc/money";
 import { EmptyState, PrimaryButton, Screen } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export default async function NewStatementPage({
   const { data: cards } = scenario
     ? await supabase
         .from("debts")
-        .select("id, name")
+        .select("id, name, base_balance, annual_interest_rate, tem")
         .eq("scenario_id", scenario.id)
         .eq("kind", "tarjeta")
         .eq("is_active", true)
@@ -45,11 +46,25 @@ export default async function NewStatementPage({
         <span aria-hidden>←</span> Volver
       </Link>
 
-      <h1 className="mt-2 text-screen text-ink">Cargar el resumen del mes</h1>
-      <p className="help mt-1">
-        Con estos cuatro números alcanza. El saldo de la tarjeta pasa a ser el que cierra este
-        resumen, y los gastos que hayas cargado a mano se archivan porque ya vienen adentro.
-      </p>
+      <h1 className="mt-2 text-screen text-ink">Agregar resumen del mes</h1>
+
+      <details className="group mt-2">
+        <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
+          Cómo funciona
+          <span
+            className="transition-transform duration-200 ease-sd group-open:rotate-180"
+            aria-hidden
+          >
+            ⌄
+          </span>
+        </summary>
+        <p className="help mt-1">
+          Con estos cuatro números alcanza. El saldo anterior y el interés se calculan solos; vos
+          confirmás los consumos nuevos, el pago mínimo y cuánto pagaste realmente. El saldo de la
+          tarjeta pasa a ser el que cierra este resumen, y los gastos que hayas cargado a mano se
+          archivan porque ya vienen adentro.
+        </p>
+      </details>
 
       {!cards || cards.length === 0 ? (
         <div className="mt-4">
@@ -61,7 +76,15 @@ export default async function NewStatementPage({
         </div>
       ) : (
         <StatementForm
-          cards={cards}
+          cards={cards.map((c) => ({
+            id: c.id,
+            name: c.name,
+            balance: Number(c.base_balance),
+            // La misma prioridad que el resto de la app: la TEM cargada manda
+            // sobre la TNA cuando están las dos.
+            monthlyRate:
+              c.tem != null ? Number(c.tem) : monthlyRateFromAnnual(c.annual_interest_rate),
+          }))}
           defaultDebtId={query.deuda}
           defaultPeriod={previousPeriod()}
         />

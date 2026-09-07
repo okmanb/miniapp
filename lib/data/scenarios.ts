@@ -67,7 +67,7 @@ export const getScenarioBoard = cache(async function getScenarioBoard(): Promise
     await Promise.all([
       supabase
         .from("debts")
-        .select("id, scenario_id, base_balance, annual_interest_rate, tem")
+        .select("id, scenario_id, base_balance, annual_interest_rate, tem, monthly_payment")
         .eq("is_active", true),
       supabase
         .from("expenses")
@@ -110,6 +110,7 @@ export const getScenarioBoard = cache(async function getScenarioBoard(): Promise
       base_balance: number | string;
       annual_interest_rate: number | null;
       tem: number | null;
+      monthly_payment: number | string | null;
     }[];
     const expenses = (expensesBy.get(scenario.id) ?? []) as unknown as ExpenseLike[];
     const payments = (paymentsBy.get(scenario.id) ?? []) as unknown as {
@@ -133,7 +134,9 @@ export const getScenarioBoard = cache(async function getScenarioBoard(): Promise
     // compromiso y no una estimación.
     const totalMinimums = debts.reduce((sum, d) => {
       const latest = statements.find((s) => s.debt_id === d.id);
-      return sum + (latest?.minimum_payment != null ? Number(latest.minimum_payment) : 0);
+      if (latest?.minimum_payment != null) return sum + Number(latest.minimum_payment);
+      // Un préstamo no tiene resumen: su cuota es lo único que lo hace pesar.
+      return sum + (d.monthly_payment != null ? Number(d.monthly_payment) : 0);
     }, 0);
 
     const scheduleByPeriod = new Map<string, number>();

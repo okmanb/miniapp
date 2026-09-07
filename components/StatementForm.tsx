@@ -1,13 +1,11 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
-import {
-  saveStatement,
-  EMPTY_STATEMENT_STATE,
-  type StatementState,
-} from "@/app/dashboard/statements/actions";
+import { useActionState, useMemo, useRef, useState, useTransition } from "react";
+import { saveStatement } from "@/app/dashboard/statements/actions";
+import { EMPTY_STATEMENT_STATE, type StatementState } from "@/app/dashboard/statements/form-state";
 import { parseStatementPdf, type ParseResult } from "@/app/dashboard/statements/parse-actions";
-import { formatMoney, formatUsd } from "@/lib/calc/money";
+import { formatMoney, formatUsd, parseMoney } from "@/lib/calc/money";
+import { closeStatement } from "@/lib/calc/statement";
 import { Spinner } from "./ui";
 
 /**
@@ -24,12 +22,21 @@ import { Spinner } from "./ui";
  * de texto. Confirmar es un acto aparte, porque la consecuencia (que esos
  * gastos dejen de sumar al saldo) no se ve hasta después.
  */
+export interface StatementCard {
+  id: string;
+  name: string;
+  /** Saldo de arranque de la tarjeta: el saldo anterior de este resumen. */
+  balance: number;
+  /** Tasa mensual en decimal. */
+  monthlyRate: number;
+}
+
 export function StatementForm({
   cards,
   defaultDebtId,
   defaultPeriod,
 }: {
-  cards: { id: string; name: string }[];
+  cards: StatementCard[];
   defaultDebtId?: string;
   defaultPeriod: string;
 }) {
@@ -48,8 +55,38 @@ export function StatementForm({
   const [newCharges, setNewCharges] = useState("");
   const [minimum, setMinimum] = useState("");
   const [paid, setPaid] = useState("");
+  const [payKind, setPayKind] = useState<PayKind>("variable");
 
   const needsConfirm = Boolean(state.pendingDuplicates?.length);
+
+  const card = cards.find((c) => c.id === debtId) ?? null;
+
+  // Cómo queda la tarjeta, con la misma función que va a correr el servidor al
+  // guardar. Es la cuenta que decide si conviene pagar el mínimo o algo más, y
+  // esa decisión se toma antes de guardar, no después.
+  const preview = useMemo(() => {
+    if (!card) return null;
+    return closeStatement({
+      previousBalance: card.balance,
+      annualRate: card.monthlyRate * 12 * 100,
+      newCharges: parseMoney(newCharges),
+      minimumPayment: parseMoney(minimum),
+      amountPaid: parseMoney(paid),
+    });
+  }, [card, newCharges, minimum, paid]);
+
+  /**
+   * El tipo de pago no es un dato aparte: es un atajo que escribe "cuánto
+   * pagaste". Guardarlo como una tercera cifra abriría la puerta a que diga
+   * "pago total" y el monto no lo sea.
+   */
+  function pickPayKind(kind: PayKind) {
+    setPayKind(kind);
+    if (kind === "minimo") setPaid(minimum);
+    if (kind === "total" && preview) {
+      setPaid(String(Math.round(card!.balance + preview.interest + parseMoney(newCharges))));
+    }
+  }
 
   function readPdf(file: File) {
     startParsing(async () => {
@@ -70,7 +107,7 @@ export function StatementForm({
   return (
     <>
       <section className="mt-4 rounded-surface-lg border border-dashed border-border-dash bg-surface-sunken px-4 py-4">
-        <h2 className="text-card text-ink">Subir el PDF</h2>
+        <h2 className="text-card text-ink">Resumen en PDF</h2>
         <p className="help mt-1">
           Lo leemos y completamos los campos de abajo. No se guarda nada hasta que revises y
           confirmes.
@@ -104,14 +141,20 @@ export function StatementForm({
         {parsed?.ok && <ParseSummary parsed={parsed} />}
       </section>
 
-      <form action={formAction} className="mt-5">
+      <form action={formAction} className="mt-6">
+        <h2 className="text-[15px] font-semibold text-ink">Revisá los montos</h2>
+        <p className="help mt-1">
+          El saldo anterior y el interés se calculan solos. Vos confirmás los consumos nuevos, el
+          pago mínimo y cuánto pagaste realmente. Si no subiste el PDF, cargalos a mano acá.
+        </p>
+
         {needsConfirm && <input type="hidden" name="confirmed" value="1" />}
         {/* Las cuotas detectadas viajan enteras: se guardan al confirmar. */}
         {parsed?.ok && parsed.installments && parsed.installments.length > 0 && (
           <input type="hidden" name="installments" value={JSON.stringify(parsed.installments)} />
         )}
 
-        <label htmlFor="debt_id" className="block text-label uppercase text-muted">
+        <label htmlFor="debt_id" className="mt-5 block text-label uppercase text-muted">
           Tarjeta
         </label>
         <select
@@ -152,14 +195,14 @@ export function StatementForm({
 
         <MoneyField
           id="new_charges"
-          label="Consumos del período"
-          help="Lo que gastaste en el mes, sin contar las cuotas que ya venían."
+          label="Consumos nuevos (sin contar cuotas)"
+          help="No incluyas las cuotas — esas ya las tiene cargadas el sistema."
           value={newCharges}
           onChange={setNewCharges}
         />
         <MoneyField
           id="minimum_payment"
-          label="Pago mínimo"
+          label="Pago mínimo del resumen"
           help="El que exige el banco. Es el que usamos para avisarte si el saldo va a crecer."
           value={minimum}
           onChange={setMinimum}
@@ -167,10 +210,40 @@ export function StatementForm({
         <MoneyField
           id="amount_paid"
           label="Cuánto pagaste"
-          help="Dejalo en cero si todavía no pagaste este resumen."
+          help="Si pagás menos que el mínimo se suma un punitorio del 3% sobre la diferencia. Dejalo en cero si todavía no pagaste."
           value={paid}
-          onChange={setPaid}
+          onChange={(v) => {
+            setPaid(v);
+            setPayKind("variable");
+          }}
         />
+
+        <fieldset className="mt-5">
+          <legend className="text-label uppercase text-muted">Tipo de pago</legend>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {PAY_KINDS.map((k) => (
+              <button
+                key={k.value}
+                type="button"
+                onClick={() => pickPayKind(k.value)}
+                aria-pressed={payKind === k.value}
+                disabled={k.value !== "variable" && !card}
+                className="min-h-touch rounded-pill border px-[14px] py-2 text-[12px] font-semibold transition-colors duration-150 ease-sd disabled:opacity-50"
+                style={{
+                  backgroundColor: payKind === k.value ? "#0E3A31" : "#FFFFFF",
+                  borderColor: payKind === k.value ? "#0E3A31" : "#DEE3DD",
+                  color: payKind === k.value ? "#FFFFFF" : "#5C6B65",
+                }}
+              >
+                {k.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        {card && preview && (
+          <StatementPreview card={card} close={preview} />
+        )}
 
         {state.message && (
           <div
@@ -223,10 +296,93 @@ export function StatementForm({
           className="mt-6 flex min-h-touch w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
         >
           {pending && <Spinner className="text-white" />}
-          {needsConfirm ? "Entiendo, archivar esos gastos y guardar" : "Guardar el resumen"}
+          {needsConfirm ? "Entiendo, archivar esos gastos y guardar" : "Agregar resumen"}
         </button>
       </form>
     </>
+  );
+}
+
+type PayKind = "variable" | "minimo" | "total";
+
+const PAY_KINDS: { value: PayKind; label: string }[] = [
+  { value: "variable", label: "Pago variable (lo que pude pagar)" },
+  { value: "minimo", label: "Pago mínimo" },
+  { value: "total", label: "Pago total" },
+];
+
+/**
+ * Cómo queda la tarjeta si se guarda esto.
+ *
+ * Sale de la misma función que va a correr el servidor, no de una segunda
+ * cuenta: si difirieran, el número que decide el pago sería distinto del que
+ * termina guardado. Y el punitorio se nombra cuando aparece, porque un saldo
+ * que sube $ 9.000 más de lo esperado sin decir por qué es exactamente la
+ * clase de sorpresa que esta app existe para evitar.
+ */
+function StatementPreview({
+  card,
+  close,
+}: {
+  card: StatementCard;
+  close: ReturnType<typeof closeStatement>;
+}) {
+  return (
+    <div className="mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3">
+      <div className="text-label uppercase text-muted">Cómo queda {card.name}</div>
+
+      <div className="mt-2 space-y-1">
+        <PreviewRow label="Saldo anterior" value={formatMoney(card.balance)} />
+        <PreviewRow label="Interés del mes" value={formatMoney(close.interest)} />
+        {close.lateFee > 0 && (
+          <PreviewRow
+            label="Punitorio por pagar menos que el mínimo"
+            value={formatMoney(close.lateFee)}
+            tone="brick"
+          />
+        )}
+      </div>
+
+      <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-border-row pt-2">
+        <span className="text-card text-ink">Nuevo saldo</span>
+        <span className="text-right">
+          <span className="block font-mono text-[15px] font-semibold text-ink">
+            {formatMoney(close.newBalance)}
+          </span>
+          <span
+            className="block font-mono text-[11px]"
+            style={{ color: close.delta > 0 ? "#823123" : "#175F42" }}
+          >
+            {close.delta > 0 ? "+" : ""}
+            {formatMoney(close.delta)}
+          </span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function PreviewRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "brick";
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className="text-[11.5px]" style={{ color: tone === "brick" ? "#823123" : "#5C6B65" }}>
+        {label}
+      </span>
+      <span
+        className="shrink-0 font-mono text-[13px]"
+        style={{ color: tone === "brick" ? "#823123" : "#12211D" }}
+      >
+        {value}
+      </span>
+    </div>
   );
 }
 

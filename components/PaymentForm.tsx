@@ -1,11 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import {
-  createPayment,
-  EMPTY_PAYMENT_STATE,
-  type PaymentState,
-} from "@/app/dashboard/payments/actions";
+import { createPayment } from "@/app/dashboard/payments/actions";
+import { EMPTY_PAYMENT_STATE, type PaymentState } from "@/app/dashboard/payments/form-state";
 import { Spinner } from "./ui";
 
 export function PaymentForm({

@@ -34,6 +34,7 @@ export interface DebtInput {
   dueDay: number | null;
   installmentsTotal: number | null;
   installmentsPaid: number | null;
+  monthlyPayment: number | null;
 }
 
 export type FieldErrors = Partial<Record<keyof DebtInput, string>>;
@@ -56,6 +57,7 @@ export function readDebtInput(formData: FormData): DebtInput {
     dueDay: parseArgNumber(String(formData.get("due_day") ?? "")),
     installmentsTotal: parseArgNumber(String(formData.get("installments_total") ?? "")),
     installmentsPaid: parseArgNumber(String(formData.get("installments_paid") ?? "")),
+    monthlyPayment: parseArgNumber(String(formData.get("monthly_payment") ?? "")),
   };
 }
 
@@ -104,6 +106,10 @@ export function validateDebt(input: DebtInput): FieldErrors {
     ) {
       errors.installmentsPaid = "No podés tener más cuotas pagadas que el total.";
     }
+  }
+
+  if (input.monthlyPayment !== null && input.monthlyPayment < 0) {
+    errors.monthlyPayment = "La cuota no puede ser negativa.";
   }
 
   return errors;

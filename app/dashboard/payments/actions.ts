@@ -5,12 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { parseArgNumber } from "@/app/dashboard/debts/validation";
 import { currentPeriod } from "@/lib/data/dashboard";
-
-export interface PaymentState {
-  message: string | null;
-}
-
-export const EMPTY_PAYMENT_STATE: PaymentState = { message: null };
+import type { PaymentState } from "./form-state";
 
 /**
  * Registrar un pago.

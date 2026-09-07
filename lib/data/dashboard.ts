@@ -106,7 +106,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
     await Promise.all([
       supabase
         .from("debts")
-        .select("id, name, kind, base_balance, annual_interest_rate, tem, due_day")
+        .select("id, name, kind, base_balance, annual_interest_rate, tem, due_day, monthly_payment")
         .eq("scenario_id", scenario.id)
         .eq("is_active", true),
       supabase
@@ -171,7 +171,17 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
 
     const recurringCharge = recurringChargeFor(d.id, expenses, period);
     const latest = statements.find((s) => s.debt_id === d.id);
-    const minimumPayment = latest?.minimum_payment != null ? Number(latest.minimum_payment) : null;
+
+    // El mínimo del último resumen es el dato preferido: lo dice el banco. Una
+    // deuda sin resumen —un préstamo— no tiene ninguno, y ahí manda la cuota
+    // que la persona cargó. Sin ese respaldo el préstamo entraba al flujo con
+    // cuota cero y la proyección lo ignoraba por completo.
+    const minimumPayment =
+      latest?.minimum_payment != null
+        ? Number(latest.minimum_payment)
+        : d.monthly_payment != null
+          ? Number(d.monthly_payment)
+          : null;
 
     const paid = payments
       .filter((p) => p.debt_id === d.id)

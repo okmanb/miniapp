@@ -5,12 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { parseArgNumber } from "@/app/dashboard/debts/validation";
 import { currentPeriod } from "@/lib/data/dashboard";
-
-export interface IncomeState {
-  message: string | null;
-}
-
-export const EMPTY_INCOME_STATE: IncomeState = { message: null };
+import type { IncomeState } from "./form-state";
 
 export type IncomeResult = { ok: false; message: string };
 

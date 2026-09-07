@@ -4,13 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { readDebtInput, validateDebt, hasErrors, type FieldErrors } from "./validation";
-
-export interface DebtFormState {
-  errors: FieldErrors;
-  message: string | null;
-}
-
-export const EMPTY_STATE: DebtFormState = { errors: {}, message: null };
+import type { DebtFormState } from "./form-state";
 
 /**
  * Alta y edición de una deuda.
@@ -48,6 +42,7 @@ export async function saveDebt(
     due_day: input.dueDay,
     installments_total: input.installmentsTotal,
     installments_paid: input.installmentsPaid ?? 0,
+    monthly_payment: input.monthlyPayment,
   };
 
   if (id) {

@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 import { useActionState } from "react";
-import {
-  createIncome,
-  EMPTY_INCOME_STATE,
-  type IncomeState,
-} from "@/app/dashboard/incomes/actions";
+import { createIncome } from "@/app/dashboard/incomes/actions";
+import { EMPTY_INCOME_STATE, type IncomeState } from "@/app/dashboard/incomes/form-state";
 import { Spinner } from "./ui";
 
 const MONTHS_ES = [

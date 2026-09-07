@@ -69,7 +69,7 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
     await Promise.all([
       supabase
         .from("debts")
-        .select("id, name, kind, base_balance, annual_interest_rate, tem, due_day")
+        .select("id, name, kind, base_balance, annual_interest_rate, tem, due_day, monthly_payment")
         .eq("scenario_id", scenario.id)
         .eq("is_active", true),
       supabase
@@ -132,11 +132,17 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
     // compromiso cargado, no una estimación.
     const entry = schedule.find((e) => e.debt_id === d.id && e.period === period);
     const latest = statements.find((s) => s.debt_id === d.id);
+    // Orden de prioridad: la entry del plan (un compromiso cargado) manda sobre
+    // el mínimo del resumen (lo que dice el banco), y este sobre la cuota
+    // mensual de la deuda (lo que la persona sabe que paga). Un préstamo no
+    // tiene resumen: sin el último escalón entraba al flujo con cero.
     const dueThisMonth = entry
       ? Number(entry.amount)
       : latest?.minimum_payment != null
         ? Number(latest.minimum_payment)
-        : 0;
+        : d.monthly_payment != null
+          ? Number(d.monthly_payment)
+          : 0;
 
     const rate = d.tem != null ? Number(d.tem) : monthlyRateFromAnnual(d.annual_interest_rate);
     const projectedBalance = Math.max(0, balance + balance * rate - dueThisMonth);
