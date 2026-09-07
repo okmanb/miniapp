@@ -127,10 +127,17 @@ Y en la pantalla 02, los seis valores del gráfico de disponible por mes (−0.6
   prototipo usando `app/dev-preview/`, que existe únicamente en desarrollo. Para verlas con
   datos de verdad hace falta una sesión iniciada, y no creo cuentas ni manejo contraseñas.
   Creá tu usuario en `/signup` y la app queda lista para cargar el primer escenario.
-- **Falta el parser de PDF en la pantalla 06.** La carga del resumen es manual: cuatro
-  números escritos a mano. `lib/statement-parser/` está intacto y funciona, pero engancharlo
-  a la pantalla necesita subida de archivo y `pdfjs` en el servidor, que es un pedazo aparte.
-  Las reglas 3 y 6 (archivar y avisar del doble conteo) ya funcionan con la carga manual.
+- **El parser de PDF ya está enganchado a la pantalla 06.** Se sube el PDF, se lee y se
+  prellenan los campos — pero prellena, no guarda: el parser depende de la maquetación de
+  cada banco y se rompe cuando el banco la cambia, así que lo leído va a campos editables
+  y lo que no se pudo leer se dice en gold en vez de quedar en cero.
+  `npx tsx scripts/parser-check.ts` lo verifica con 17 comprobaciones sobre el layout real
+  de BBVA. La que más importa es negativa: comprueba que el saldo **no** coincida con la
+  suma de los consumos, que es como se detectaría que alguien "arregló" el parser
+  volviendo a calcularlo.
+
+  Lo que sigue faltando ahí: probarlo con un PDF real. Las regex se ejercitan contra un
+  layout reconstruido a partir de los valores del respaldo, no contra un archivo del banco.
 - **La pantalla 00 estaba mal y se rehizo.** Lo que había construido era una landing de
   marketing con tres tarjetas explicativas, y **eso no existe en el prototipo**. El
   onboarding real es un alta guiada de la primera deuda en tres pasos, y ahora está
