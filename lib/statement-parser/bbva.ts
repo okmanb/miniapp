@@ -57,11 +57,28 @@ export interface ParsedStatement {
   cierreActual: string | null;
   vencimientoActual: string | null;
   saldoActual: number | null;
+  /**
+   * Saldo en dólares del encabezado, en USD. Es el dato del banco, no una
+   * suma nuestra: mismo criterio que saldoActual. Ver el comentario de
+   * usdChargesExcluded para por qué la distinción importa acá.
+   */
+  saldoActualUsd: number | null;
   pagoMinimo: number | null;
   saldoAnterior: number | null;
   planVEntries: ParsedPlanVEntry[];
   newChargesArs: number; // suma de consumos nuevos en pesos, sin contar Plan V
-  usdChargesExcluded: number; // consumos en USD detectados pero NO sumados (revisar a mano)
+  /**
+   * Suma de las líneas de consumo en dólares que el parser pudo leer, en USD.
+   *
+   * NO es el total en dólares del resumen: es lo que se pudo reconocer línea
+   * por línea, y casi siempre da de menos porque la extracción por
+   * coordenadas deja algunas líneas sin su importe. Para mostrarle un total
+   * a alguien va saldoActualUsd, que lo dice el banco.
+   *
+   * Se conserva justamente para poder compararlos: si difieren, es que
+   * quedaron líneas sin leer, y eso se avisa en vez de disimularlo.
+   */
+  usdChargesExcluded: number;
   // Detalle línea por línea de esos mismos consumos nuevos — para
   // poder categorizarlos en fijo/necesario vs. discrecional (spec
   // §2.4). Vacío si el parser no distingue líneas individuales.
@@ -112,6 +129,7 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
   let cierreActual: string | null = null;
   let vencimientoActual: string | null = null;
   let saldoActual: number | null = null;
+  let saldoActualUsd: number | null = null;
   let pagoMinimo: number | null = null;
 
   const headerLabelIdx = lines.findIndex((l) => l.includes("CIERRE ACTUAL") && l.includes("VENCIMIENTO ACTUAL"));
@@ -124,6 +142,10 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
       cierreActual = parseArgDate(match[1]);
       vencimientoActual = parseArgDate(match[2]);
       saldoActual = parseArgNumber(match[3]);
+      // La columna de dólares venía capturada y se descartaba: por eso el
+      // total en USD se mostraba sumando líneas sueltas, que es justo lo que
+      // este parser tiene prohibido hacer con el saldo en pesos.
+      saldoActualUsd = parseArgNumber(match[4]);
       pagoMinimo = parseArgNumber(match[5]);
     } else {
       warnings.push("No se pudo leer la línea de cierre/vencimiento/saldo/mínimo.");
@@ -261,6 +283,18 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
     }
   }
 
+  // Si el banco declara un saldo en dólares y las líneas que pudimos leer no
+  // llegan a ese total, faltaron líneas. Avisarlo importa: sin el aviso, el
+  // faltante se ve como "gastaste menos en dólares", que es una conclusión
+  // falsa sacada de una limitación nuestra.
+  const usdRounded = Math.round(usdChargesExcluded * 100) / 100;
+  if (saldoActualUsd != null && saldoActualUsd > 0 && usdRounded < saldoActualUsd - 0.01) {
+    warnings.push(
+      `El resumen cierra con US$ ${saldoActualUsd} en dólares, pero solo pudimos leer ` +
+        `US$ ${usdRounded} línea por línea. Los consumos en dólares hay que revisarlos a mano.`
+    );
+  }
+
   return {
     cardName,
     accountLast4,
@@ -268,6 +302,7 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
     cierreActual,
     vencimientoActual,
     saldoActual,
+    saldoActualUsd,
     pagoMinimo,
     saldoAnterior,
     planVEntries,

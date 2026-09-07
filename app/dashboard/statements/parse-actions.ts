@@ -40,6 +40,9 @@ export interface ParseResult {
   minimumPayment?: number | null;
   previousBalance?: number | null;
   statementBalance?: number | null;
+  /** Total en dólares que declara el resumen. Dato del banco. */
+  usdBalance?: number | null;
+  /** Lo que se pudo sumar línea por línea. Sirve para comparar, no para mostrar. */
   usdExcluded?: number;
   installments?: ParsedInstallment[];
   warnings?: string[];
@@ -66,11 +69,23 @@ export async function parseStatementPdf(formData: FormData): Promise<ParseResult
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     text = await extractLayoutText(buffer);
-  } catch {
+  } catch (error) {
+    // Los resúmenes de varios bancos vienen cifrados con el DNI. Se distingue
+    // ese caso del resto porque la solución es concreta y distinta: no es que
+    // el archivo esté roto, es que hay que guardarlo sin la protección.
+    //
+    // No pedimos la contraseña ni la guardamos: abrir el PDF con ella
+    // significaría que la app maneja una clave personal, y no hay ninguna
+    // razón para que lo haga.
+    const isProtected = /password/i.test(
+      error instanceof Error ? `${error.name} ${error.message}` : String(error)
+    );
+
     return {
       ok: false,
-      message:
-        "No pudimos abrir ese PDF. Si está protegido con contraseña, guardalo sin contraseña y probá de nuevo.",
+      message: isProtected
+        ? "Ese PDF está protegido con contraseña. Abrilo con la clave del banco (suele ser tu DNI), guardá una copia sin protección y subí esa."
+        : "No pudimos abrir ese PDF. Puede estar dañado o no ser un resumen. Cargá los números a mano abajo.",
     };
   }
 
@@ -98,6 +113,7 @@ export async function parseStatementPdf(formData: FormData): Promise<ParseResult
     minimumPayment: parsed.pagoMinimo,
     previousBalance: parsed.saldoAnterior,
     statementBalance: parsed.saldoActual,
+    usdBalance: parsed.saldoActualUsd,
     usdExcluded: parsed.usdChargesExcluded,
     installments: parsed.planVEntries.map((entry) => ({
       cupon: entry.cupon,

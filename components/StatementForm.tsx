@@ -288,11 +288,16 @@ function ParseSummary({ parsed }: { parsed: ParseResult }) {
         </p>
       )}
 
-      {parsed.usdExcluded != null && parsed.usdExcluded > 0 && (
+      {/*
+        Se muestra el total que declara el resumen, no la suma de las líneas
+        que pudimos leer: la extracción por coordenadas deja algunas sin
+        importe, y el faltante se vería como "gastaste menos en dólares".
+      */}
+      {parsed.usdBalance != null && parsed.usdBalance > 0 && (
         <p className="mt-2 text-[11px] text-gold-ink">
-          Hay {formatUsd(parsed.usdExcluded)} en consumos en dólares que NO sumamos: se
-          convierten a la cotización del cierre, que no tenemos. Cargalos a mano si querés
-          que cuenten.
+          El resumen cierra con {formatUsd(parsed.usdBalance)} en dólares, que NO sumamos: se
+          convierten a la cotización del cierre, y esa no la tenemos. Cargalos a mano si
+          querés que cuenten.
         </p>
       )}
 

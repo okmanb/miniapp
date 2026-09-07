@@ -147,6 +147,20 @@ Y en la pantalla 02, los seis valores del gráfico de disponible por mes (−0.6
   de los consumos cualquier línea que traiga `(TNA ...)` al lado. Esa segunda es la red
   para la próxima vez que el banco le cambie el nombre: un consumo del mes nunca trae su
   propia tasa. Queda como regresión en `scripts/parser-check.ts`.
+
+  **Segundo bug del mismo PDF: el total en dólares se sumaba en vez de leerse.** La regex
+  del encabezado ya capturaba la columna `SALDO ACTUAL U$S` y la descartaba, así que la
+  pantalla mostraba la suma de las líneas de consumo en dólares que se podían reconocer —
+  US$ 102,08 en vez de los US$ 127,06 que declara el resumen. Era el mismo pecado que el
+  parser tiene prohibido con el saldo en pesos, cometido en la otra moneda. Ahora se lee
+  del encabezado, y si la suma línea por línea no llega a ese total se avisa, porque el
+  faltante viene de una limitación nuestra y no de que se haya gastado menos.
+
+  **Los resúmenes de Patagonia vienen protegidos con contraseña.** El de septiembre no se
+  pudo abrir. La app lo detecta y lo dice con la solución concreta (abrirlo con la clave
+  del banco, guardar una copia sin protección, subir esa) en vez del error genérico. No se
+  pide ni se guarda la contraseña: no hay razón para que la app maneje una clave personal.
+  Queda pendiente probar el parser de Patagonia contra un PDF real sin protección.
 - **La pantalla 00 estaba mal y se rehizo.** Lo que había construido era una landing de
   marketing con tres tarjetas explicativas, y **eso no existe en el prototipo**. El
   onboarding real es un alta guiada de la primera deuda en tres pasos, y ahora está

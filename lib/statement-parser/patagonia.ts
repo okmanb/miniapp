@@ -166,6 +166,10 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     cierreActual,
     vencimientoActual,
     saldoActual,
+    // El encabezado de Patagonia no trae columna de dólares. null es "no lo
+    // sé", que es distinto de cero: cero afirmaría que no hay consumos en
+    // dólares, y eso no lo sabemos.
+    saldoActualUsd: null,
     pagoMinimo,
     saldoAnterior,
     planVEntries,
