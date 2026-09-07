@@ -160,7 +160,17 @@ Y en la pantalla 02, los seis valores del gráfico de disponible por mes (−0.6
   pudo abrir. La app lo detecta y lo dice con la solución concreta (abrirlo con la clave
   del banco, guardar una copia sin protección, subir esa) en vez del error genérico. No se
   pide ni se guarda la contraseña: no hay razón para que la app maneje una clave personal.
-  Queda pendiente probar el parser de Patagonia contra un PDF real sin protección.
+  **Patagonia probado con un PDF real (septiembre 2026), y tenía el mismo bug.** El
+  encabezado sí trae columna de dólares —yo había escrito `saldoActualUsd: null`
+  *afirmando lo contrario sin verificarlo*— y la regex ya la capturaba en `match[3]` para
+  descartarla, exactamente igual que en BBVA. Eran US$ 20,24. Corregido.
+
+  Lo demás de Patagonia sale bien y está verificado contra el texto crudo: cierre
+  27-Ago-26, TNA punitoria 80,50%, saldo $4.644.435,68, mínimo $675.505, y las 22 líneas
+  de consumo excluyen correctamente `IMPUESTO DE SELLOS`, `INTERESES FINANCIACION`,
+  `DB IVA` e `IVA RG 4240`.
+
+  Los tres parsers quedan probados contra archivos reales del banco.
 - **La pantalla 00 estaba mal y se rehizo.** Lo que había construido era una landing de
   marketing con tres tarjetas explicativas, y **eso no existe en el prototipo**. El
   onboarding real es un alta guiada de la primera deuda en tres pasos, y ahora está

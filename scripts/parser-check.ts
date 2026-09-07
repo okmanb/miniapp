@@ -23,7 +23,7 @@ Tasas
 69,440 %   -   5,707 %   -
 
 CIERRE ACTUAL   VENCIMIENTO ACTUAL   SALDO ACTUAL $   SALDO ACTUAL U$S   PAGO MINIMO $
-26-Jul-26   07-Ago-26   5.739.870,04   0,00   3.086.770,00
+26-Jul-26   07-Ago-26   5.739.870,04   127,06   3.086.770,00
 
 SALDO ANTERIOR   4.838.268,01
 
@@ -32,7 +32,7 @@ FECHA   DETALLE   NRO. CUPON   IMPORTE
 12-Jul-26   MERPAGO*JUMBO   445120   630.396,59
 14-Jul-26   COLEGIO SAN PABLO   445121   391.200,00
 15-Jul-26   DLO*PRIMEVIDEO   445122   10.283,79
-16-Jul-26   NETFLIX USD   445123   12.500,00
+16-Jul-26   APPLE.COM/BILL USD 12,50   445123   12,50
 26-Nov-25   VISA PLAN V 9-18 (TNA 98,03)   288032   482.069,57
 26-Nov-25   FINANC DE SALDO 10-18 (TNA 89,00)   755158   367.418,69
 17-Abr-26   MERPAGO*CARONEGM   C.04/09   282179   36.726,66
@@ -101,6 +101,16 @@ check("cuota fija — comercio", fija?.description, "MERPAGO*CARONEGM");
 check("cuota fija — total", fija?.totalInstallments, 9);
 // TNA 0 acá significa "sin interés, lo subsidia el comercio", no "no se pudo leer".
 check("cuota fija — sin interés", fija?.tna, 0);
+
+console.log("\n=== Regresión: el total en dólares se lee, no se suma ===\n");
+// La columna de dólares del encabezado venía capturada y se descartaba, y la
+// pantalla mostraba en su lugar la suma de las líneas que se podían
+// reconocer. En un resumen real eso daba US$ 102,08 en vez de US$ 127,06.
+check("saldo en dólares del encabezado", parsed.saldoActualUsd, 127.06);
+// Y cuando la suma línea por línea no llega al total del banco, se avisa: el
+// faltante es una limitación nuestra, no plata que no se gastó.
+const avisaFaltante = parsed.warnings.some((w) => /d[óo]lares/i.test(w));
+check("avisa si no pudo leerlas todas", avisaFaltante, true);
 
 console.log("\n=== Regresión: BBVA renombró el producto ===\n");
 // En los resúmenes de Visa de 2026 las refinanciaciones vienen como

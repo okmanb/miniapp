@@ -61,6 +61,7 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
   let cierreActual: string | null = null;
   let vencimientoActual: string | null = null;
   let saldoActual: number | null = null;
+  let saldoActualUsd: number | null = null;
   let pagoMinimo: number | null = null;
 
   const cierreLine = lines.find((l) => l.includes("CIERRE ACTUAL:"));
@@ -78,6 +79,10 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     if (match) {
       vencimientoActual = parseSpacedDate(match[1]);
       saldoActual = parseArgNumber(match[2]);
+      // La columna de dólares (SALDO U$S) ya venía capturada y se
+      // descartaba. Es el mismo dato duro del banco que el saldo en pesos:
+      // se lee, no se reconstruye sumando las líneas en dólares.
+      saldoActualUsd = parseArgNumber(match[3]);
       pagoMinimo = parseArgNumber(match[4]);
     } else {
       warnings.push("No se pudo leer la línea de vencimiento/saldo/mínimo.");
@@ -166,10 +171,7 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     cierreActual,
     vencimientoActual,
     saldoActual,
-    // El encabezado de Patagonia no trae columna de dólares. null es "no lo
-    // sé", que es distinto de cero: cero afirmaría que no hay consumos en
-    // dólares, y eso no lo sabemos.
-    saldoActualUsd: null,
+    saldoActualUsd,
     pagoMinimo,
     saldoAnterior,
     planVEntries,
