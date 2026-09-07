@@ -73,12 +73,39 @@ export default async function DashboardPage() {
             hasOverdue={data.hasOverdue}
           />
 
+          {/*
+            Sin ingresos cargados la proyección da todo cero, y como cero
+            nunca es menor que cero el alcance saldría "no toca rojo en 6
+            meses" con "te queda $ 0". Eso suena a buena noticia y no lo es:
+            es la ausencia del dato disfrazada de resultado. En ese caso la
+            tarjeta pide lo que falta en vez de afirmar nada.
+          */}
           <div className="mt-3">
-            <RunwayCard
-              monthLabel={data.runwayMonth}
-              note={data.runwayNote}
-              remaining={data.cashflow.remainingAtRunway}
-            />
+            {data.canProject ? (
+              <RunwayCard
+                monthLabel={data.runwayMonth}
+                note={data.runwayNote}
+                remaining={data.cashflow.remainingAtRunway}
+              />
+            ) : (
+              <Link
+                href="/dashboard/incomes"
+                className="flex min-h-touch items-center justify-between gap-3 rounded-surface-lg border border-dashed border-border-dash bg-surface px-4 py-4 transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+              >
+                <span className="min-w-0">
+                  <span className="block text-card text-ink">
+                    Falta cuánto entra por mes
+                  </span>
+                  <span className="mt-1 block text-[11.5px] leading-[1.45] text-muted">
+                    Sin eso no podemos decirte hasta cuándo te alcanza — y preferimos no
+                    decir nada antes que inventarlo.
+                  </span>
+                </span>
+                <span aria-hidden className="shrink-0 text-muted">
+                  →
+                </span>
+              </Link>
+            )}
           </div>
 
           <Link

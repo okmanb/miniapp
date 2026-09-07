@@ -68,6 +68,13 @@ export interface DashboardData {
   series: number[];
   hasOverdue: boolean;
   cashflow: CashflowResult;
+  /**
+   * Si la proyección tiene con qué decir algo. Sin ingresos cargados todos
+   * los meses dan cero, y como cero nunca es menor que cero el alcance sale
+   * "no toca rojo en 6 meses" — una afirmación tranquilizadora sacada de la
+   * nada. Eso es justo lo que la regla de oro prohíbe.
+   */
+  canProject: boolean;
   runwayMonth: string | null;
   runwayNote: string;
   alerts: DerivedAlert[];
@@ -250,6 +257,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
     series: series.length >= 2 ? series : [total, total],
     hasOverdue,
     cashflow,
+    canProject: incomes.length > 0,
     runwayMonth:
       cashflow.runwayIndex >= 0 ? monthName(cashflow.months[cashflow.runwayIndex].period) : null,
     runwayNote: buildRunwayNote(cashflow, scenario.name),
