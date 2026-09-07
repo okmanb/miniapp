@@ -5,6 +5,7 @@ import { amortize, breakeven } from "@/lib/calc/amortize";
 import { explainGrowth, type GrowthCause } from "@/lib/calc/statement";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
 import { addMonths } from "@/lib/calc/cashflow";
+import { nextDueDate, formatLongDate } from "@/lib/calc/dates";
 import { currentPeriod } from "@/lib/data/dashboard";
 
 /**
@@ -64,35 +65,11 @@ export interface DebtDetail {
   payments: DebtPaymentRow[];
 }
 
-const MONTHS_ES = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-];
-
 const MONTHS_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 function periodLabel(period: string): string {
   const [year, month] = period.split("-");
   return `${MONTHS_SHORT[Number(month) - 1]} ${year}`;
-}
-
-/**
- * El día del resumen es el dato; la fecha del próximo vencimiento se deriva de
- * hoy. Si el día ya pasó este mes, el vencimiento vigente es el del mes que
- * viene. Se topea al último día del mes para que un vencimiento el 31 no se
- * caiga a marzo en febrero.
- */
-export function nextDueDate(dueDay: number, today = new Date()): Date {
-  const clamp = (year: number, monthIndex: number) =>
-    new Date(year, monthIndex, Math.min(dueDay, new Date(year, monthIndex + 1, 0).getDate()));
-
-  const thisMonth = clamp(today.getFullYear(), today.getMonth());
-  if (thisMonth.getDate() >= today.getDate()) return thisMonth;
-  return clamp(today.getFullYear(), today.getMonth() + 1);
-}
-
-function formatLongDate(date: Date): string {
-  return `${date.getDate()} de ${MONTHS_ES[date.getMonth()]} de ${date.getFullYear()}`;
 }
 
 export const getDebtDetail = cache(async function getDebtDetail(
@@ -238,3 +215,5 @@ export const getDebtDetail = cache(async function getDebtDetail(
     })),
   };
 });
+
+export { nextDueDate };

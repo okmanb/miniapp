@@ -1,4 +1,5 @@
 import { BottomNav } from "@/components/BottomNav";
+import { DraftImporter } from "@/components/onboarding/DraftImporter";
 import { getDashboard } from "@/lib/data/dashboard";
 
 /**
@@ -21,6 +22,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <>
+      {/* Sube lo que se cargó en el onboarding sin cuenta, una sola vez. */}
+      <DraftImporter />
       {children}
       <BottomNav alertCount={alertCount} />
     </>

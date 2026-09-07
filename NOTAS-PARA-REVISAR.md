@@ -131,9 +131,19 @@ Y en la pantalla 02, los seis valores del gráfico de disponible por mes (−0.6
   números escritos a mano. `lib/statement-parser/` está intacto y funciona, pero engancharlo
   a la pantalla necesita subida de archivo y `pdfjs` en el servidor, que es un pedazo aparte.
   Las reglas 3 y 6 (archivar y avisar del doble conteo) ya funcionan con la carga manual.
-- **Onboarding de tres pasos.** La pantalla 00 quedó como una sola: los tres pasos se
-  muestran juntos en vez de en secuencia. Con tres tarjetas cortas, hacer pasar por tres
-  pantallas agrega fricción sin agregar información.
+- **La pantalla 00 estaba mal y se rehizo.** Lo que había construido era una landing de
+  marketing con tres tarjetas explicativas, y **eso no existe en el prototipo**. El
+  onboarding real es un alta guiada de la primera deuda en tres pasos, y ahora está
+  portado palabra por palabra, con los cuatro tipos de deuda y sus tasas típicas
+  prellenadas (tarjeta 83,80% día 10 · préstamo 95% día 5 · familiar 0% día 30 · servicio
+  60% día 15).
+
+  Funciona **sin cuenta**, porque el prototipo lo dice con todas las letras. Lo cargado
+  vive en el navegador y sube a Supabase recién cuando la persona crea la cuenta. Esa
+  importación es idempotente: si el usuario ya tiene un escenario, no importa nada.
+
+  Contrastado contra el prototipo con los mismos números: mínimo $40.000, interés del mes
+  $34.917, sobrante $4.860.000, "vence en 3 días", "10 de septiembre". Todo igual.
 - **Borrar `backup_pre_reset` cuando el modelo nuevo esté verificado.** El esquema ya se
   aplicó a `miniapp_deb` (`udhqdbpjhifeotgoqaoa`). El proyecto **no estaba vacío**: tenía
   33 deudas, 28 líneas de consumo, 3 resúmenes y 2 escenarios reales, contra lo que asumía
