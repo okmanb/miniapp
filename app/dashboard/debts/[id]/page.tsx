@@ -16,10 +16,15 @@ const KIND_LABEL: Record<string, string> = {
   otro: "Otro",
 };
 
-const HEALTH: Record<string, { label: string; bg: string; fg: string; border: string }> = {
-  al_dia: { label: "Al día", bg: "#E0F4E9", fg: "#175F42", border: "#BEE1CE" },
-  crece: { label: "Crece", bg: "#FFE9E4", fg: "#823123", border: "#F2C7BE" },
-  sin_datos: { label: "Sin resumen", bg: "#F2F5F1", fg: "#5C6B65", border: "#DEE3DD" },
+/**
+ * Solo la etiqueta. Sobre la tarjeta pine el globo es siempre el mismo blanco
+ * al 18% —así lo dibuja el prototipo—, y tres colores distintos ahí competirían
+ * con el fondo en vez de decir algo: lo que informa es la palabra.
+ */
+const HEALTH: Record<string, { label: string }> = {
+  al_dia: { label: "Al día" },
+  crece: { label: "Crece" },
+  sin_datos: { label: "Sin resumen" },
 };
 
 export default async function DebtDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,30 +43,51 @@ export default async function DebtDetailPage({ params }: { params: Promise<{ id:
         <span aria-hidden>←</span> Volver a tus deudas
       </Link>
 
-      <h1 className="mt-2 text-screen text-ink">{debt.name}</h1>
-      <p className="mt-0.5 text-[12px] text-muted">{KIND_LABEL[debt.kind] ?? debt.kind}</p>
+      {/*
+        Dos tarjetas y no una, como el prototipo. La blanca es identidad y
+        saldo; la pine es diagnóstico. Iban juntas en una sola tarjeta blanca,
+        y ahí las cuatro filas de la salud se leían con el mismo peso que el
+        saldo, cuando son otra cosa: el saldo es el dato y la salud es la
+        lectura del dato.
+      */}
+      <div className="mt-4 rounded-[16px] border border-border bg-surface p-4 shadow-card">
+        <div className="text-[15px] font-semibold leading-[1.3] text-ink">{debt.name}</div>
+        <div className="mt-[3px] text-[11px] text-muted">{KIND_LABEL[debt.kind] ?? debt.kind}</div>
 
-      <Card className="mt-4 px-4 py-4">
-        <div className="text-label uppercase text-muted">Saldo actual</div>
-        <Amount className="mt-1 block text-[28px] font-semibold text-ink">
-          {formatMoney(debt.balance)}
-        </Amount>
+        <div className="mt-[14px] flex items-baseline justify-between gap-3 border-t border-dashed border-border pt-[13px]">
+          <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-muted">
+            Saldo actual
+          </span>
+          <Amount className="whitespace-nowrap text-[21px] font-semibold text-ink">
+            {formatMoney(debt.balance)}
+          </Amount>
+        </div>
+      </div>
 
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-border-row pt-3">
-          <span className="text-card text-ink">Salud de la deuda</span>
+      <div
+        className="mt-[14px] rounded-[16px] p-[17px] text-white"
+        style={{
+          background: "linear-gradient(160deg,#0E3A31,#134A3E)",
+          boxShadow: "0 18px 34px -16px rgba(14,58,49,.5)",
+        }}
+      >
+        <div className="flex items-center justify-between gap-2.5">
+          <h2 className="text-[15px] font-bold">Salud de la deuda</h2>
           <span
-            className="rounded-pill px-2.5 py-1 font-mono text-[10px] font-bold uppercase"
-            style={{ backgroundColor: health.bg, color: health.fg, border: `1px solid ${health.border}` }}
+            className="rounded-pill px-[11px] py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.06em]"
+            style={{ backgroundColor: "rgba(255,255,255,.18)" }}
           >
             {health.label}
           </span>
         </div>
 
         {debt.growth && (
-          <p className="mt-2 text-[11.5px] text-brick-ink">{growthMessage(debt)}</p>
+          <p className="mt-2 text-[11.5px] leading-[1.45]" style={{ color: "#F0B0A0" }}>
+            {growthMessage(debt)}
+          </p>
         )}
 
-        <dl className="mt-1">
+        <dl>
           <DetailRow label="Tasa (TNA)" value={debt.annualRate != null ? `${debt.annualRate.toLocaleString("es-AR")}%` : "sin cargar"} />
           <DetailRow label="Próximo vencimiento" value={debt.nextDueLabel ?? "cuota fija"} />
           <DetailRow label="Interés del mes" value={formatMoney(debt.monthlyInterest)} />
@@ -70,7 +96,7 @@ export default async function DebtDetailPage({ params }: { params: Promise<{ id:
             value={debt.minimumPayment != null ? formatMoney(debt.minimumPayment) : "sin resumen"}
           />
         </dl>
-      </Card>
+      </div>
 
       <h2 className="mt-6 text-[15px] font-semibold text-ink">Estimación de pago</h2>
       {debt.payoff ? (
@@ -149,12 +175,21 @@ const PAYMENT_KIND: Record<string, string> = {
   unico: "Pago único",
 };
 
+/**
+ * Fila de la tarjeta pine: etiqueta arriba y valor abajo, alineado a la
+ * derecha. No es que se parta por falta de lugar — es el molde del prototipo.
+ * "10 de septiembre de 2026" al lado de su etiqueta no entra en un teléfono
+ * angosto, y en cuanto una fila se parte, la columna de valores deja de
+ * existir; poniéndolos todos abajo, la columna se sostiene siempre.
+ */
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border-row py-2.5 last:border-b-0">
-      <dt className="text-[13px] text-muted">{label}</dt>
+    <div className="border-t border-[rgba(255,255,255,.14)] py-3">
+      <dt className="text-[12px] opacity-75">{label}</dt>
       <dd>
-        <Amount className="text-[13px] text-ink">{value}</Amount>
+        <Amount className="mt-1 block whitespace-nowrap text-right text-[15px] font-semibold">
+          {value}
+        </Amount>
       </dd>
     </div>
   );
