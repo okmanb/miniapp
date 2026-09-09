@@ -51,9 +51,11 @@ export function StatementImport({
 }) {
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<ParseResult | null>(null);
+  const [fileName, setFileName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   function read(file: File) {
+    setFileName(file.name);
     startTransition(async () => {
       const data = new FormData();
       data.set("pdf", file);
@@ -64,21 +66,59 @@ export function StatementImport({
   }
 
   return (
-    <section className="rounded-surface-lg border border-dashed border-border-dash bg-surface-sunken px-4 py-4">
-      <h2 className="text-card text-ink">{title}</h2>
+    /*
+      La tarjeta es blanca y sólida, y el punteado vive solo en la fila del
+      archivo. Antes el punteado envolvía la sección entera y adentro iba el
+      `<input type="file">` crudo: el control nativo trae su propio botón, su
+      propio tipo de letra y su propio idioma —"Choose File", "No file
+      chosen"— y no hay CSS que lo alinee con el resto. Acá el input está
+      oculto (accesible, no invisible para el teclado) y lo que se ve es la
+      píldora del sistema con el nombre del archivo al lado.
+    */
+    <section className="rounded-surface-lg border border-border bg-surface p-[14px]">
+      <h2 className="text-card text-pine">{title}</h2>
       <p className="help mt-1">{note}</p>
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="application/pdf"
-        aria-label="PDF del resumen"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) read(file);
-        }}
-        className="mt-3 block w-full text-[12px] text-muted file:mr-3 file:min-h-touch file:cursor-pointer file:rounded-pill file:border file:border-border file:bg-surface file:px-4 file:text-[12px] file:font-semibold file:text-pine hover:file:bg-surface-arch"
-      />
+      <span className="mt-3 block text-label uppercase text-muted">Archivo</span>
+
+      <label className="mt-1.5 flex cursor-pointer items-center gap-[10px] rounded-surface border border-dashed border-border-dash bg-surface-alt px-[10px] py-2 transition-colors duration-150 ease-sd hover:border-pine focus-within:border-pine">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="application/pdf"
+          aria-label="PDF del resumen"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) read(file);
+          }}
+          className="sr-only"
+        />
+        <span className="shrink-0 whitespace-nowrap rounded-pill border border-pine px-[13px] py-2 text-[12px] font-semibold text-pine">
+          Seleccionar archivo
+        </span>
+        <span
+          className="min-w-0 truncate text-[12px]"
+          style={{ color: fileName ? "#12211D" : "#8A9691" }}
+        >
+          {fileName || "Ningún archivo seleccionado"}
+        </span>
+      </label>
+
+      {/*
+        Leer arranca solo al elegir el archivo: pedir un segundo toque para
+        empezar algo que ya se decidió es un paso de más. El botón aparece
+        después, y es para volver a intentar cuando el parser falló o el
+        archivo era el equivocado.
+      */}
+      {fileName && !pending && (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-pill bg-teal px-[14px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+        >
+          Volver a leer el PDF
+        </button>
+      )}
 
       {pending && (
         <p role="status" className="mt-3 flex items-center gap-2 text-[11.5px] text-muted">

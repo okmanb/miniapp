@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * El calendario del prototipo, en sus tres modos.
@@ -49,13 +50,25 @@ function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Cómo se lee el valor elegido en el botón y en el encabezado del panel. */
-export function describeCalendarValue(mode: CalendarMode, value: string): string {
+/**
+ * Cómo se lee el valor elegido en el botón y en el encabezado del panel.
+ *
+ * En `compact` la frase se acorta a "Día 10" y el vacío se vuelve una
+ * invitación ("Elegir el día") en vez de un estado ("Sin día elegido"). Es
+ * para los campos que comparten fila con otro y miden media pantalla: ahí
+ * "Día 10 de cada mes" se parte en dos renglones y el control crece al doble.
+ * La distinción es del prototipo, que tiene las dos versiones del mismo dato.
+ */
+export function describeCalendarValue(
+  mode: CalendarMode,
+  value: string,
+  compact = false,
+): string {
   if (!value) {
-    if (mode === "day") return "Sin día elegido";
+    if (mode === "day") return compact ? "Elegir el día" : "Sin día elegido";
     return mode === "date" ? "Sin fecha elegida" : "Sin mes elegido";
   }
-  if (mode === "day") return `Día ${Number(value)} de cada mes`;
+  if (mode === "day") return compact ? `Día ${Number(value)}` : `Día ${Number(value)} de cada mes`;
   if (mode === "monthOfYear") return `${capitalize(MONTHS_ES[Number(value) - 1])}, todos los años`;
   if (mode === "month") {
     const [year, month] = value.split("-").map(Number);
@@ -75,6 +88,7 @@ export function CalendarField({
   note,
   help,
   min,
+  compact = false,
 }: {
   id: string;
   /** Nombre del campo oculto que viaja en el form. */
@@ -92,6 +106,8 @@ export function CalendarField({
   help?: string;
   /** Solo modo month: el primer mes elegible, "2026-10". */
   min?: string;
+  /** Para el campo que comparte fila: acorta lo que dice el botón. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -109,8 +125,8 @@ export function CalendarField({
         onClick={() => setOpen(true)}
         className="mt-2 flex min-h-touch w-full items-center justify-between gap-2 rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink transition-colors duration-150 ease-sd hover:bg-surface-sunken"
       >
-        <span className={value ? "text-ink" : "text-muted"}>
-          {describeCalendarValue(mode, value)}
+        <span className={`truncate ${value ? "text-ink" : "text-muted"}`}>
+          {describeCalendarValue(mode, value, compact)}
         </span>
         <CalendarIcon />
       </button>
@@ -204,7 +220,15 @@ function CalendarSheet({
 
   const preview = describeCalendarValue(mode, value);
 
-  return (
+  /*
+    Va al body y no donde está el campo. `Screen` anima su opacidad al entrar,
+    y una animación de opacidad crea un contexto de apilado: adentro de él, el
+    z-50 de este panel no se compara con el z-20 de la barra inferior sino con
+    el z-index del `<main>`, que es 0. Por eso la barra le pasaba por encima al
+    calendario aunque el número fuera más alto. Con el portal el z-50 vale de
+    verdad, y deja de depender de que el panel no llegue nunca hasta abajo.
+  */
+  return createPortal(
     <>
       <div
         onClick={onClose}
@@ -213,30 +237,56 @@ function CalendarSheet({
         aria-hidden
       />
 
+      {/*
+        No es una hoja pegada al borde: es una tarjeta que flota 80px sobre el
+        piso, con los cuatro vértices redondeados y 10px de aire a los lados.
+        Los 80px son los que dejan la barra inferior a la vista — con
+        `bottom: 0` el pie del panel ("Hoy" y "Listo") quedaba tapado por la
+        barra y no había forma de cerrarlo tocando.
+
+        La altura está topeada y el grillado scrollea adentro, así que el
+        encabezado y el pie no se salen nunca de la pantalla, por baja que sea.
+      */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label={kicker}
         data-motion
-        className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-[430px] animate-card-in overflow-hidden rounded-t-[22px] border border-[rgba(14,58,49,.1)] bg-surface pb-3 shadow-[0_-26px_54px_-20px_rgba(14,58,49,.45)]"
+        className="fixed inset-x-[10px] z-50 mx-auto flex max-h-[calc(100dvh-108px)] max-w-[410px] animate-card-in flex-col overflow-hidden rounded-[22px] border border-[rgba(14,58,49,.1)] bg-surface"
+        style={{
+          bottom: "calc(80px + env(safe-area-inset-bottom))",
+          boxShadow:
+            "inset 0 2px 0 rgba(255,255,255,.7), 0 26px 54px -20px rgba(14,58,49,.6)",
+        }}
       >
-        <div className="flex justify-center pt-[9px]">
+        <div className="flex shrink-0 justify-center pt-[9px]">
           <span className="h-1 w-[34px] rounded-pill bg-[#DDE4DD]" aria-hidden />
         </div>
 
         {/* El encabezado dice qué se está eligiendo y qué consecuencia tiene. */}
         <div
-          className="relative mx-[10px] mt-[9px] overflow-hidden rounded-[14px] px-[14px] py-3 text-white"
+          className="relative mx-[10px] mt-[9px] shrink-0 overflow-hidden rounded-[14px] px-[14px] py-3 text-white"
           style={{ background: "linear-gradient(160deg,#0E3A31,#134A3E)" }}
         >
-          <div className="font-mono text-[9.5px] uppercase tracking-[0.1em] text-white/60">
-            {kicker}
+          {/* El resplandor de arriba a la derecha: sin él el verde es plano. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -top-[60%] right-[-12%] h-[170px] w-[170px] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(151,220,186,.24) 0%, transparent 70%)",
+            }}
+          />
+          <div className="relative">
+            <div className="font-mono text-[9.5px] font-semibold uppercase tracking-[0.1em] text-white/60">
+              {kicker}
+            </div>
+            <div className="mt-1 text-[16px] font-semibold tracking-[-0.02em]">{preview}</div>
+            <p className="mt-[3px] text-[11px] leading-[1.4] text-white/70">{note}</p>
           </div>
-          <div className="mt-1 text-[16px] font-semibold tracking-[-0.02em]">{preview}</div>
-          <p className="mt-[3px] text-[11px] leading-[1.4] text-white/70">{note}</p>
         </div>
 
-        <div className="flex items-center justify-between gap-[10px] px-4 pb-1.5 pt-[10px]">
+        <div className="flex shrink-0 items-center justify-between gap-[10px] px-4 pb-1.5 pt-[10px]">
           {mode === "monthOfYear" ? (
             <span className="w-[34px]" aria-hidden />
           ) : (
@@ -256,30 +306,33 @@ function CalendarSheet({
           )}
         </div>
 
-        {isMonthGrid ? (
-          <MonthGrid mode={mode} cursor={cursor} value={value} min={min} onPick={onPick} />
-        ) : (
-          <DayGrid cursor={cursor} mode={mode} value={value} today={today} onPick={onPick} />
-        )}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {isMonthGrid ? (
+            <MonthGrid mode={mode} cursor={cursor} value={value} min={min} onPick={onPick} />
+          ) : (
+            <DayGrid cursor={cursor} mode={mode} value={value} today={today} onPick={onPick} />
+          )}
+        </div>
 
-        <div className="mt-2 flex gap-2 border-t border-border-row px-4 pt-3">
+        <div className="mt-[6px] flex shrink-0 gap-[9px] border-t border-[#EDF1EC] px-4 pb-[14px] pt-[11px]">
           <button
             type="button"
             onClick={pickToday}
-            className="min-h-touch flex-1 rounded-pill border border-border bg-surface-sunken px-4 text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface"
+            className="min-h-touch flex-1 rounded-pill border border-border bg-surface-sunken px-3 text-[12.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface"
           >
             {isMonthGrid ? "Este mes" : "Hoy"}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="min-h-touch flex-1 rounded-pill bg-teal px-4 text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+            className="min-h-touch flex-1 rounded-pill bg-teal px-3 text-[12.5px] font-semibold text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
           >
             Listo
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
@@ -302,16 +355,19 @@ function DayGrid({
   const todayIso = iso(today);
 
   return (
-    <div className="px-3">
-      <div className="grid grid-cols-7 gap-1 pb-1">
+    <div>
+      <div className="grid grid-cols-7 gap-1 px-[14px] pb-[6px] pt-[2px]">
         {DOW_ES.map((d) => (
-          <div key={d} className="py-1 text-center font-mono text-[9.5px] text-muted">
+          <div
+            key={d}
+            className="text-center font-mono text-[9px] font-semibold tracking-[0.06em] text-muted"
+          >
             {d}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1 px-[14px] pb-[2px]">
         {Array.from({ length: lead }).map((_, i) => (
           <span key={`lead-${i}`} aria-hidden />
         ))}
@@ -328,7 +384,10 @@ function DayGrid({
               type="button"
               aria-pressed={selected}
               onClick={() => onPick(mode === "day" ? String(day) : cellIso)}
-              className="flex aspect-square items-center justify-center rounded-pill border font-mono text-[13px] transition-colors duration-150 ease-sd"
+              // El tope de 44px es lo que evita que en una pantalla ancha las
+              // celdas crezcan con la grilla y el calendario entero deje de
+              // entrar. Es la medida del prototipo y el mínimo táctil a la vez.
+              className="flex aspect-square max-h-[44px] items-center justify-center rounded-pill border font-mono text-[13px] transition-colors duration-150 ease-sd"
               style={{
                 backgroundColor: selected ? "#0E3A31" : isToday ? "#E0F4E9" : "transparent",
                 color: selected ? "#97DCBA" : "#12211D",
@@ -360,7 +419,7 @@ function MonthGrid({
   onPick: (value: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-2 px-3">
+    <div className="grid grid-cols-3 gap-2 px-4 pb-[2px] pt-[4px]">
       {MONTHS_ES.map((label, i) => {
         const period =
           mode === "monthOfYear"
@@ -378,7 +437,7 @@ function MonthGrid({
             disabled={disabled}
             aria-pressed={selected}
             onClick={() => onPick(period)}
-            className="min-h-touch rounded-surface border px-2 text-[12.5px] font-semibold capitalize transition-colors duration-150 ease-sd disabled:opacity-35"
+            className="min-h-touch rounded-pill border px-1 text-[11.5px] font-semibold capitalize transition-colors duration-150 ease-sd disabled:opacity-35"
             style={{
               backgroundColor: selected ? "#0E3A31" : "#F3F6F2",
               color: selected ? "#97DCBA" : "#12211D",

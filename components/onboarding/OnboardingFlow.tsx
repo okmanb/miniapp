@@ -226,6 +226,7 @@ function StepDebt({
           id="dueDay"
           label="Día de vto."
           mode="day"
+          compact
           value={String(draft.dueDay)}
           onChange={(v) => onPatch({ dueDay: Number(v) })}
           kicker="Día de vencimiento"

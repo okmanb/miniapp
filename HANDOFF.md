@@ -2,9 +2,10 @@
 
 Última actualización: 9 de septiembre de 2026.
 
-Tres sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
+Cuatro sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
 pantallas contra el prototipo y la desplegó; la tercera la usó en producción y arregló lo
-que aparece solo cuando la abrís.
+que aparece solo cuando la abrís; la cuarta arregló los cuatro controles que la tercera
+dejó rotos al mirarlos en un teléfono de verdad.
 
 ---
 
@@ -114,6 +115,9 @@ Esta distinción importa más que la lista de pantallas, porque marca dónde bus
 | El puente, el plan y las cuotas | Sus cifras, contra las que muestra el prototipo, al peso |
 | El calendario | El panel del prototipo, contra su captura: kicker, valor, nota, semana desde el lunes y el anillo de hoy |
 | El deploy | `llegas.vercel.app` responde 200 y sirve `main` |
+| La geometría del calendario | El panel del prototipo abierto y medido: `bottom: 80px`, 10px de aire al costado, radio 22 en los cuatro vértices, celdas topeadas en 44px, meses en píldora. Y probado a 375, 430 y 500px de alto: el pie siempre entra |
+| La barra inferior | Los cuatro ítems del prototipo, propiedad por propiedad: píldora `rgba(151,220,186,.17)`, trazo 2,1 vs 1,7, etiqueta 10px en 600 vs 400, globo durazno con anillo. Verificado en `/dev-preview`, que la renderiza sin sesión |
+| El importador de resúmenes | La tarjeta del prototipo, medida: fondo, borde, radio, padding, la píldora y el nombre del archivo |
 
 ### NO verificado — acá es donde hay bugs
 
@@ -204,6 +208,65 @@ teléfono:
    Rebotaba al login. Ahora lee el PDF ahí mismo. Y el mismo bloque está en el alta de una
    tarjeta: prellena nombre, saldo, tasa y día, y lo parseado viaja a la pantalla del
    resumen para no pedir el mismo archivo dos veces.
+
+## Lo que encontró mirar de nuevo esos controles
+
+Los cuatro arreglos de arriba se escribieron sin volver a medir contra el prototipo, y los
+cuatro salieron mal de una forma que solo se ve en pantalla. Se midió el prototipo
+propiedad por propiedad y se corrigieron:
+
+1. **El calendario quedaba debajo de la barra inferior.** Eran dos bugs encimados. El
+   visible: el panel iba `bottom: 0` y la barra le tapaba el pie —los botones "Hoy" y
+   "Listo"—, así que no había forma de cerrarlo tocando. El de fondo: `Screen` anima su
+   opacidad al entrar, y **una animación de opacidad crea un contexto de apilado**; adentro
+   de él el `z-50` del panel no competía contra el `z-20` de la barra sino contra el
+   `z-index: 0` del `<main>`, y perdía. Ahora el panel va por un portal al `body` —donde su
+   z-index vale de verdad— y flota a 80px del piso con 10px de aire a los lados y los cuatro
+   vértices redondeados, que es como lo dibuja el prototipo.
+
+   **Ojo con esto para lo que venga: cualquier overlay que se renderice adentro de `Screen`
+   va a quedar por debajo de la barra por más z-index que le pongas.** El portal es la
+   salida.
+
+2. **Las celdas del calendario crecían con la pantalla.** Sin tope, en 430px de ancho cada
+   día medía 55px y el panel entero dejaba de entrar. El prototipo las topea en 44px, que es
+   también el mínimo táctil. Además los meses eran rectángulos y en el prototipo son
+   píldoras. Y el panel ahora tiene la altura topeada con la grilla scrolleando adentro: el
+   encabezado y el pie no se salen de pantalla por baja que sea.
+
+3. **El importador de resúmenes mostraba el `<input type="file">` crudo.** El control nativo
+   trae su propio botón, su propia tipografía y su propio idioma —"Choose File", "No file
+   chosen"— y no hay CSS que lo alinee con el resto. Ahora es lo del prototipo: tarjeta
+   blanca sólida (el punteado quedó solo en la fila del archivo), la píldora "Seleccionar
+   archivo" y el nombre del archivo al lado. El input sigue existiendo, oculto pero
+   alcanzable con el teclado.
+
+4. **La tira del flujo cortaba el anillo del mes elegido.** `overflow-x: auto` también
+   recorta en vertical, y el anillo sobresale 4px de la tarjeta: sin padding vertical en el
+   scroller, el borde de arriba se comía. Cuatro píxeles arriba y abajo.
+
+5. **La barra inferior no decía en qué sección estabas.** El único indicio era el color, y
+   entre mint y blanco al 62% sobre verde oscuro, de reojo, no se lee. El prototipo marca el
+   activo con tres cosas a la vez y solo estaba una: falta la **píldora mint al 17% detrás
+   del ítem** —que es la que da el "presionado"— y el **ícono con trazo 2,1 en vez de 1,7**.
+   De paso los cuatro íconos eran invención nuestra y ahora son los del prototipo (tarjeta,
+   barras, diana, campana), y el globo de alertas es durazno con un anillo del color de la
+   barra, no mint pelado.
+
+6. **"Día 10 de cada mes" se partía en dos renglones** en el campo de media pantalla del
+   onboarding. El prototipo tiene dos versiones del mismo dato —`obDayLabel` dice "Día 10" y
+   `formDayLabel` dice "Día 10 de cada mes"— y acá había una sola. `CalendarField` toma
+   `compact` para el campo que comparte fila.
+
+### La diferencia que se dejó a propósito
+
+**En las subpantallas la barra marca la sección de la que cuelgan; el prototipo no marca
+ninguna.** Él calcula el activo como `s.screen === screen`, así que en "editar deuda" o en
+"préstamos puente" las cuatro pestañas quedan apagadas. Ahí se puede: son vistas apiladas
+adentro de un marco de teléfono y no se aterriza en ellas. En la app son URLs y sí se
+aterriza —el botón `+` lleva derecho a cinco de ellas—, y dejar la barra entera apagada es
+contestar "en ninguna" a la pregunta de dónde estoy parado. "Deudas" se queda con todo lo
+que cuelga de `/dashboard` y no es Flujo, Plan ni Alertas.
 
 ## Pendientes concretos
 

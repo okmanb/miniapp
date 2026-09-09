@@ -53,8 +53,15 @@ export function CashflowBoard({
         Saldo acumulado proyectado, encadenado desde tu saldo real de partida.
       </p>
 
-      {/* Tira de meses. Scrollea sola en horizontal: la pantalla no. */}
-      <div className="-mx-[18px] mt-3 no-scrollbar overflow-x-auto px-[18px] pb-1">
+      {/*
+        Tira de meses. Scrollea sola en horizontal: la pantalla no.
+
+        El `pt-1` no es aire decorativo: `overflow-x-auto` también recorta en
+        vertical, y el anillo del mes elegido sobresale 4px de la tarjeta. Sin
+        ese padding el borde de arriba del elegido queda cortado y la
+        selección se lee a medias.
+      */}
+      <div className="-mx-[18px] mt-2 no-scrollbar overflow-x-auto px-[18px] pb-1 pt-1">
         <ul className="flex gap-2">
           {months.map((m, i) => (
             <li key={m.period}>

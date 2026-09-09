@@ -24,8 +24,28 @@ const ITEMS = [
   { href: "/dashboard/alerts", label: "Alertas", icon: BellIcon },
 ];
 
+/**
+ * Qué sección está abierta.
+ *
+ * Las tres secciones con ruta propia ganan por prefijo; "Deudas" se queda con
+ * todo lo demás que cuelgue de `/dashboard` —cargar un resumen, editar una
+ * deuda, un puente, ajustes—, que es de donde se entra a esas pantallas.
+ *
+ * Acá el prototipo se queda corto y no se lo copia: él marca la pestaña solo
+ * en las cuatro pantallas raíz, porque las demás son vistas apiladas adentro
+ * de un marco de teléfono y no se puede aterrizar en ellas. En la app son URLs
+ * y sí se aterriza —el botón + lleva derecho a cinco de ellas—, así que dejar
+ * la barra entera apagada sería contestar "en ninguna" a la pregunta de dónde
+ * estoy parado.
+ */
+function activeHref(pathname: string): string {
+  const match = ITEMS.slice(1).find((item) => pathname.startsWith(item.href));
+  return match ? match.href : "/dashboard";
+}
+
 export function BottomNav({ alertCount = 0 }: { alertCount?: number }) {
   const pathname = usePathname();
+  const active = activeHref(pathname);
 
   return (
     <nav
@@ -37,9 +57,9 @@ export function BottomNav({ alertCount = 0 }: { alertCount?: number }) {
         paddingBottom: "max(13px, env(safe-area-inset-bottom))",
       }}
     >
-      <ul className="mx-auto flex max-w-[430px] items-stretch justify-around px-1 pt-[9px]">
+      <ul className="mx-auto flex max-w-[430px] items-stretch justify-around px-1 pt-[9px] [&>li]:min-w-0">
         {ITEMS.slice(0, 2).map((item) => (
-          <NavItem key={item.href} {...item} pathname={pathname} />
+          <NavItem key={item.href} {...item} active={item.href === active} />
         ))}
 
         {/*
@@ -55,7 +75,7 @@ export function BottomNav({ alertCount = 0 }: { alertCount?: number }) {
           <NavItem
             key={item.href}
             {...item}
-            pathname={pathname}
+            active={item.href === active}
             badge={item.label === "Alertas" ? alertCount : 0}
           />
         ))}
@@ -68,91 +88,124 @@ function NavItem({
   href,
   label,
   icon: Icon,
-  pathname,
+  active,
   badge = 0,
 }: {
   href: string;
   label: string;
-  icon: () => React.JSX.Element;
-  pathname: string;
+  icon: (props: { strokeWidth: number }) => React.JSX.Element;
+  active: boolean;
   badge?: number;
 }) {
-  // El dashboard es prefijo de todas las demás, así que solo coincide exacto.
-  const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
-
   return (
     <li className="flex-1">
       <Link
         href={href}
         data-ondark
         aria-current={active ? "page" : undefined}
-        className="flex min-h-touch flex-col items-center justify-center gap-1 rounded-pill px-1 pb-2 pt-[7px] text-[11px] font-medium transition-colors duration-150 ease-sd"
-        style={{ color: active ? "#97DCBA" : "rgba(226,238,232,.62)" }}
+        /*
+          Tres cosas marcan dónde estoy, no una: la píldora mint al 17% detrás
+          del ítem, el color mint del texto y el ícono con trazo más grueso.
+          Con el color solo —que era lo que había— la diferencia entre activo e
+          inactivo es un cambio de opacidad sobre verde oscuro, y de reojo, en
+          un teléfono, no se lee. La píldora es la que da el "presionado".
+        */
+        className="flex min-h-touch flex-col items-center justify-center gap-[3px] rounded-pill px-[2px] pb-2 pt-[7px] transition-colors duration-150 ease-sd"
+        style={{
+          color: active ? "#97DCBA" : "rgba(226,238,232,.62)",
+          backgroundColor: active ? "rgba(151,220,186,.17)" : "transparent",
+        }}
       >
-        <span className="relative">
-          <Icon />
+        <span className="relative flex h-6 w-11 items-center justify-center">
+          <Icon strokeWidth={active ? 2.1 : 1.7} />
           {badge > 0 && (
             <span
-              className="absolute -right-2 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-pill px-1 font-mono text-[9.5px] font-semibold text-pine"
-              style={{ backgroundColor: "#97DCBA" }}
+              /*
+                El anillo del color de la barra recorta el globo del ícono. Sin
+                él, el número se apoya encima de la campana y los dos trazos se
+                confunden en uno.
+              */
+              className="absolute right-[9px] top-[-2px] flex h-[15px] min-w-[15px] items-center justify-center rounded-pill px-1 font-mono text-[9.5px] font-semibold leading-[15px] text-pine"
+              style={{ backgroundColor: "#F0B0A0", boxShadow: "0 0 0 2px #10402F" }}
             >
               {badge}
             </span>
           )}
         </span>
-        {label}
+        <span
+          className="text-[10px] tracking-[0.01em]"
+          style={{ fontWeight: active ? 600 : 400 }}
+        >
+          {label}
+        </span>
       </Link>
     </li>
   );
 }
 
-/* Iconos de línea, 18px, trazo 1.6 — el sistema no usa iconos rellenos. */
+/*
+ * Iconos de línea, 19px sobre caja de 24 — los del prototipo, trazo a trazo.
+ * El grosor lo decide el ítem: 2.1 en el activo, 1.7 en el resto.
+ */
 
-function WalletIcon() {
+function WalletIcon({ strokeWidth }: { strokeWidth: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-      <path
-        d="M2.5 5.5A1.5 1.5 0 0 1 4 4h9a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 13 14H4a1.5 1.5 0 0 1-1.5-1.5v-7Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      />
-      <path d="M11.5 9h1.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
+    <Glyph strokeWidth={strokeWidth}>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+    </Glyph>
   );
 }
 
-function FlowIcon() {
+function FlowIcon({ strokeWidth }: { strokeWidth: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-      <path
-        d="M2.5 12.5 6 8.5l3 2.5 4.5-6"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <Glyph strokeWidth={strokeWidth}>
+      <path d="M3 3v18h18" />
+      <path d="M7 14v4" />
+      <path d="M12 9v9" />
+      <path d="M17 12v6" />
+    </Glyph>
   );
 }
 
-function PlanIcon() {
+function PlanIcon({ strokeWidth }: { strokeWidth: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-      <path d="M4 3.5h10M4 9h10M4 14.5h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
+    <Glyph strokeWidth={strokeWidth}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="4" />
+    </Glyph>
   );
 }
 
-function BellIcon() {
+function BellIcon({ strokeWidth }: { strokeWidth: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-      <path
-        d="M9 2.5a4 4 0 0 0-4 4v3l-1 2h10l-1-2v-3a4 4 0 0 0-4-4ZM7.5 13.5a1.5 1.5 0 0 0 3 0"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <Glyph strokeWidth={strokeWidth}>
+      <path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8" />
+      <path d="M10.3 21a2 2 0 0 0 3.4 0" />
+    </Glyph>
+  );
+}
+
+function Glyph({
+  strokeWidth,
+  children,
+}: {
+  strokeWidth: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <svg
+      width="19"
+      height="19"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      {children}
     </svg>
   );
 }
