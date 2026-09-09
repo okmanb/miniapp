@@ -79,6 +79,7 @@ mecanismo que la app y no depende del scratchpad de ninguna sesión. Va en el **
 ```bash
 npx tsx scripts/cross-check.ts    # el motor contra el prototipo y contra el motor viejo
 npx tsx scripts/parser-check.ts   # las regex de los resúmenes, con sus regresiones
+npx tsx scripts/forms-check.ts    # los números que van y vuelven entre campo y modelo
 ```
 
 El cross-check compara contra las cifras que el prototipo muestra en pantalla. Hoy
@@ -273,6 +274,52 @@ propiedad por propiedad y se corrigieron:
    contra el prototipo y aun así no existir para quien usa la app.** El banco de pruebas la
    renderiza por su cuenta, así que tampoco la delata. Cuando agregues una pantalla,
    preguntate desde dónde se entra.
+
+## Lo que encontró el primer PDF de verdad
+
+Pasó lo que el patrón anticipaba. Apenas se cargó un resumen real en el alta de una tarjeta
+apareció un bug, y al lado había otro peor que nadie estaba mirando.
+
+**La tasa entraba mal, y en la edición entraba mal en silencio.** El importador escribía la
+tasa con `String(n)` —"68.63"— y el campo se lee con `parseArgNumber`, donde el punto separa
+miles: 68.63 se volvía 6863 y saltaba "esa tasa parece un error de tipeo". Molesto, pero
+visible.
+
+El de al lado no se veía. El formulario de edición prellena la tasa igual, con
+`String(initial.annualRate)`. Una deuda con 83,8 de TNA se prellenaba "83.8" y al guardar
+entraba **838** — que no supera el tope de 1000, así que no daba ningún error. Cada edición
+de una deuda con tasa decimal la corrompía un poco más, sin un solo mensaje.
+
+Se arregló en los dos extremos: todo número que la app escriba en un campo sale por
+`formatArgNumber`, que es el inverso de `parseArgNumber`; y `parseArgNumber` toma un punto
+suelto con una o dos cifras detrás como decimal, porque un grupo de miles tiene siempre tres
+("1.500" sigue siendo mil quinientos). Queda como regresión en `scripts/forms-check.ts`.
+
+**La regla que deja: un valor que la app escribe en un campo de texto y después vuelve a
+leer tiene que hacer el viaje redondo.** El onboarding ya lo hacía bien con `toLocaleString`
+y por eso nunca falló; los otros dos usaban `String()` y ninguna pantalla lo delataba.
+
+## Los `<select>` que el prototipo no tiene
+
+El prototipo **no tiene un solo `<select>` en ninguna pantalla**: cada elección es un grupo
+de opciones a la vista. No es gusto — el control nativo abre la rueda del sistema operativo,
+con su tipografía y su idioma, igual que el `<input type="file">` que se sacó antes.
+
+`ChoiceGroup` es el reemplazo, con las tres formas del prototipo. La que decide no es el
+campo sino **el largo de la etiqueta**: `row` para tres opciones de una o dos palabras,
+`grid` para cuatro medianas en dos columnas, `stack` para etiquetas largas a todo el ancho.
+Adentro son `<input type="radio">` de verdad, así que las flechas, el foco y el envío los
+maneja el navegador.
+
+Convertidos: tipo de deuda (`stack`, seis opciones), cada cuánto entra un ingreso (`row`, con
+la ayuda que cambia según lo elegido, como el prototipo) y qué tipo de pago (`stack`, porque
+nuestras etiquetas son frases y las del prototipo son de dos palabras).
+
+**Quedan cuatro a propósito**, todos los que eligen de una lista que crece: a qué deuda va un
+pago, con qué tarjeta se paga un gasto, a qué tarjeta corresponde un resumen y de qué
+escenario copiar. El prototipo lista cuatro tarjetas fijas; la app tiene que aguantar a
+alguien con veinte deudas, y veinte opciones a la vista es un problema distinto que hay que
+diseñar, no traducir. Se dejaron para después de usar la app con datos reales.
 
 ### La diferencia que se dejó a propósito
 
