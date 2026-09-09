@@ -30,6 +30,16 @@ export function formatArgNumber(n: number): string {
   return String(n).replace(".", ",");
 }
 
+/**
+ * 83.8 -> "83,80%". Siempre dos decimales, como el prototipo: una columna de
+ * tasas donde una dice "83,8%" y la de al lado "98,03%" no se puede leer de
+ * corrido, y la que tiene un decimal parece menos precisa cuando es la misma
+ * medida.
+ */
+export function formatRate(n: number): string {
+  return `${n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+}
+
 /** "$ 1.300.000" -> 1300000. Se queda solo con los dígitos, como el prototipo. */
 export function parseMoney(v: number | string | null | undefined): number {
   if (v == null) return 0;

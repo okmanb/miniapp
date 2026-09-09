@@ -1,4 +1,4 @@
-import { formatMoney } from "@/lib/calc/money";
+import { formatMoney, formatRate } from "@/lib/calc/money";
 import type { InstallmentPlanView } from "@/lib/calc/installments";
 import { Card, Amount, MetaChip } from "@/components/ui";
 
@@ -57,7 +57,7 @@ export function InstallmentGroup({
                 {plan.finished ? (
                   <MetaChip>✓ pagada por completo</MetaChip>
                 ) : (plan.tna ?? 0) > 0 ? (
-                  <MetaChip>{plan.tna!.toLocaleString("es-AR")}% TNA</MetaChip>
+                  <MetaChip>{formatRate(plan.tna!)} TNA</MetaChip>
                 ) : (
                   <MetaChip>cuota sin interés</MetaChip>
                 )}

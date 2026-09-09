@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { createBridgeLoan } from "@/app/dashboard/bridge-loans/actions";
 import { bridgeCost, compareAgainstWorstDebt, monthsBetween } from "@/lib/calc/bridge";
-import { formatMoney, parseMoney } from "@/lib/calc/money";
+import { formatMoney, parseMoney, formatRate } from "@/lib/calc/money";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
 
@@ -231,7 +231,7 @@ function CostPreview({
         <div className="mt-1.5 flex items-baseline justify-between gap-3">
           <span className="text-[12px] text-muted">
             Dejarlo en {worstDebt.name} ·{" "}
-            {worstDebt.annualRatePercent.toLocaleString("es-AR")}%
+            {formatRate(worstDebt.annualRatePercent)}
           </span>
           <span className="font-mono text-[13.5px] text-ink">
             {formatMoney(comparison.alternativeInterest)}

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { parseStatementPdf, type ParseResult } from "@/app/dashboard/statements/parse-actions";
-import { formatMoney } from "@/lib/calc/money";
+import { formatMoney, formatRate } from "@/lib/calc/money";
 import { Spinner } from "./ui";
 
 /**
@@ -176,7 +176,7 @@ export function StatementImport({
             {result.minimumPayment != null && (
               <Row label="Pago mínimo" value={formatMoney(result.minimumPayment)} />
             )}
-            {result.annualRate != null && <Row label="TNA" value={`${result.annualRate}%`} />}
+            {result.annualRate != null && <Row label="TNA" value={formatRate(result.annualRate)} />}
             {result.installments && result.installments.length > 0 && (
               <Row
                 label="Compras en cuotas"

@@ -88,11 +88,27 @@ $3.875.621 de interés total, $2.757.627 de ahorro pagando el doble, los seis va
 gráfico de flujo, las cuatro cifras del préstamo puente ($800.000 a un mes al 5%) y las
 tres del plan destructor (plazo, interés total y orden de cancelación).
 
-Y hay un banco de pruebas visual: `/dev-preview/pantallas` renderiza las pantallas 04, 06 y
-07 a 11 con el dataset del prototipo, sin necesitar sesión ni datos cargados. `/dev-preview`
-y `/dev-preview/cashflow` hacen lo mismo con las pantallas 01 y 02. **Es la forma más barata
-de ver una pantalla sin poder iniciar sesión**, y fue lo que destapó los formularios que
-rompían.
+Y hay un banco de pruebas visual, que ahora cubre **las dieciséis pantallas**:
+
+| Ruta | Pantallas |
+|---|---|
+| `/dev-preview` | 01 · Dashboard |
+| `/dev-preview/cashflow` | 02 · Flujo de caja |
+| `/dev-preview/pantallas` | 04, 06 y 07 a 11 |
+| `/dev-preview/privadas` | 03, 05, 15 y 16 — las que piden sesión |
+| `/` , `/login`, `/signup`, `/recuperar` | 00 y 12 a 14, que no piden sesión |
+
+Todas con el dataset del prototipo, sin necesitar sesión ni datos cargados. **Es la forma
+más barata de ver una pantalla sin poder iniciar sesión**, y fue lo que destapó los
+formularios que rompían.
+
+`/dev-preview/privadas` se sumó tarde y por una razón concreta: mientras esas cuatro no se
+podían mirar, nadie las comparaba contra el prototipo, y se notó. La 06 se quedó con el
+`<input type="file">` crudo después de que se arreglara el del alta de la tarjeta, y la 16
+—la única pantalla con "Cerrar sesión"— estuvo sin puerta de entrada sin que nadie lo
+notara. Para que existiera, el cuerpo de las pantallas 03, 15 y 16 se separó de su página en
+`DebtDetailView`, `PaymentsHistory` y `SettingsView`: la página consulta y el componente
+dibuja. **Si agregás una pantalla, dejala montable sin sesión.**
 
 Si alguna deja de coincidir, cambió el motor: entender por qué **antes** de seguir.
 
