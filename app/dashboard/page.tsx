@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboard } from "@/lib/data/dashboard";
 import { DashboardHeader } from "@/components/DashboardHeader";
+import { DebtCard } from "@/components/DebtCard";
 import { formatMoney } from "@/lib/calc/money";
 import type { GrowthCause } from "@/lib/calc/statement";
 import { TotalDebtHero } from "@/components/TotalDebtHero";
@@ -177,70 +178,7 @@ export default async function DashboardPage() {
             <ul className="space-y-2">
               {data.debts.map((debt) => (
                 <li key={debt.id}>
-                  <Link href={`/dashboard/debts/${debt.id}`} className="block">
-                    <Card className="px-4 py-3 transition-colors duration-150 ease-sd hover:bg-surface-sunken">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate text-card text-ink">{debt.name}</div>
-                          <div className="mt-1.5 flex flex-wrap gap-1.5">
-                            <MetaChip>
-                              {debt.dueDay != null ? `vto. ${debt.dueDay}` : "cuota fija"}
-                            </MetaChip>
-                            {debt.annualRate != null && (
-                              <MetaChip>TNA {debt.annualRate.toLocaleString("es-AR")}%</MetaChip>
-                            )}
-                          </div>
-                          {debt.installmentCount > 0 && (
-                            <p className="mt-1.5 text-[11px] text-muted">
-                              incluye {debt.installmentCount}{" "}
-                              {debt.installmentCount === 1 ? "compra en cuotas" : "compras en cuotas"}:{" "}
-                              {formatMoney(debt.installmentTotal)}
-                            </p>
-                          )}
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <div className="text-label uppercase text-muted">Saldo</div>
-                          <Amount className="text-card-lg text-ink">
-                            {formatMoney(debt.balance)}
-                          </Amount>
-                        </div>
-                      </div>
-
-                      {/*
-                        El progreso se deriva de pagado / (pagado + saldo). Sin
-                        pagos registrados no hay barra: una en cero no informa,
-                        solo ocupa lugar y sugiere que se empezó algo.
-                      */}
-                      {debt.paid > 0 && (
-                        <div className="mt-2.5">
-                          <div className="flex items-baseline justify-between gap-3">
-                            <span className="text-[11px] text-muted">
-                              {formatMoney(debt.paid)} pagado
-                            </span>
-                            <span className="font-mono text-[11px] text-leaf-deep">
-                              {Math.round(debt.paidFraction * 100)}%
-                            </span>
-                          </div>
-                          <div
-                            className="mt-1 h-1 w-full overflow-hidden rounded-pill bg-track"
-                            role="img"
-                            aria-label={`${Math.round(debt.paidFraction * 100)}% saldado`}
-                          >
-                            <div
-                              className="h-full rounded-pill bg-leaf"
-                              style={{ width: `${Math.min(debt.paidFraction * 100, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {debt.growth && (
-                        <p className="mt-2 border-t border-border-row pt-2 text-[11.5px] text-brick-ink">
-                          {growthMessage(debt.growth)}
-                        </p>
-                      )}
-                    </Card>
-                  </Link>
+                  <DebtCard debt={debt} today={now} />
                 </li>
               ))}
             </ul>

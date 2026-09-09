@@ -5,6 +5,7 @@ import { RunwayCard } from "@/components/RunwayCard";
 import { AlertsPeek } from "@/components/AlertsPeek";
 import { BottomNav } from "@/components/BottomNav";
 import { DashboardHeader } from "@/components/DashboardHeader";
+import { DebtCard } from "@/components/DebtCard";
 import { Card, Amount, EmptyState, PrimaryButton, Screen, MetaChip } from "@/components/ui";
 import { formatMoney } from "@/lib/calc/money";
 import { deriveBalance } from "@/lib/calc/balance";
@@ -20,12 +21,14 @@ import { explainGrowth } from "@/lib/calc/statement";
  */
 export const dynamic = "force-dynamic";
 
+// Pagado y cuotas salen del prototipo tal cual los muestra, para poder poner
+// la tarjeta al lado de la suya y comparar los porcentajes al peso.
 const PROTOTYPE_DEBTS = [
-  { id: "0", name: "Mastercard Banco Patagonia …4139", saldo: 3386911, tna: 83.8, min: 290017, dueDay: 10 },
-  { id: "1", name: "Mastercard Black …3311", saldo: 5806439, tna: 69.44, min: 1085218, dueDay: 7 },
-  { id: "2", name: "Visa Signature …2166", saldo: 30845480, tna: 98.03, min: 1300000, dueDay: 7 },
-  { id: "3", name: "Prestamo 2 BBVA", saldo: 5738552, tna: 74.9, min: 716569, dueDay: null },
-  { id: "4", name: "Prestamo 1 BBVA", saldo: 1356072, tna: 71.9, min: 262695, dueDay: null },
+  { id: "0", name: "Mastercard Banco Patagonia …4139", saldo: 3386911, tna: 83.8, min: 290017, dueDay: 10, kind: "tarjeta", paid: 954251, cuotas: 3, cuotasMonto: 433422 },
+  { id: "1", name: "Mastercard Black …3311", saldo: 5806439, tna: 69.44, min: 1085218, dueDay: 7, kind: "tarjeta", paid: 4635027, cuotas: 4, cuotasMonto: 3240167 },
+  { id: "2", name: "Visa Signature …2166", saldo: 30845480, tna: 98.03, min: 1300000, dueDay: 7, kind: "tarjeta", paid: 6120400, cuotas: 4, cuotasMonto: 26171896 },
+  { id: "3", name: "Prestamo 2 BBVA", saldo: 5738552, tna: 74.9, min: 716569, dueDay: null, kind: "prestamo_personal", paid: 688626, cuotas: 0, cuotasMonto: 0 },
+  { id: "4", name: "Prestamo 1 BBVA", saldo: 1356072, tna: 71.9, min: 262695, dueDay: null, kind: "prestamo_personal", paid: 1102431, cuotas: 0, cuotasMonto: 0 },
 ];
 
 export default function PreviewPage() {
@@ -42,6 +45,14 @@ export default function PreviewPage() {
     return {
       ...d,
       balance,
+      annualRate: d.tna,
+      minimumPayment: d.min,
+      monthlyDue: d.min,
+      recurringCharge: 0,
+      minimumPaidThisMonth: false,
+      paidFraction: d.paid + balance > 0 ? d.paid / (d.paid + balance) : 0,
+      installmentCount: d.cuotas,
+      installmentTotal: d.cuotasMonto,
       growth: explainGrowth({
         balance,
         annualRate: d.tna,
@@ -124,27 +135,7 @@ export default function PreviewPage() {
       <ul className="space-y-2">
         {debts.map((debt) => (
           <li key={debt.id}>
-            <Card className="px-4 py-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="truncate text-card text-ink">{debt.name}</div>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <MetaChip>{debt.dueDay != null ? `vto. ${debt.dueDay}` : "cuota fija"}</MetaChip>
-                    <MetaChip>TNA {debt.tna.toLocaleString("es-AR")}%</MetaChip>
-                  </div>
-                </div>
-                <Amount className="shrink-0 text-card-lg text-ink">
-                  {formatMoney(debt.balance)}
-                </Amount>
-              </div>
-              {debt.growth && (
-                <p className="mt-2 border-t border-border-row pt-2 text-[11.5px] text-brick-ink">
-                  {debt.growth.kind === "interes"
-                    ? `El mínimo no cubre el interés de ${formatMoney(debt.growth.amount)} por mes — el saldo va a seguir creciendo.`
-                    : `Al mínimo le faltan ${formatMoney(debt.growth.amount)} por mes para que el saldo deje de crecer.`}
-                </p>
-              )}
-            </Card>
+            <DebtCard debt={debt} today={new Date()} />
           </li>
         ))}
       </ul>
