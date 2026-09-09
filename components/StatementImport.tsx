@@ -40,48 +40,47 @@ export function takeParsedStatement(): ParseResult | null {
   }
 }
 
-export function StatementImport({
-  title = "Importar resumen",
-  note = "Subí el PDF y completamos los campos de abajo. No se guarda nada hasta que revises y confirmes.",
-  onParsed,
+/**
+ * La tarjeta de "subí el PDF", sola.
+ *
+ * Vive aparte porque la usan dos pantallas con resúmenes distintos debajo —el
+ * alta de una tarjeta y la carga del resumen del mes—, y cuando cada una tenía
+ * su copia, arreglar una dejaba la otra con el `<input type="file">` crudo. Lo
+ * que va debajo del selector lo pone cada pantalla por `children`.
+ *
+ * La tarjeta es blanca y sólida, y el punteado vive solo en la fila del
+ * archivo. El control nativo trae su propio botón, su propia tipografía y su
+ * propio idioma —"Choose file", "No file chosen"— y no hay CSS que lo alinee
+ * con el resto, así que el input va oculto (a la vista, no al teclado) y lo
+ * que se ve es la píldora del sistema con el nombre del archivo al lado.
+ */
+export function PdfCard({
+  title,
+  note,
+  fileName,
+  busy = false,
+  onPick,
+  children,
 }: {
-  title?: string;
-  note?: string;
-  onParsed: (parsed: ParseResult) => void;
+  title: string;
+  note: string;
+  /** Vacío mientras no se eligió nada. */
+  fileName: string;
+  /** Mientras lee, el botón de reintentar no tiene sentido. */
+  busy?: boolean;
+  onPick: (file: File) => void;
+  children?: React.ReactNode;
 }) {
-  const [pending, startTransition] = useTransition();
-  const [result, setResult] = useState<ParseResult | null>(null);
-  const [fileName, setFileName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function read(file: File) {
-    setFileName(file.name);
-    startTransition(async () => {
-      const data = new FormData();
-      data.set("pdf", file);
-      const parsed = await parseStatementPdf(data);
-      setResult(parsed);
-      if (parsed.ok) onParsed(parsed);
-    });
-  }
-
   return (
-    /*
-      La tarjeta es blanca y sólida, y el punteado vive solo en la fila del
-      archivo. Antes el punteado envolvía la sección entera y adentro iba el
-      `<input type="file">` crudo: el control nativo trae su propio botón, su
-      propio tipo de letra y su propio idioma —"Choose File", "No file
-      chosen"— y no hay CSS que lo alinee con el resto. Acá el input está
-      oculto (accesible, no invisible para el teclado) y lo que se ve es la
-      píldora del sistema con el nombre del archivo al lado.
-    */
     <section className="rounded-surface-lg border border-border bg-surface p-[14px]">
       <h2 className="text-card text-pine">{title}</h2>
       <p className="help mt-1">{note}</p>
 
       <span className="mt-3 block text-label uppercase text-muted">Archivo</span>
 
-      <label className="mt-1.5 flex cursor-pointer items-center gap-[10px] rounded-surface border border-dashed border-border-dash bg-surface-alt px-[10px] py-2 transition-colors duration-150 ease-sd hover:border-pine focus-within:border-pine">
+      <label className="mt-1.5 flex cursor-pointer items-center gap-[10px] rounded-surface border border-dashed border-border-dash bg-surface-alt px-[10px] py-2 transition-colors duration-150 ease-sd focus-within:border-pine hover:border-pine">
         <input
           ref={inputRef}
           type="file"
@@ -89,11 +88,11 @@ export function StatementImport({
           aria-label="PDF del resumen"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) read(file);
+            if (file) onPick(file);
           }}
-          className="sr-only"
+          className="peer sr-only"
         />
-        <span className="shrink-0 whitespace-nowrap rounded-pill border border-pine px-[13px] py-2 text-[12px] font-semibold text-pine">
+        <span className="shrink-0 whitespace-nowrap rounded-pill border border-pine px-[13px] py-2 text-[12px] font-semibold text-pine peer-focus-visible:underline peer-focus-visible:underline-offset-4">
           Seleccionar archivo
         </span>
         <span
@@ -110,7 +109,7 @@ export function StatementImport({
         después, y es para volver a intentar cuando el parser falló o el
         archivo era el equivocado.
       */}
-      {fileName && !pending && (
+      {fileName && !busy && (
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -120,6 +119,37 @@ export function StatementImport({
         </button>
       )}
 
+      {children}
+    </section>
+  );
+}
+
+export function StatementImport({
+  title = "Importar resumen",
+  note = "Subí el PDF y completamos los campos de abajo. No se guarda nada hasta que revises y confirmes.",
+  onParsed,
+}: {
+  title?: string;
+  note?: string;
+  onParsed: (parsed: ParseResult) => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [result, setResult] = useState<ParseResult | null>(null);
+  const [fileName, setFileName] = useState("");
+
+  function read(file: File) {
+    setFileName(file.name);
+    startTransition(async () => {
+      const data = new FormData();
+      data.set("pdf", file);
+      const parsed = await parseStatementPdf(data);
+      setResult(parsed);
+      if (parsed.ok) onParsed(parsed);
+    });
+  }
+
+  return (
+    <PdfCard title={title} note={note} fileName={fileName} busy={pending} onPick={read}>
       {pending && (
         <p role="status" className="mt-3 flex items-center gap-2 text-[11.5px] text-muted">
           <Spinner className="text-teal" />
@@ -170,7 +200,7 @@ export function StatementImport({
           )}
         </div>
       )}
-    </section>
+    </PdfCard>
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import { saveStatement } from "@/app/dashboard/statements/actions";
 import { EMPTY_STATEMENT_STATE, type StatementState } from "@/app/dashboard/statements/form-state";
 import { parseStatementPdf, type ParseResult } from "@/app/dashboard/statements/parse-actions";
@@ -8,7 +8,7 @@ import { formatMoney, formatUsd, parseMoney } from "@/lib/calc/money";
 import { closeStatement } from "@/lib/calc/statement";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
-import { takeParsedStatement } from "./StatementImport";
+import { PdfCard, takeParsedStatement } from "./StatementImport";
 
 /**
  * Carga del resumen del mes (pantalla 06).
@@ -49,7 +49,7 @@ export function StatementForm({
 
   const [parsing, startParsing] = useTransition();
   const [parsed, setParsed] = useState<ParseResult | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState("");
 
   // Controlados para que el PDF pueda prellenarlos y la persona corregirlos.
   const [debtId, setDebtId] = useState(defaultDebtId ?? "");
@@ -60,6 +60,20 @@ export function StatementForm({
   const [payKind, setPayKind] = useState<PayKind>("variable");
 
   const needsConfirm = Boolean(state.pendingDuplicates?.length);
+
+  /*
+   * Qué falta para que los atajos de "tipo de pago" se puedan usar. Los dos
+   * escriben el campo "cuánto pagaste", así que necesitan el número que van a
+   * escribir: el mínimo, del campo de arriba; el total, del saldo de la
+   * tarjeta. Sin esta línea el botón gris no explica nada.
+   */
+  const missing: string[] = [];
+  if (parseMoney(minimum) <= 0) missing.push("cargá el pago mínimo");
+  if (!debtId) missing.push("elegí la tarjeta");
+  const blockedHint =
+    missing.length > 0
+      ? `«Pago variable» es lo que pudiste pagar, sea cual sea el monto. Para usar los otros dos, ${missing.join(" y ")}.`
+      : "«Pago variable» es lo que pudiste pagar, sea cual sea el monto. Los otros dos escriben el monto por vos.";
 
   // Si el PDF ya se leyo al crear la tarjeta, no se vuelve a pedir: los
   // campos llegan cargados y solo hay que confirmarlos.
@@ -102,6 +116,7 @@ export function StatementForm({
   }
 
   function readPdf(file: File) {
+    setFileName(file.name);
     startParsing(async () => {
       const data = new FormData();
       data.set("pdf", file);
@@ -119,40 +134,37 @@ export function StatementForm({
 
   return (
     <>
-      <section className="mt-4 rounded-surface-lg border border-dashed border-border-dash bg-surface-sunken px-4 py-4">
-        <h2 className="text-card text-ink">Resumen en PDF</h2>
-        <p className="help mt-1">
-          Lo leemos y completamos los campos de abajo. No se guarda nada hasta que revises y
-          confirmes.
-        </p>
+      {/*
+        La tarjeta la pone `PdfCard`, no esta pantalla. Antes acá había una
+        copia del bloque —con el `<input type="file">` crudo adentro— y cuando
+        se arregló el del alta de la tarjeta, este quedó atrás mostrando
+        "Choose file / No file chosen". Lo único propio de esta pantalla es el
+        resumen de lo leído, que va como hijo.
+      */}
+      <div className="mt-4">
+        <PdfCard
+          title="Resumen en PDF"
+          note="Lo leemos y completamos los campos de abajo. No se guarda nada hasta que revises y confirmes."
+          fileName={fileName}
+          busy={parsing}
+          onPick={readPdf}
+        >
+          {parsing && (
+            <p role="status" className="mt-3 flex items-center gap-2 text-[11.5px] text-muted">
+              <Spinner className="text-teal" />
+              Leyendo el PDF…
+            </p>
+          )}
 
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/pdf"
-          aria-label="PDF del resumen"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) readPdf(file);
-          }}
-          className="mt-3 block w-full text-[12px] text-muted file:mr-3 file:min-h-touch file:cursor-pointer file:rounded-pill file:border file:border-border file:bg-surface file:px-4 file:text-[12px] file:font-semibold file:text-pine hover:file:bg-surface-arch"
-        />
+          {parsed && !parsed.ok && (
+            <p role="alert" className="mt-3 text-[11.5px] text-brick-ink">
+              {parsed.message}
+            </p>
+          )}
 
-        {parsing && (
-          <p role="status" className="mt-3 flex items-center gap-2 text-[11.5px] text-muted">
-            <Spinner className="text-teal" />
-            Leyendo el PDF…
-          </p>
-        )}
-
-        {parsed && !parsed.ok && (
-          <p role="alert" className="mt-3 text-[11.5px] text-brick-ink">
-            {parsed.message}
-          </p>
-        )}
-
-        {parsed?.ok && <ParseSummary parsed={parsed} />}
-      </section>
+          {parsed?.ok && <ParseSummary parsed={parsed} />}
+        </PdfCard>
+      </div>
 
       <form action={formAction} className="mt-6">
         <h2 className="text-[15px] font-semibold text-ink">Revisá los montos</h2>
@@ -233,25 +245,51 @@ export function StatementForm({
 
         <fieldset className="mt-5">
           <legend className="text-label uppercase text-muted">Tipo de pago</legend>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {PAY_KINDS.map((k) => (
-              <button
-                key={k.value}
-                type="button"
-                onClick={() => pickPayKind(k.value)}
-                aria-pressed={payKind === k.value}
-                disabled={k.value !== "variable" && !card}
-                className="min-h-touch rounded-pill border px-[14px] py-2 text-[12px] font-semibold transition-colors duration-150 ease-sd disabled:opacity-50"
-                style={{
-                  backgroundColor: payKind === k.value ? "#0E3A31" : "#FFFFFF",
-                  borderColor: payKind === k.value ? "#0E3A31" : "#DEE3DD",
-                  color: payKind === k.value ? "#FFFFFF" : "#5C6B65",
-                }}
-              >
-                {k.label}
-              </button>
-            ))}
+          {/*
+            Tres columnas iguales, no una fila que envuelve. Con la etiqueta
+            larga —"Pago variable (lo que pude pagar)"— los tres no entraban y
+            quedaban escalonados: dos arriba y uno abajo, cada uno de un ancho
+            distinto. La etiqueta se acortó y lo que decía el paréntesis pasó a
+            la ayuda, que es donde no empuja a nadie.
+          */}
+          <div className="mt-2 grid grid-cols-3 gap-1.5">
+            {PAY_KINDS.map((k) => {
+              /*
+                Los dos atajos escriben "cuánto pagaste", así que solo se
+                pueden usar cuando existe el número que van a escribir: el
+                mínimo sale del campo de arriba y el total sale del saldo de
+                la tarjeta. Antes los dos dependían de la tarjeta, y "Pago
+                mínimo" quedaba apagado incluso con el mínimo ya cargado.
+              */
+              const blocked =
+                (k.value === "minimo" && parseMoney(minimum) <= 0) ||
+                (k.value === "total" && !card);
+
+              return (
+                <button
+                  key={k.value}
+                  type="button"
+                  onClick={() => pickPayKind(k.value)}
+                  aria-pressed={payKind === k.value}
+                  disabled={blocked}
+                  className="flex min-h-touch items-center justify-center rounded-pill border px-2 text-center text-[12px] font-semibold leading-tight transition-colors duration-150 ease-sd disabled:opacity-50"
+                  style={{
+                    backgroundColor: payKind === k.value ? "#0E3A31" : "#FFFFFF",
+                    borderColor: payKind === k.value ? "#0E3A31" : "#DEE3DD",
+                    color: payKind === k.value ? "#FFFFFF" : "#5C6B65",
+                  }}
+                >
+                  {k.label}
+                </button>
+              );
+            })}
           </div>
+
+          {/*
+            Un botón gris sin explicación es un callejón: se ve que no se
+            puede y no se ve por qué. Acá se dice qué falta para destrabarlo.
+          */}
+          {blockedHint && <p className="help mt-1.5">{blockedHint}</p>}
         </fieldset>
 
         {card && preview && (
@@ -318,8 +356,14 @@ export function StatementForm({
 
 type PayKind = "variable" | "minimo" | "total";
 
+/**
+ * Las etiquetas son de dos palabras para que los tres botones midan lo mismo.
+ * Lo que decía "Pago variable (lo que pude pagar)" ahora vive en la ayuda: en
+ * el botón obligaba a que los otros dos quedaran chiquitos al lado, o a que la
+ * fila se partiera en dos renglones desparejos.
+ */
 const PAY_KINDS: { value: PayKind; label: string }[] = [
-  { value: "variable", label: "Pago variable (lo que pude pagar)" },
+  { value: "variable", label: "Pago variable" },
   { value: "minimo", label: "Pago mínimo" },
   { value: "total", label: "Pago total" },
 ];
