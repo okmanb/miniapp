@@ -1,19 +1,30 @@
 # Dónde quedó esto — para retomar
 
-Fecha: 7 de septiembre de 2026. Escrito al cerrar una sesión larga y actualizado al cerrar
-la siguiente, que comparó las dieciséis pantallas contra el prototipo, arregló lo que
-apareció y dejó la aplicación desplegada.
+Última actualización: 9 de septiembre de 2026.
+
+Tres sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
+pantallas contra el prototipo y la desplegó; la tercera la usó en producción y arregló lo
+que aparece solo cuando la abrís.
+
+---
+
+## Si vas a hacer una sola cosa
+
+Tocar los dos settings de Supabase del pendiente 1 y 2 —cuatro campos en el dashboard— y
+después **abrir la app y cargar una deuda real con su PDF**. Todo lo construido está
+verificado contra el prototipo y contra el motor viejo; nada está verificado contra una
+sesión de verdad, y ahí es donde vienen apareciendo los bugs.
 
 ---
 
 ## Lo primero: esto ya está en el aire
 
-`llegas.vercel.app` responde 200 y es público. El dominio y la Deployment
-Protection se configuraron a mano en Vercel el 9 de septiembre — el deploy solo NO los
-resolvía, como se creía. `main` y `reset` apuntan al mismo commit.
+`llegas.vercel.app` responde 200 y es público, sirviendo lo que hay en `main`. El dominio y
+la Deployment Protection se configuraron a mano en Vercel — el deploy solo NO los resolvía,
+como se creía, y se comprobó midiéndolo. `main` y `reset` apuntan al mismo commit.
 
-Lo que sigue roto en producción está más abajo, en pendientes, y el primero es urgente:
-**crear cuenta no funciona hasta que el dominio esté en los Redirect URLs de Supabase.**
+Hay **una cosa rota en producción ahora mismo**, y es el pendiente número uno: crear cuenta
+falla hasta que el dominio esté en los Redirect URLs de Supabase.
 
 ## La app
 
@@ -75,9 +86,11 @@ $3.875.621 de interés total, $2.757.627 de ahorro pagando el doble, los seis va
 gráfico de flujo, las cuatro cifras del préstamo puente ($800.000 a un mes al 5%) y las
 tres del plan destructor (plazo, interés total y orden de cancelación).
 
-Y hay un banco de pruebas visual: `/dev-preview/pantallas` renderiza las pantallas 07 a 11
-con el dataset del prototipo, sin necesitar sesión ni datos cargados. `/dev-preview` y
-`/dev-preview/cashflow` hacen lo mismo con las pantallas 01 y 02.
+Y hay un banco de pruebas visual: `/dev-preview/pantallas` renderiza las pantallas 04, 06 y
+07 a 11 con el dataset del prototipo, sin necesitar sesión ni datos cargados. `/dev-preview`
+y `/dev-preview/cashflow` hacen lo mismo con las pantallas 01 y 02. **Es la forma más barata
+de ver una pantalla sin poder iniciar sesión**, y fue lo que destapó los formularios que
+rompían.
 
 Si alguna deja de coincidir, cambió el motor: entender por qué **antes** de seguir.
 
@@ -99,6 +112,8 @@ Esta distinción importa más que la lista de pantallas, porque marca dónde bus
 | La capa de datos | La app y Postgres derivan el mismo saldo |
 | Pantallas 04, 06 y 07 a 11 | Medidas contra el prototipo renderizado, con su banco de pruebas propio |
 | El puente, el plan y las cuotas | Sus cifras, contra las que muestra el prototipo, al peso |
+| El calendario | El panel del prototipo, contra su captura: kicker, valor, nota, semana desde el lunes y el anillo de hoy |
+| El deploy | `llegas.vercel.app` responde 200 y sirve `main` |
 
 ### NO verificado — acá es donde hay bugs
 
@@ -112,12 +127,14 @@ septiembre, a la tarde). Lo que sigue sin mirarse:
   otro, ni borrar todos los datos.
 - El flujo de **recuperar clave por código**, que depende de una plantilla de Supabase que
   todavía hay que tocar (ver pendientes).
-- El **deploy en sí**. `main` ya está desplegado, pero la URL está detrás de la Deployment
-  Protection de Vercel y no se puede abrir sin la cuenta.
+- **El parseo de PDF por el camino nuevo.** Importar desde el alta de la tarjeta y que lo
+  leído llegue al resumen sin volver a pedir el archivo está verificado en estructura, no
+  con un PDF de verdad.
 
-El patrón de la sesión anterior se repitió y conviene recordarlo: donde se comparó contra
-algo real apareció un bug; donde se razonó sin dato, se inventó. Los cinco que aparecieron
-esta vez están en la sección siguiente.
+**El patrón se repitió tres veces y ya es una regla del proyecto: donde se comparó contra
+algo real apareció un bug; donde se razonó sin dato, se inventó.** Vale para el prototipo
+renderizado, para un PDF del banco, para la base — y, la última vez, para la app abierta en
+un teléfono.
 
 ## Lo que la comparación de pantallas encontró
 
@@ -131,26 +148,26 @@ pantallas 04 y 06, que eran las últimas sin comparar:
    Caían agregar deuda, editar deuda, ingresos, registrar pago y cargar resumen. **Regla
    para el futuro: un archivo `"use server"` solo puede exportar funciones asíncronas.**
 
-1. **Los préstamos entraban al flujo con cuota cero.** La obligación mensual salía del
+2. **Los préstamos entraban al flujo con cuota cero.** La obligación mensual salía del
    mínimo del último resumen, y un préstamo no tiene resúmenes. La proyección los ignoraba
    y el alcance del mes daba más holgado de lo que es. Lo destapó el campo "PAGO MENSUAL
    ESTIMADO" del prototipo, que acá no existía.
 
-2. **Los préstamos puente no llegaban al flujo.** `bridge_loans` se escribía y no lo leía
+3. **Los préstamos puente no llegaban al flujo.** `bridge_loans` se escribía y no lo leía
    nadie: `projectCashflow` nunca supo de su existencia. La pantalla 11 estaba completa y
    era decorativa, y el mensaje de éxito del formulario decía "Miralo en el flujo".
 
-3. **El plan destructor numeraba en orden de ataque, no de cancelación.** Son dos órdenes
+4. **El plan destructor numeraba en orden de ataque, no de cancelación.** Son dos órdenes
    distintos: la deuda de tasa más alta suele ser la más grande y cae última. Con el orden
    de ataque, la frase "libera $X por mes para la siguiente" era falsa en cada fila.
 
-4. **La pantalla de alertas prometía un chequeo que la app no hacía.** `mes_no_reflejado`
+5. **La pantalla de alertas prometía un chequeo que la app no hacía.** `mes_no_reflejado`
    estaba en el enum y en la lista de "Qué miramos", y `deriveAlerts` nunca lo emitía.
 
-5. **Las alertas no traían ni cifra ni destino.** El prototipo da a cada una su número
+6. **Las alertas no traían ni cifra ni destino.** El prototipo da a cada una su número
    etiquetado y un botón al lugar donde se resuelve; la lista mostraba título y flecha.
 
-6. **El menos de `formatMoney` era un guion y no U+2212.** En cifras tabulares el menos
+7. **El menos de `formatMoney` era un guion y no U+2212.** En cifras tabulares el menos
    matemático mide lo mismo que un dígito y el guion no, así que cualquier columna de
    montos con signo se desalineaba sola. Afecta a toda la app.
 
@@ -163,6 +180,30 @@ Y dos diferencias que quedaron a propósito, con su razón:
   corriendo en septiembre, la 18ª cae en junio; el prototipo dice julio. Su propio contador
   de cuotas y su fecha de fin no cierran entre sí, así que copiarlo exigía meter un
   off-by-one a propósito.
+
+## Lo que encontró usarla en producción
+
+Cuatro más, y ninguno se ve leyendo código. Salieron de abrir `llegas.vercel.app` en un
+teléfono:
+
+1. **El onboarding pedía el día de vencimiento con un `<select>` de "Día 1 … Día 31".** El
+   prototipo tiene un calendario. Ahora hay un componente único (`CalendarField`) con los
+   modos del prototipo, aplicado a las **seis** fechas de la app: día de vencimiento
+   (onboarding y editar deuda), mes del resumen, mes de devolución de un puente, mes del
+   bono y fecha de un pago. Ya no queda ningún `<select>` de días ni ningún `type="month"`.
+
+2. **La raíz caía directo al onboarding, sin salida a login.** Quien ya tenía cuenta pero no
+   la sesión abierta —otro dispositivo, la sesión vencida— tenía que escribir `/login` a
+   mano. Ahora hay una pantalla de entrada con dos caminos.
+
+3. **El botón `+` no daba ninguna respuesta en el frame del toque.** El primer feedback era
+   la hoja 200 ms después, y por eso se sentía tosco. Ahora se hunde al presionarlo, el
+   fondo entra con fade y cerrar tiene salida propia.
+
+4. **"Importar resumen de tarjeta" del onboarding era un link a una pantalla con sesión.**
+   Rebotaba al login. Ahora lee el PDF ahí mismo. Y el mismo bloque está en el alta de una
+   tarjeta: prellena nombre, saldo, tasa y día, y lo parseado viaja a la pantalla del
+   resumen para no pedir el mismo archivo dos veces.
 
 ## Pendientes concretos
 
@@ -185,9 +226,10 @@ Y dos diferencias que quedaron a propósito, con su razón:
    snapshot de los datos viejos (33 deudas, 28 consumos) y es la única copia. Sigue ahí.
 6. **El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)** sigue en el repo como
    control cruzado. Decidir si se borra.
-7. **`public.rls_auto_enable()` es ejecutable por `anon`.** Lo marca el linter de Supabase.
-   Es un objeto de la plataforma, no nuestro, y es una función de event trigger: llamarla
-   por RPC falla sola. Bajo riesgo, pero conviene revocarle el EXECUTE.
+
+El 1 y el 2 son de dashboard y tardan un minuto; el 3 es donde está el valor.
+El linter de seguridad de Supabase quedó con **un solo warning**, el 4: los dos de
+`rls_auto_enable` se cerraron en la migración 006.
 
 ### Deudas de producto conocidas
 
@@ -202,8 +244,8 @@ Y dos diferencias que quedaron a propósito, con su razón:
 
 ## Migraciones aplicadas en la base
 
-Las de esta tanda ya corrieron sobre el proyecto `udhqdbpjhifeotgoqaoa` y están en el repo
-como `supabase/migration_003_*.sql` y `_004_*.sql`. `supabase/schema.sql` quedó al día.
+Las de estas sesiones ya corrieron sobre el proyecto `udhqdbpjhifeotgoqaoa` y están en el
+repo como `supabase/migration_003_*.sql` a `_006_*.sql`. `supabase/schema.sql` quedó al día.
 
 - `bridge_loans`: se sumaron `is_taken` y `monthly_interest_rate`, y se fue
   `annual_interest_rate` — nunca se escribió desde la app y la tasa que pide la pantalla es
@@ -215,6 +257,9 @@ como `supabase/migration_003_*.sql` y `_004_*.sql`. `supabase/schema.sql` quedó
 - Tabla nueva `alert_settings` (cuándo, por dónde y sobre qué deudas).
 - Función nueva `create_scenario_from`, y `copy_scenario` al día con las columnas nuevas.
 - `debts`: se sumó `monthly_payment` (migración 005), la cuota de una deuda sin resumen.
+- Se le revocó el `EXECUTE` público a `rls_auto_enable()` (migración 006). Es un objeto de
+  la plataforma, no nuestro, así que no está en `schema.sql`. Verificado que el guardarraíl
+  sigue funcionando: una tabla creada después del revoke sigue quedando con RLS activa.
 
 ### La plantilla del código de recuperación
 
