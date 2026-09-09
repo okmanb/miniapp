@@ -6,14 +6,14 @@ apareció y dejó la aplicación desplegada.
 
 ---
 
-## Lo primero: esto ya está desplegado
+## Lo primero: esto ya está en el aire
 
-`reset` se mergeó a `main` y se pusheó. Vercel construyó y `mini-app-factory-okmanb.vercel.app`
-sirve la aplicación — detrás de la Deployment Protection, así que hoy solo la ve el dueño de
-la cuenta. Dos cosas que **no** se resolvieron solas y siguen pendientes: sacar esa
-protección, y asociar `llegas.vercel.app` al proyecto (ver pendientes 2 y 3).
+`llegas.vercel.app` responde 200 y es público. El dominio y la Deployment
+Protection se configuraron a mano en Vercel el 9 de septiembre — el deploy solo NO los
+resolvía, como se creía. `main` y `reset` apuntan al mismo commit.
 
-La rama `reset` se conserva apuntando al mismo commit.
+Lo que sigue roto en producción está más abajo, en pendientes, y el primero es urgente:
+**crear cuenta no funciona hasta que el dominio esté en los Redirect URLs de Supabase.**
 
 ## La app
 
@@ -166,34 +166,37 @@ Y dos diferencias que quedaron a propósito, con su razón:
 
 ## Pendientes concretos
 
-Ninguno bloquea a los demás; el 1 y el 2 son los que hacen que alguien más pueda verla.
-
-1. **`llegas.vercel.app` devuelve 404 y NO se arregla solo.** Se probó: se desplegó `main` a
-   producción y el dominio siguió en 404 cinco minutos después. No está asociado al
-   proyecto — hay que agregarlo en *Project Settings → Domains* de `mini-app-factory`. El
-   deploy sí funcionó: `mini-app-factory-okmanb.vercel.app` y su alias de `main` responden,
-   con la protección puesta.
-2. **Deployment Protection está activa.** La URL redirige al login de Vercel: hoy solo la ve
-   el dueño de la cuenta. Se saca en *Project Settings → Deployment Protection*.
-3. **La plantilla "Reset password" de Supabase tiene que incluir `{{ .Token }}`.** Recuperar
-   la clave pide un código de 6 dígitos, como el prototipo; con la plantilla por defecto
-   llega el link de siempre y la pantalla espera un código que nunca aparece. No se puede
-   hacer con el acceso que tuvo esta sesión: las plantillas son configuración de Auth, no
-   SQL, y viven detrás de la Management API con un personal access token. El `curl` está
-   más abajo.
-4. **Supabase → Authentication → URL Configuration**: agregar el dominio de producción a
-   Redirect URLs. Sin eso, confirmar mail y recuperar clave fallan en producción. (El login
-   con clave anda igual.) Los callbacks ya no dependen de `NEXT_PUBLIC_APP_URL`: se derivan
-   del request, así que funcionan en local, preview y producción sin configurar.
-5. **Activar la protección de contraseñas filtradas** en Supabase Auth. El linter la marca
+1. **Supabase → Authentication → URL Configuration.** Agregar `https://llegas.vercel.app` al
+   Site URL y `https://llegas.vercel.app/auth/callback` a los Redirect URLs. **Hasta que eso
+   pase, crear cuenta y recuperar la clave fallan en producción**: los callbacks se derivan
+   del request (no de `NEXT_PUBLIC_APP_URL`), así que apuntan al dominio nuevo, y Supabase
+   rechaza cualquier redirect que no esté en la lista. Entrar con clave anda igual.
+2. **La plantilla "Reset password" tiene que incluir `{{ .Token }}`.** Recuperar la clave pide
+   un código de 6 dígitos, como el prototipo; con la plantilla por defecto llega el link de
+   siempre y la pantalla espera un código que nunca aparece. Va en *Authentication → Email
+   Templates → Reset password*; el `curl` está más abajo.
+3. **Usar la app con datos reales.** Es lo que más bugs está encontrando: cada vuelta de
+   "abrirla y mirar" destapó uno (el `<select>` de días, el `+` sin respuesta, la falta de
+   login en la raíz, el botón de importar que rebotaba al login). Nada de lo construido se
+   ejercitó todavía con un PDF de verdad ni con una sesión.
+4. **Activar la protección de contraseñas filtradas** en Supabase Auth. El linter la marca
    desactivada.
-6. **Borrar el esquema `backup_pre_reset`** cuando el modelo nuevo esté verificado. Tiene el
+5. **Borrar el esquema `backup_pre_reset`** cuando el modelo nuevo esté verificado. Tiene el
    snapshot de los datos viejos (33 deudas, 28 consumos) y es la única copia. Sigue ahí.
-7. **El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)** sigue en el repo como
+6. **El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)** sigue en el repo como
    control cruzado. Decidir si se borra.
-8. **`public.rls_auto_enable()` es ejecutable por `anon`.** Lo marca el linter de Supabase.
+7. **`public.rls_auto_enable()` es ejecutable por `anon`.** Lo marca el linter de Supabase.
    Es un objeto de la plataforma, no nuestro, y es una función de event trigger: llamarla
    por RPC falla sola. Bajo riesgo, pero conviene revocarle el EXECUTE.
+
+### Deudas de producto conocidas
+
+- **Las preferencias de aviso se guardan y no mandan nada.** La pantalla lo dice, pero no hay
+  backend de notificaciones. La anticipación sí cambia cómo se agrupan los vencimientos.
+- **Editar deuda no tiene ESTADO (al día / en mora) ni MONTO ORIGINAL**, que el prototipo sí
+  tiene. Se dejaron afuera porque ningún cálculo los usaría: serían campos que no mueven
+  ningún número. Si la mora tiene que disparar punitorio o cambiar una alerta, hay que
+  modelarlo con consumidor antes de agregar el campo.
 
 ---
 
