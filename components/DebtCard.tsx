@@ -12,29 +12,27 @@ import type { DashboardDebt } from "@/lib/data/dashboard";
  * explicando que tenía que moverse sola al registrar un pago, y no la dibujaba
  * nadie.
  *
- * ## El tono, que acá se deriva y en el prototipo no
+ * ## El tono
  *
  * El prototipo pinta tres cosas del mismo color —la barra de la izquierda, el
- * ícono y el relleno del progreso— pero ese color es un campo `accent` escrito
- * a mano en sus datos semilla, deuda por deuda. **No hay regla que copiar**:
- * su Mastercard Black es brick porque alguien la pintó brick, no porque algo
- * de esa deuda lo diga. Con sus propias cifras el mínimo cubre el interés de
- * sobra.
+ * ícono y el relleno del progreso— y en su código ese color es un campo
+ * `accent` escrito a mano, deuda por deuda. Que esté escrito a mano no
+ * significa que sea arbitrario: mirando cuáles pintó de cada color, la regla
+ * aparece sola.
  *
- * Como acá ninguna cifra visible se escribe a mano, el tono sale de la deuda:
- *
- *  - `brick` cuando el saldo está creciendo, o sea cuando el mínimo no alcanza
- *    a cubrir el interés del mes. Es la única que pide una decisión.
- *  - `gold` cuando es de cuota fija y no tiene resumen que mirar: un préstamo.
- *    No está mal, pero tampoco se sigue igual que una tarjeta.
+ *  - `brick` cuando **el día de vencimiento de este mes ya pasó** y todavía se
+ *    debe. Es la misma definición que la app ya usaba para `hasOverdue`.
+ *  - `gold` cuando es de cuota fija y no tiene vencimiento que mirar: un
+ *    préstamo. No está mal, pero tampoco se sigue igual que una tarjeta.
  *  - `pine` cuando no pasa ninguna de las dos.
  *
- * Que el rojo gane sobre el dorado es a propósito: un préstamo cuyo saldo
- * crece es primero un problema y después un préstamo.
+ * Con el dataset del prototipo, un 9 de septiembre, esto reproduce sus cinco
+ * tarjetas: sus dos tarjetas brick vencen el 7 —ya pasó— y la pine el 10, que
+ * todavía no. El banco de pruebas está para volver a comprobarlo.
  *
- * Consecuencia esperada: puesto al lado del prototipo con su mismo dataset,
- * todo coincide menos la Mastercard Black, que a él le queda brick y acá pine.
- * Si algún día hay que igualarlo, el que tiene que cambiar es el prototipo.
+ * El saldo que crece no entra acá aunque tiente: ya tiene su propia línea roja
+ * al pie de la tarjeta, y agregarlo al tono pintaría de brick tarjetas que el
+ * prototipo deja en pine.
  */
 
 type Tone = "pine" | "gold" | "brick";
@@ -80,7 +78,7 @@ function kindLabel(kind: string): string {
 }
 
 export function DebtCard({ debt, today }: { debt: DashboardDebt; today: Date }) {
-  const tone = TONES[debt.growth ? "brick" : debt.dueDay == null ? "gold" : "pine"];
+  const tone = TONES[debt.overdue ? "brick" : debt.dueDay == null ? "gold" : "pine"];
   const pct = Math.round(debt.paidFraction * 100);
 
   return (

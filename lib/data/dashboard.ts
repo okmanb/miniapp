@@ -53,6 +53,13 @@ export interface DashboardDebt {
   /** Cuántas compras en cuotas activas trae y cuánto suman. */
   installmentCount: number;
   installmentTotal: number;
+  /**
+   * El día de vencimiento de este mes ya pasó y todavía debe. Es la misma
+   * definición que usa `hasOverdue`, que ahora sale de acá: si fueran dos
+   * cuentas distintas, tarde o temprano la tarjeta y el encabezado dirían
+   * cosas diferentes del mismo mes.
+   */
+  overdue: boolean;
 }
 
 export type { AlertKind, DerivedAlert } from "@/lib/calc/alerts";
@@ -150,6 +157,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
   const rawDebts = debtsRes.data ?? [];
   const expenses = (expensesRes.data ?? []) as ExpenseLike[];
   const payments = paymentsRes.data ?? [];
+  const todayDay = new Date().getDate();
   const statements = statementsRes.data ?? [];
   const incomes = (incomesRes.data ?? []) as IncomeLike[];
   const schedule = scheduleRes.data ?? [];
@@ -202,6 +210,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
       paidFraction: totalEverOwed > 0 ? paid / totalEverOwed : 0,
       installmentCount: activePlans.length,
       installmentTotal: activePlans.reduce((sum, p) => sum + Number(p.installment_amount), 0),
+      overdue: d.due_day != null && d.due_day < todayDay && balance > 0,
       id: d.id,
       name: d.name,
       kind: d.kind,
@@ -265,7 +274,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
 
   const now = new Date();
   const today = now.getDate();
-  const hasOverdue = debts.some((d) => d.dueDay != null && d.dueDay < today && d.balance > 0);
+  const hasOverdue = debts.some((d) => d.overdue);
 
   // La capacidad del mes: lo que entra todos los meses menos lo que sale sí o
   // sí en efectivo. El aguinaldo no cuenta — medir el peso de las cuotas

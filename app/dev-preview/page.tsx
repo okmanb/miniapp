@@ -50,6 +50,7 @@ export default function PreviewPage() {
       monthlyDue: d.min,
       recurringCharge: 0,
       minimumPaidThisMonth: false,
+      overdue: d.dueDay != null && d.dueDay < new Date().getDate(),
       paidFraction: d.paid + balance > 0 ? d.paid / (d.paid + balance) : 0,
       installmentCount: d.cuotas,
       installmentTotal: d.cuotasMonto,
