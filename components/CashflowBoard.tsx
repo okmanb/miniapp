@@ -22,6 +22,10 @@ const SEVERITY_BG: Record<Severity, string> = {
   rojo3: "#94362A",
 };
 
+/** El desvanecido del borde derecho de la tira de meses, medido del prototipo. */
+const STRIP_FADE =
+  "linear-gradient(90deg,#000 0px,#000 calc(100% - 34px),transparent)";
+
 const MONTHS_SHORT = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
 function shortMonth(period: string): string {
@@ -60,8 +64,18 @@ export function CashflowBoard({
         vertical, y el anillo del mes elegido sobresale 4px de la tarjeta. Sin
         ese padding el borde de arriba del elegido queda cortado y la
         selección se lee a medias.
+
+        Los últimos 34px se desvanecen: es lo que avisa que la tira sigue. Sin
+        eso el último mes queda cortado a filo contra el borde y se lee como el
+        final de la serie, no como que hay más. Va de máscara y no de un
+        degradado encima porque la tira scrollea sobre el fondo de la app: un
+        degradado pintado tendría que saber de qué color es el fondo, y esto
+        no. Los 34px salen del prototipo.
       */}
-      <div className="-mx-[18px] mt-2 no-scrollbar overflow-x-auto px-[18px] pb-1 pt-1">
+      <div
+        className="-mx-[18px] mt-2 no-scrollbar overflow-x-auto px-[18px] pb-1 pt-1"
+        style={{ maskImage: STRIP_FADE, WebkitMaskImage: STRIP_FADE }}
+      >
         <ul className="flex gap-2">
           {months.map((m, i) => (
             <li key={m.period}>
