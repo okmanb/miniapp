@@ -337,6 +337,41 @@ escenario copiar. El prototipo lista cuatro tarjetas fijas; la app tiene que agu
 alguien con veinte deudas, y veinte opciones a la vista es un problema distinto que hay que
 diseñar, no traducir. Se dejaron para después de usar la app con datos reales.
 
+## El barrido de las dieciséis pantallas
+
+Con el banco de pruebas completo se comparó pantalla por pantalla contra el prototipo
+renderizado. **El texto ya coincidía en las dieciséis** —eso se había comparado en la sesión
+del 7— así que lo que apareció fue estructura y copia de detalle:
+
+Arreglado: la 04 rotulaba "Tipo" donde el prototipo dice "Tipo de deuda" y "Día de
+vencimiento" donde dice "Día de vencimiento (1–31)", y su ayuda del nombre era otra; la 05
+tenía dos ayudas reescritas; la 15 no tenía el subtítulo "Todo lo que registraste, de todas
+tus deudas, ordenado por mes."; y las tasas se mostraban con un decimal donde el prototipo
+usa dos.
+
+Coinciden sin tocar: 01, 02, 03, 06, 07, 08, 09, 10 y 11.
+
+### Lo que el barrido dejó sin resolver
+
+Son diferencias que no se arreglan con una etiqueta, y ninguna se decidió sola:
+
+1. **La 04 no tiene MONTO ORIGINAL ni ESTADO (al día / en mora)**, que el prototipo sí
+   tiene. Son columnas nuevas. La sesión que las dejó afuera argumentó que ningún cálculo
+   las usaría; con la regla de que el prototipo manda, eso hay que volver a mirarlo — pero
+   es un cambio de esquema, no de pantalla.
+2. **La 04 rotula la tasa "TASA DE INTERÉS PUNITORIO ANUAL (%)" en el prototipo** y acá
+   "Tasa anual (TNA)". Ojo: el propio detalle del prototipo (pantalla 03) muestra esa misma
+   cifra como "Tasa (TNA)", y su motor la usa como nominal anual. Todo indica que el rótulo
+   del formulario es un error del prototipo, y por eso no se copió: copiarlo cambiaría el
+   significado de un campo que alimenta el cálculo.
+3. **La 04 tiene PLAZO, CUOTAS TOTALES y YA PAGADAS**, que el prototipo no tiene. Sacarlos
+   rompería los préstamos con cuotas contadas.
+4. **La 16 tiene un cuarto enlace, "Préstamos puente"**, que el prototipo no lista.
+5. **El vacío de la 15**: el prototipo ofrece "Ir a mis deudas" y acá dice "Registrar un
+   pago", que lleva directo a la pantalla de alta.
+6. **Falta el kebab "⋯" de la tarjeta de deuda**, que en el prototipo abre las acciones que
+   la tarjeta no hace. Es un menú, no un retoque.
+
 ### La diferencia que se dejó a propósito
 
 **En las subpantallas la barra marca la sección de la que cuelgan; el prototipo no marca

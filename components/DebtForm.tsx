@@ -101,7 +101,7 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         id="name"
         label="Nombre"
         error={state.errors.name}
-        help="Como lo reconocés en el resumen: “Visa Signature …2166”."
+        help="Así la vas a ver en el dashboard y las notificaciones — poné algo que reconozcas de un vistazo."
       >
         <input
           id="name"
@@ -122,7 +122,7 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
       */}
       <ChoiceGroup
         name="kind"
-        label="Tipo"
+        label="Tipo de deuda"
         value={kind}
         onChange={setKind}
         options={DEBT_KINDS.map((k) => ({ value: k.value, label: k.label }))}
@@ -190,7 +190,7 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         <CalendarField
           id="due_day"
           name="due_day"
-          label="Día de vencimiento"
+          label="Día de vencimiento (1–31)"
           mode="day"
           value={dueDay}
           onChange={setDueDay}

@@ -63,6 +63,7 @@ export function PaymentsHistory({ rows }: { rows: PaymentRow[] }) {
       </Link>
 
       <h1 className="mt-2 text-screen text-ink">Historial de pagos</h1>
+      <p className="help mt-1">Todo lo que registraste, de todas tus deudas, ordenado por mes.</p>
 
       {rows.length === 0 ? (
         <div className="mt-4">

@@ -68,7 +68,7 @@ export function ExpenseForm({ cards }: { cards: CardOption[] }) {
       <p className="help mt-1.5">
         {isOneOff
           ? "Entra una sola vez, en el mes en curso."
-          : "Se repite todos los meses. Podés terminarlo más adelante sin borrar el historial."}
+          : "Se repite todos los meses. Desmarcalo abajo si es un pago puntual de este mes."}
       </p>
 
       <label htmlFor="amount" className="mt-5 block text-label uppercase text-muted">
@@ -109,8 +109,7 @@ export function ExpenseForm({ cards }: { cards: CardOption[] }) {
         ))}
       </select>
       <p className="help mt-1.5">
-        Si lo pagás con tarjeta, el gasto entra en el resumen de esa tarjeta y no en efectivo:
-        no se descuenta dos veces.
+        Si lo pagás con tarjeta, el gasto entra en el resumen de esa tarjeta y no en efectivo.
       </p>
 
       {error && (
