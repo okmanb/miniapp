@@ -4,8 +4,10 @@ import { useActionState, useState } from "react";
 import { saveDebt } from "@/app/dashboard/debts/actions";
 import { EMPTY_STATE, type DebtFormState } from "@/app/dashboard/debts/form-state";
 import { DEBT_KINDS } from "@/app/dashboard/debts/validation";
+import { formatArgNumber } from "@/lib/calc/money";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
+import { ChoiceGroup } from "./ChoiceGroup";
 import { StatementImport, stashParsedStatement } from "./StatementImport";
 
 /**
@@ -42,7 +44,9 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
   const [balance, setBalance] = useState(
     initial.baseBalance != null ? String(Math.round(initial.baseBalance)) : ""
   );
-  const [rate, setRate] = useState(initial.annualRate != null ? String(initial.annualRate) : "");
+  const [rate, setRate] = useState(
+    initial.annualRate != null ? formatArgNumber(initial.annualRate) : ""
+  );
   const [monthlyPayment, setMonthlyPayment] = useState(
     initial.monthlyPayment != null ? String(Math.round(initial.monthlyPayment)) : ""
   );
@@ -73,7 +77,7 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
               if (parsed.statementBalance != null) {
                 setBalance(String(Math.round(parsed.statementBalance)));
               }
-              if (parsed.annualRate != null) setRate(String(parsed.annualRate));
+              if (parsed.annualRate != null) setRate(formatArgNumber(parsed.annualRate));
               if (parsed.dueDate) {
                 const day = Number(parsed.dueDate.slice(8, 10));
                 if (day >= 1 && day <= 31) setDueDay(String(day));
@@ -110,21 +114,21 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         />
       </Field>
 
-      <Field id="kind" label="Tipo" error={state.errors.kind}>
-        <select
-          id="kind"
-          name="kind"
-          value={kind}
-          onChange={(e) => setKind(e.target.value)}
-          className="min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
-        >
-          {DEBT_KINDS.map((k) => (
-            <option key={k.value} value={k.value}>
-              {k.label}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {/*
+        Seis opciones apiladas: son más que las tres del prototipo porque el
+        modelo tiene prendario, hipotecario y otro, que ahí no existen. La
+        forma es la del prototipo igual — a todo el ancho y radio 12 — porque
+        es la que aguanta etiquetas largas, y escala a seis sin cambiar nada.
+      */}
+      <ChoiceGroup
+        name="kind"
+        label="Tipo"
+        value={kind}
+        onChange={setKind}
+        options={DEBT_KINDS.map((k) => ({ value: k.value, label: k.label }))}
+        layout="stack"
+        error={state.errors.kind}
+      />
 
       <Section title="Montos" />
 

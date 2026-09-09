@@ -5,6 +5,7 @@ import { createPayment } from "@/app/dashboard/payments/actions";
 import { EMPTY_PAYMENT_STATE, type PaymentState } from "@/app/dashboard/payments/form-state";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
+import { ChoiceGroup } from "./ChoiceGroup";
 
 export function PaymentForm({
   debts,
@@ -25,6 +26,8 @@ export function PaymentForm({
     const p = (n: number) => String(n).padStart(2, "0");
     return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
   });
+
+  const [kind, setKind] = useState("pago_variable");
 
   return (
     <form action={formAction} className="mt-4">
@@ -76,24 +79,26 @@ export function PaymentForm({
         />
       </div>
 
-      <label htmlFor="kind" className="mt-5 block text-label uppercase text-muted">
-        Qué tipo de pago
-      </label>
-      <select
-        id="kind"
+      {/*
+        Apilado y no en dos columnas como el prototipo: sus cuatro etiquetas
+        son de dos palabras y las nuestras son frases. Se respeta la regla del
+        prototipo —la forma la decide el largo de la etiqueta— en vez de
+        copiar la grilla y dejar que el texto se parta en tres renglones.
+      */}
+      <ChoiceGroup
         name="kind"
-        defaultValue="pago_variable"
-        className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
-      >
-        <option value="pago_variable">Un pago cualquiera</option>
-        <option value="minimo_estimado">El mínimo del resumen</option>
-        <option value="cuota_fija">La cuota fija</option>
-        <option value="unico">Un pago extra, de una vez</option>
-      </select>
-      <p className="help mt-1.5">
-        Solo puede haber un pago mínimo por deuda por mes: así el atajo del dashboard no se
-        aplica dos veces sin que se note.
-      </p>
+        label="Qué tipo de pago"
+        value={kind}
+        onChange={setKind}
+        layout="stack"
+        options={[
+          { value: "pago_variable", label: "Un pago cualquiera" },
+          { value: "minimo_estimado", label: "El mínimo del resumen" },
+          { value: "cuota_fija", label: "La cuota fija" },
+          { value: "unico", label: "Un pago extra, de una vez" },
+        ]}
+        help="Solo puede haber un pago mínimo por deuda por mes: así el atajo del dashboard no se aplica dos veces sin que se note."
+      />
 
       {state.message && (
         <p

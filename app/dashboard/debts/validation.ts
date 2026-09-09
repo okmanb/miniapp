@@ -39,12 +39,25 @@ export interface DebtInput {
 
 export type FieldErrors = Partial<Record<keyof DebtInput, string>>;
 
-/** Formato argentino: "5.710.670,92" -> 5710670.92. */
+/**
+ * Formato argentino: "5.710.670,92" -> 5710670.92.
+ *
+ * Un punto solo, seguido de una o dos cifras y sin ninguna coma en el texto,
+ * se toma como decimal y no como separador de miles: un grupo de miles tiene
+ * siempre tres cifras, así que "68.63" no puede ser sesenta y ocho mil. Sin
+ * esta excepción se leía 6863, y con una tasa de dos cifras enteras —"83.8"
+ * -> 838— ni siquiera saltaba el tope de 1000: se guardaba mal en silencio.
+ *
+ * "1.500" sigue siendo mil quinientos, que es lo que quiere decir acá.
+ */
 export function parseArgNumber(raw: string): number | null {
   const trimmed = raw.trim();
   if (trimmed === "") return null;
-  const normalized = trimmed.replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, "");
-  const value = Number(normalized);
+  const decimalDot = !trimmed.includes(",") && /^-?\d+\.\d{1,2}$/.test(trimmed);
+  const normalized = decimalDot
+    ? trimmed
+    : trimmed.replace(/\./g, "").replace(",", ".");
+  const value = Number(normalized.replace(/[^\d.-]/g, ""));
   return Number.isNaN(value) ? null : value;
 }
 

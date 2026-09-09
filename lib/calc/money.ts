@@ -17,6 +17,19 @@ export function monthlyRateFromAnnual(annual: number | string | null | undefined
   return n / 100 / 12;
 }
 
+/**
+ * 83.8 -> "83,8". Para prellenar un campo que después se lee con
+ * `parseArgNumber`.
+ *
+ * No es cosmética: `String(83.8)` da "83.8", y ese punto, leído con las reglas
+ * de acá, es un separador de miles. La tasa entraba como 838 sin que nadie
+ * dijera nada. Todo número que la app escriba en un campo de texto tiene que
+ * salir por acá.
+ */
+export function formatArgNumber(n: number): string {
+  return String(n).replace(".", ",");
+}
+
 /** "$ 1.300.000" -> 1300000. Se queda solo con los dígitos, como el prototipo. */
 export function parseMoney(v: number | string | null | undefined): number {
   if (v == null) return 0;

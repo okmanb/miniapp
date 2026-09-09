@@ -6,6 +6,7 @@ import { createIncome } from "@/app/dashboard/incomes/actions";
 import { EMPTY_INCOME_STATE, type IncomeState } from "@/app/dashboard/incomes/form-state";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
+import { ChoiceGroup } from "./ChoiceGroup";
 
 /**
  * Alta de un ingreso. El selector de mes solo aparece para un bono: para el
@@ -51,20 +52,25 @@ export function IncomeForm() {
         />
       </div>
 
-      <label htmlFor="kind" className="mt-5 block text-label uppercase text-muted">
-        Cuándo entra
-      </label>
-      <select
-        id="kind"
+      {/*
+        Las etiquetas se acortaron a las del prototipo y lo que decían pasó a
+        la línea de ayuda, que cambia con lo elegido. Es el mismo dato en dos
+        renglones en vez de uno apretado: "Aguinaldo — junio y diciembre" no
+        entra en una píldora de un tercio de pantalla, y achicar la letra para
+        que entre es la respuesta equivocada.
+      */}
+      <ChoiceGroup
         name="kind"
+        label="Cuándo entra"
         value={kind}
-        onChange={(e) => setKind(e.target.value)}
-        className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
-      >
-        <option value="mensual">Todos los meses</option>
-        <option value="aguinaldo">Aguinaldo — junio y diciembre</option>
-        <option value="bono">Bono — un mes al año</option>
-      </select>
+        onChange={setKind}
+        layout="row"
+        options={[
+          { value: "mensual", label: "Cada mes", note: "Sueldo, alquiler, freelance fijo." },
+          { value: "aguinaldo", label: "Aguinaldo", note: "Junio y diciembre." },
+          { value: "bono", label: "Bono", note: "Una vez al año, en el mes que elijas." },
+        ]}
+      />
 
       {kind === "bono" && (
         <div className="mt-5">
