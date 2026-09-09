@@ -4,6 +4,7 @@ import { TotalDebtHero } from "@/components/TotalDebtHero";
 import { RunwayCard } from "@/components/RunwayCard";
 import { AlertsPeek } from "@/components/AlertsPeek";
 import { BottomNav } from "@/components/BottomNav";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { Card, Amount, EmptyState, PrimaryButton, Screen, MetaChip } from "@/components/ui";
 import { formatMoney } from "@/lib/calc/money";
 import { deriveBalance } from "@/lib/calc/balance";
@@ -58,6 +59,18 @@ export default function PreviewPage() {
         Banco de pruebas — solo en desarrollo. Mismo dataset que el prototipo; el total tiene que
         dar $ 47.133.454.
       </p>
+
+      {/*
+        El encabezado va acá aunque el dataset sea falso: es la única forma de
+        mirarlo sin sesión, y sus dos botones son las puertas a Ajustes y a
+        Historial, que estuvieron sin puerta hasta ahora.
+      */}
+      <DashboardHeader
+        greeting="Buenas tardes"
+        dateLabel="miércoles 9 de septiembre"
+        fullName="Ana Pérez"
+        email="ana@ejemplo.com"
+      />
 
       <TotalDebtHero
         total={total}

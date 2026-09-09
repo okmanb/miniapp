@@ -258,6 +258,22 @@ propiedad por propiedad y se corrigieron:
    `formDayLabel` dice "Día 10 de cada mes"— y acá había una sola. `CalendarField` toma
    `compact` para el campo que comparte fila.
 
+7. **Ajustes e Historial de pagos existían y no se podía entrar.** Ni un solo `href` apuntaba
+   a `/dashboard/settings` ni a `/dashboard/payments`: las dos pantallas estaban completas,
+   con su "← Volver al dashboard" y todo, y eran inalcanzables. Peor: **Ajustes es la única
+   que tiene "Cerrar sesión"**, así que entrar a la app era un camino de ida.
+
+   El prototipo tiene las dos puertas en el encabezado del dashboard y no se habían
+   implementado: el avatar a la izquierda del saludo (50px, pine con la inicial en mint) y
+   el reloj a la derecha (44px, blanco con borde). Ahora están, medidos. De paso el saludo
+   pasó a ser "Hola, ‹Nombre›" cuando la cuenta tiene nombre, como el prototipo; el saludo
+   por hora quedó para la cuenta sin nombre.
+
+   **La lección es más general que el bug: una pantalla puede estar terminada, verificada
+   contra el prototipo y aun así no existir para quien usa la app.** El banco de pruebas la
+   renderiza por su cuenta, así que tampoco la delata. Cuando agregues una pantalla,
+   preguntate desde dónde se entra.
+
 ### La diferencia que se dejó a propósito
 
 **En las subpantallas la barra marca la sección de la que cuelgan; el prototipo no marca

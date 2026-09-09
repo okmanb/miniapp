@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { getDashboard } from "@/lib/data/dashboard";
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { formatMoney } from "@/lib/calc/money";
 import type { GrowthCause } from "@/lib/calc/statement";
 import { TotalDebtHero } from "@/components/TotalDebtHero";
@@ -34,6 +36,16 @@ export default async function DashboardPage() {
   const greeting = GREETING_HOURS.find((g) => now.getHours() < g.until)!.text;
   const dateLabel = `${DAYS[now.getDay()]} ${now.getDate()} de ${MONTHS[now.getMonth()]}`;
 
+  // El nombre es solo para encabezar la pantalla; si la lectura falla, el
+  // saludo por hora alcanza y el dashboard no tiene por qué caerse por eso.
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  const fullName =
+    typeof auth.user?.user_metadata?.full_name === "string"
+      ? auth.user.user_metadata.full_name.trim()
+      : "";
+  const email = auth.user?.email ?? "";
+
   // El atajo apunta a la primera alerta que un pago del mínimo puede resolver,
   // no siempre a la primera alerta: la más cara no se destraba pagando.
   const payable =
@@ -43,12 +55,12 @@ export default async function DashboardPage() {
 
   return (
     <Screen>
-      <header className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-screen text-ink">{greeting}</h1>
-          <p className="mt-0.5 text-[12px] text-muted">{dateLabel}</p>
-        </div>
-      </header>
+      <DashboardHeader
+        greeting={greeting}
+        dateLabel={dateLabel}
+        fullName={fullName}
+        email={email}
+      />
 
       {data === null ? (
         /*
