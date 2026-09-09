@@ -270,16 +270,41 @@ que cuelga de `/dashboard` y no es Flujo, Plan ni Alertas.
 
 ## Pendientes concretos
 
-1. **Supabase → Authentication → URL Configuration.** Agregar `https://llegas.vercel.app` al
-   Site URL y `https://llegas.vercel.app/auth/callback` a los Redirect URLs. **Hasta que eso
-   pase, crear cuenta y recuperar la clave fallan en producción**: los callbacks se derivan
-   del request (no de `NEXT_PUBLIC_APP_URL`), así que apuntan al dominio nuevo, y Supabase
-   rechaza cualquier redirect que no esté en la lista. Entrar con clave anda igual.
-2. **La plantilla "Reset password" tiene que incluir `{{ .Token }}`.** Recuperar la clave pide
-   un código de 6 dígitos, como el prototipo; con la plantilla por defecto llega el link de
-   siempre y la pantalla espera un código que nunca aparece. Va en *Authentication → Email
-   Templates → Reset password*; el `curl` está más abajo.
-3. **Usar la app con datos reales.** Es lo que más bugs está encontrando: cada vuelta de
+1. ~~**Supabase → Authentication → URL Configuration.**~~ **Hecho** (9 de septiembre):
+   `https://llegas.vercel.app` está en el Site URL y `/auth/callback` en los Redirect URLs.
+   Los callbacks se derivan del request, no de `NEXT_PUBLIC_APP_URL`, así que sin esto
+   apuntaban al dominio nuevo y Supabase los rechazaba.
+2. **El proyecto no tiene SMTP propio, y eso es más grande que la plantilla.** Son dos
+   consecuencias, y la segunda es la que importa:
+
+   - **La plantilla "Reset password" no se puede editar.** El dashboard ahora la bloquea
+     detrás de SMTP propio ("Set up custom SMTP to edit templates"), así que no hay forma de
+     meterle `{{ .Token }}`. El `curl` de la Management API que está más abajo quedó de una
+     época en que se podía; contra el servidor de mail incorporado no cambia nada, porque
+     ese servidor manda las plantillas por defecto y punto.
+   - **El servidor de mail incorporado solo entrega a los miembros de la organización.**
+     Está en la documentación con todas las letras: cualquier otra dirección falla con
+     *Email address not authorized*. O sea que **hoy, en producción, nadie que no sea
+     `okmanb@gmail.com` puede crear cuenta ni recuperar la clave** — y no por los Redirect
+     URLs, que ya están, sino por esto. Es un servidor de cortesía para probar, no para
+     producción, y encima con un tope de mails por hora.
+
+   Las dos se arreglan con lo mismo: configurar SMTP propio en *Authentication → SMTP
+   Settings*. Con eso el mail llega a cualquiera **y** las plantillas se desbloquean, así que
+   el código de 6 dígitos que la pantalla 14 ya espera empieza a funcionar sin tocar una
+   línea de la app.
+
+   **Ojo con cómo falla cada uno, porque no fallan igual.** Crear cuenta muestra el error
+   (`signup` redirige con `?error=`), pero recuperar la clave **falla en silencio**:
+   `requestPasswordReset` devuelve `{ ok: true }` pase lo que pase, a propósito, para no
+   confirmarle a nadie si un mail está registrado. Así que la pantalla dice "te mandamos un
+   código" y no se mandó nada. Al depurar esto, no confíes en lo que muestra la pantalla.
+
+   Y antes de dar por roto el alta: verificá si *Confirm email* está prendido en
+   *Authentication → Sign In / Providers → Email*. Apagado, `signUp` abre sesión sin mandar
+   mail y crear cuenta anda para cualquiera; el bloqueo queda solo en recuperar la clave.
+3. **Usar la app con datos reales.** Esto **no** está bloqueado por lo de arriba: la cuenta
+   propia sí puede crearse, porque es la dirección de la organización. Es lo que más bugs está encontrando: cada vuelta de
    "abrirla y mirar" destapó uno (el `<select>` de días, el `+` sin respuesta, la falta de
    login en la raíz, el botón de importar que rebotaba al login). Nada de lo construido se
    ejercitó todavía con un PDF de verdad ni con una sesión.
@@ -290,7 +315,8 @@ que cuelga de `/dashboard` y no es Flujo, Plan ni Alertas.
 6. **El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)** sigue en el repo como
    control cruzado. Decidir si se borra.
 
-El 1 y el 2 son de dashboard y tardan un minuto; el 3 es donde está el valor.
+El 1 ya está. El 2 dejó de ser un minuto de dashboard: pide dar de alta un servicio de
+envío afuera. El 3 sigue siendo donde está el valor, y no depende del 2.
 El linter de seguridad de Supabase quedó con **un solo warning**, el 4: los dos de
 `rls_auto_enable` se cerraron en la migración 006.
 
@@ -325,6 +351,10 @@ repo como `supabase/migration_003_*.sql` a `_006_*.sql`. `supabase/schema.sql` q
   sigue funcionando: una tabla creada después del revoke sigue quedando con RLS activa.
 
 ### La plantilla del código de recuperación
+
+**Esto no corre hasta que el proyecto tenga SMTP propio** (pendiente 2). Sin él la plantilla
+está bloqueada en el dashboard y el servidor incorporado manda la de fábrica igual, así que
+el `curl` no cambia lo que llega al buzón. Guardado para cuando el SMTP esté.
 
 Va en *Authentication → Email Templates → Reset password*, o por la Management API con un
 token de https://supabase.com/dashboard/account/tokens:
