@@ -374,6 +374,37 @@ de tener sentido y se fue con él.
 desde un PDF.** Son dos números distintos y el error no da ningún mensaje: infla el saldo
 un mes entero de interés.
 
+## Los dólares del resumen
+
+El resumen declara un total en dólares y la app lo dejaba afuera del saldo, con un aviso que
+decía "cargalos a mano si querés que cuenten" y no decía dónde. Era plata real escondida: la
+tarjeta debía más de lo que la app mostraba.
+
+Se dejaba afuera **por una razón buena**: los dólares se pagan a la cotización del cierre y
+esa cotización no está en el PDF. Convertirlos con un número puesto por nosotros sería peor
+que no sumarlos, en una app cuya regla es que ninguna cifra visible se escribe a mano.
+
+La salida fue pedirla. El bloque "Consumos en dólares" tiene el total (del PDF, prellenado) y
+la cotización, con un botón que trae **la oficial (venta) de hoy** desde `dolarapi.com` y la
+deja editable. Con las dos, el equivalente entra al cierre como un consumo más y el preview
+lo nombra aparte. Con una sola, no entra nada.
+
+**Es la oficial y no la "dólar tarjeta" a propósito.** La de tarjeta trae adentro las
+percepciones e impuestos, y el resumen ya te los cobra aparte como líneas en pesos:
+convertir con ella los contaría dos veces.
+
+### El doble conteo del mes siguiente
+
+Los dólares que no pagás los convierte el banco y **los unifica con los pesos en el resumen
+siguiente**. Como acá ya entraron al saldo en pesos, cargarlos otra vez en "consumos nuevos"
+los sumaría dos veces.
+
+La app no lo puede detectar sola: no lee el saldo anterior del PDF, usa el nuestro. Pero sí
+sabe que el resumen anterior de esa tarjeta convirtió dólares, y avisa. **El aviso va arriba
+de "consumos nuevos", no al guardar** —a diferencia del de gastos— porque es un consejo
+sobre *qué* escribir: uno que aparece al apretar guardar llega cuando el número ya está
+puesto.
+
 ## Los `<select>` que el prototipo no tiene
 
 El prototipo **no tiene un solo `<select>` en ninguna pantalla**: cada elección es un grupo
@@ -568,6 +599,9 @@ repo como `supabase/migration_003_*.sql` a `_006_*.sql`. `supabase/schema.sql` q
   índice de los vivos. `copy_scenario` copia `is_absorbed` y **no** las dos referencias a
   resúmenes, por lo mismo que ya hacía con `expenses.is_archived`: el flag es lo que decide
   si el pago resta, y los ids apuntan a resúmenes del escenario viejo.
+- `card_statements`: se sumaron `usd_balance` y `usd_rate` (migración 009). Se guardan las
+  dos y no solo el resultado: el peso equivalente ya quedó adentro del cierre, así que sin
+  la cotización no habría forma de explicar de dónde salió.
 - Se le revocó el `EXECUTE` público a `rls_auto_enable()` (migración 006). Es un objeto de
   la plataforma, no nuestro, así que no está en `schema.sql`. Verificado que el guardarraíl
   sigue funcionando: una tabla creada después del revoke sigue quedando con RLS activa.

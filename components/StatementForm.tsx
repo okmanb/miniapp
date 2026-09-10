@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState, useTransition } from "react";
 import { saveStatement } from "@/app/dashboard/statements/actions";
 import { EMPTY_STATEMENT_STATE, type StatementState } from "@/app/dashboard/statements/form-state";
 import { parseStatementPdf, type ParseResult } from "@/app/dashboard/statements/parse-actions";
+import { fetchUsdRate } from "@/app/dashboard/statements/rate-actions";
 import {
   formatArgNumber,
   formatMoney,
@@ -112,6 +113,30 @@ export function StatementForm({
   // y se abre solo cuando el PDF declara un saldo en dolares, que es cuando la
   // pregunta deja de ser hipotetica.
   const [usdOpen, setUsdOpen] = useState(false);
+  const [rateBusy, startRate] = useTransition();
+  const [rateNote, setRateNote] = useState<string | null>(null);
+
+  /*
+   * Traer la cotización de hoy. Prellena, no decide: cae en el mismo campo
+   * editable, y la pantalla dice de dónde salió para que nadie la confunda con
+   * la que aplicó el banco.
+   */
+  function pickTodaysRate() {
+    setRateNote(null);
+    startRate(async () => {
+      const result = await fetchUsdRate();
+      if (!result.ok) {
+        setRateNote(result.message);
+        return;
+      }
+      setUsdRate(formatArgNumber(result.rate));
+      setRateNote(
+        `Oficial (venta) de hoy${
+          result.updatedAt ? `, actualizada ${describeCalendarValue("date", result.updatedAt.slice(0, 10))}` : ""
+        }. Es de referencia: el banco pudo haber usado otra.`
+      );
+    });
+  }
   const [payKind, setPayKind] = useState<PayKind>("variable");
 
   const needsConfirm = Boolean(state.pendingDuplicates?.length);
@@ -475,10 +500,26 @@ export function StatementForm({
           <MoneyField
             id="usd_rate"
             label="Cotización del dólar"
-            help="A cuánto se pagó cada dólar. El resumen no la trae — mirá el débito de tu cuenta, o poné la del día que lo pagaste."
+            help="A cuánto se pagó cada dólar. El resumen no la trae — mirá el débito de tu cuenta, o traé la de hoy y corregila si hace falta."
             value={usdRate}
-            onChange={setUsdRate}
+            onChange={(v) => {
+              setUsdRate(v);
+              // Escrita a mano deja de ser la que trajimos: la nota mentiría.
+              setRateNote(null);
+            }}
           />
+
+          <button
+            type="button"
+            onClick={pickTodaysRate}
+            disabled={rateBusy}
+            className="mt-2 inline-flex min-h-touch items-center gap-2 rounded-pill border border-border-input bg-surface px-3 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:border-pine disabled:opacity-60"
+          >
+            {rateBusy && <Spinner className="text-teal" />}
+            Usar la cotización de hoy
+          </button>
+
+          {rateNote && <p className="help mt-1.5">{rateNote}</p>}
 
           {usdInPesos > 0 && (
             <p className="mt-3 text-[12px] text-leaf-deep">
