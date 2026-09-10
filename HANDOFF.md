@@ -558,8 +558,11 @@ que cuelga de `/dashboard` y no es Flujo, Plan ni Alertas.
    ejercitó todavía con un PDF de verdad ni con una sesión.
 4. **Activar la protección de contraseñas filtradas** en Supabase Auth. El linter la marca
    desactivada.
-5. **Borrar el esquema `backup_pre_reset`** cuando el modelo nuevo esté verificado. Tiene el
-   snapshot de los datos viejos (33 deudas, 28 consumos) y es la única copia. Sigue ahí.
+5. **Borrar los dos esquemas de backup** cuando el modelo nuevo esté verificado.
+   `backup_pre_reset` tiene el snapshot de los datos viejos (33 deudas, 28 consumos) y es la
+   única copia. `backup_limpieza_20260910` tiene las seis deudas archivadas que quedaron de
+   las pruebas con datos reales —con sus 5 pagos y 4 resúmenes— borradas del esquema público
+   el 10 de septiembre a pedido. Las dos se borran con `drop schema ... cascade`.
 6. **El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)** sigue en el repo como
    control cruzado. Decidir si se borra.
 
