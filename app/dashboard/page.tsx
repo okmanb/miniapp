@@ -171,8 +171,25 @@ export default async function DashboardPage() {
           {data.debts.length === 0 ? (
             <EmptyState
               title="Este escenario no tiene deudas"
-              note="Un escenario vacío no proyecta nada. Agregá una deuda acá o copiá las de otro escenario desde la pantalla de escenarios."
-              action={<PrimaryButton href="/dashboard/debts/new">Agregar una deuda</PrimaryButton>}
+              note="Un escenario vacío no proyecta nada. Si es una tarjeta y tenés el PDF del resumen, ese es el camino corto: la crea con el nombre, el saldo, la tasa y el día ya cargados, y de paso queda el resumen del mes."
+              action={
+                /*
+                  Dos caminos y no uno. El PDF va primero porque es el que
+                  ahorra trabajo, pero mandar solo ahí dejaría sin salida a un
+                  préstamo, que no tiene resumen que leer.
+                */
+                <div className="flex flex-col items-center gap-2">
+                  <PrimaryButton href="/dashboard/statements/new">
+                    Cargar el resumen de una tarjeta
+                  </PrimaryButton>
+                  <Link
+                    href="/dashboard/debts/new"
+                    className="inline-flex min-h-touch items-center text-[12px] text-pine underline underline-offset-2"
+                  >
+                    O cargar una deuda a mano
+                  </Link>
+                </div>
+              }
             />
           ) : (
             <ul className="space-y-2">

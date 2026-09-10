@@ -70,7 +70,11 @@ export function StatementForm({
   const [fileName, setFileName] = useState("");
 
   // Controlados para que el PDF pueda prellenarlos y la persona corregirlos.
-  const [debtId, setDebtId] = useState(defaultDebtId ?? "");
+  // Sin ninguna tarjeta cargada, "es una tarjeta nueva" es la única respuesta
+  // posible: elegirla a mano sería pedirle a alguien que confirme lo obvio.
+  const [debtId, setDebtId] = useState(
+    defaultDebtId ?? (cards.length === 0 ? NEW_CARD : "")
+  );
 
   /*
    * Los cuatro datos de una tarjeta que todavía no existe. Son exactamente los
