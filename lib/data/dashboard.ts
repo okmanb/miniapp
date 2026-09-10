@@ -122,7 +122,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
         .eq("scenario_id", scenario.id),
       supabase
         .from("debt_payments")
-        .select("debt_id, amount, period, kind")
+        .select("debt_id, amount, period, kind, is_absorbed")
         .eq("scenario_id", scenario.id),
       supabase
         .from("card_statements")

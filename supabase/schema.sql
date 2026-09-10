@@ -133,10 +133,29 @@ create table if not exists debt_payments (
   amount numeric(14, 2) not null,
   kind payment_kind not null default 'pago_variable',
   note text,
+  -- De que resumen salio este pago. El campo "cuanto pagaste" del resumen no
+  -- se guarda restado adentro del saldo: se guarda aca, como pago, para que
+  -- tenga recibo en el historial igual que uno cargado a mano.
+  -- La FK se agrega mas abajo, porque card_statements todavia no existe.
+  statement_id uuid,
+  -- Un pago absorbido ya esta adentro del saldo base que dejo un resumen, asi
+  -- que NO se vuelve a restar. Es la Regla 3 aplicada a los pagos: el resumen
+  -- se come lo que ya trae adentro, igual que archiva los gastos duplicados.
+  -- Sin esto, el pago de un resumen sigue descontando para siempre y el saldo
+  -- baja dos veces por el mismo peso.
+  is_absorbed boolean not null default false,
+  absorbed_by_statement_id uuid,
   created_at timestamptz not null default now()
 );
 
 create index if not exists debt_payments_debt_idx on debt_payments (debt_id, period);
+-- Los que siguen contando. Es el filtro de todas las lecturas que derivan saldo.
+create index if not exists debt_payments_live_idx
+  on debt_payments (debt_id) where not is_absorbed;
+-- Un pago por resumen: volver a guardar el mismo resumen corrige el pago, no
+-- agrega otro.
+create unique index if not exists debt_payments_one_per_statement_idx
+  on debt_payments (statement_id) where statement_id is not null;
 -- Integridad: un mínimo por deuda por mes. El atajo de "registrar el mínimo"
 -- no puede aplicarse dos veces en el mismo período sin que se note.
 create unique index if not exists debt_payments_one_minimum_idx
@@ -205,6 +224,18 @@ create table if not exists card_statements (
 );
 
 create index if not exists statements_debt_idx on card_statements (debt_id, period);
+
+-- Las dos referencias de debt_payments a los resumenes. Van aca y no en la
+-- tabla porque debt_payments se crea antes que card_statements.
+alter table debt_payments
+  drop constraint if exists debt_payments_statement_fk,
+  add constraint debt_payments_statement_fk
+    foreign key (statement_id) references card_statements(id) on delete cascade;
+
+alter table debt_payments
+  drop constraint if exists debt_payments_absorbed_by_fk,
+  add constraint debt_payments_absorbed_by_fk
+    foreign key (absorbed_by_statement_id) references card_statements(id) on delete set null;
 
 alter table card_statements enable row level security;
 
@@ -492,8 +523,15 @@ begin
     insert into _debt_map (old_id, new_id) values (old_debt.id, copied_debt_id);
   end loop;
 
-  insert into debt_payments (user_id, scenario_id, debt_id, period, paid_on, amount, kind, note)
-  select p.user_id, new_scen_id, m.new_id, p.period, p.paid_on, p.amount, p.kind, p.note
+  -- Se copia is_absorbed pero no las dos referencias a resumenes: el flag es
+  -- lo que decide si el pago sigue restando, y los ids apuntan a resumenes del
+  -- escenario viejo. Mismo criterio que expenses.is_archived, unas lineas mas
+  -- abajo.
+  insert into debt_payments (
+    user_id, scenario_id, debt_id, period, paid_on, amount, kind, note, is_absorbed
+  )
+  select p.user_id, new_scen_id, m.new_id, p.period, p.paid_on, p.amount, p.kind, p.note,
+         p.is_absorbed
   from debt_payments p join _debt_map m on m.old_id = p.debt_id
   where p.scenario_id = source_id;
 

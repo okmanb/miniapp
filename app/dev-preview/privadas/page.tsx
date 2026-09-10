@@ -50,11 +50,13 @@ const DEBT: DebtDetail = {
   ],
 };
 
+// p3 viene de un resumen a propósito: es la fila con la píldora "Del resumen",
+// y sin una acá el banco de pruebas no la mostraría nunca.
 const PAYMENTS = [
-  { id: "p1", amount: 290017, period: currentPeriod(), paidOn: "2026-09-08", kind: "minimo_estimado", debtName: "Mastercard Banco Patagonia …4139" },
-  { id: "p2", amount: 1085218, period: currentPeriod(), paidOn: "2026-09-07", kind: "minimo_estimado", debtName: "Mastercard Black …3311" },
-  { id: "p3", amount: 664234, period: "2026-08", paidOn: "2026-08-10", kind: "pago_variable", debtName: "Mastercard Banco Patagonia …4139" },
-  { id: "p4", amount: 262695, period: "2026-08", paidOn: "2026-08-05", kind: "cuota_fija", debtName: "Prestamo 1 BBVA" },
+  { id: "p1", amount: 290017, period: currentPeriod(), paidOn: "2026-09-08", kind: "minimo_estimado", debtName: "Mastercard Banco Patagonia …4139", fromStatement: false },
+  { id: "p2", amount: 1085218, period: currentPeriod(), paidOn: "2026-09-07", kind: "minimo_estimado", debtName: "Mastercard Black …3311", fromStatement: false },
+  { id: "p3", amount: 664234, period: "2026-08", paidOn: null, kind: "pago_variable", debtName: "Mastercard Banco Patagonia …4139", fromStatement: true },
+  { id: "p4", amount: 262695, period: "2026-08", paidOn: "2026-08-05", kind: "cuota_fija", debtName: "Prestamo 1 BBVA", fromStatement: false },
 ];
 
 const CARDS = [

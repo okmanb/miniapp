@@ -69,7 +69,7 @@ export default async function BridgeLoansPage() {
       .eq("scenario_id", scenario.id),
     supabase
       .from("debt_payments")
-      .select("debt_id, amount, period, kind")
+      .select("debt_id, amount, period, kind, is_absorbed")
       .eq("scenario_id", scenario.id),
   ]);
 

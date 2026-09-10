@@ -15,6 +15,12 @@ export interface PaymentRow {
   paidOn: string | null;
   kind: string;
   debtName: string;
+  /**
+   * Si salió del campo "cuánto pagaste" de un resumen. Se marca porque es la
+   * única fila que no se puede borrar desde acá: se corrige volviendo a cargar
+   * el resumen, que es de donde sale.
+   */
+  fromStatement: boolean;
 }
 
 const MONTHS_ES = [
@@ -105,6 +111,7 @@ export function PaymentsHistory({ rows }: { rows: PaymentRow[] }) {
                           <div className="truncate text-card text-ink">{row.debtName}</div>
                           <div className="mt-1.5 flex flex-wrap gap-1.5">
                             <MetaChip>{KIND_LABEL[row.kind] ?? row.kind}</MetaChip>
+                            {row.fromStatement && <MetaChip>Del resumen</MetaChip>}
                             {row.paidOn && <MetaChip>{row.paidOn}</MetaChip>}
                           </div>
                         </div>

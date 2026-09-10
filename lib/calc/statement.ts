@@ -31,6 +31,15 @@ export interface StatementClose {
   lateFee: number;
   /** Saldo con el que cierra el mes. Nunca negativo. */
   newBalance: number;
+  /**
+   * El cierre ANTES de restar lo pagado.
+   *
+   * Es lo que se guarda como saldo base de la tarjeta, porque el pago no se
+   * guarda restado: se guarda como pago y la resta la hace `deriveBalance`.
+   * Así el pago del resumen queda con recibo propio en el historial en vez de
+   * desaparecer adentro de un saldo, que es lo que pasaba antes.
+   */
+  grossBalance: number;
   /** Cuánto se movió el saldo. Positivo = creció. */
   delta: number;
 }
@@ -55,12 +64,10 @@ export function closeStatement(params: {
       ? Math.round((params.minimumPayment - params.amountPaid) * LATE_FEE_RATE)
       : 0;
 
-  const newBalance = Math.max(
-    0,
-    Math.round(previous + interest + lateFee + params.newCharges - params.amountPaid)
-  );
+  const grossBalance = Math.round(previous + interest + lateFee + params.newCharges);
+  const newBalance = Math.max(0, grossBalance - Math.round(params.amountPaid));
 
-  return { interest, lateFee, newBalance, delta: newBalance - previous };
+  return { interest, lateFee, grossBalance, newBalance, delta: newBalance - previous };
 }
 
 /**

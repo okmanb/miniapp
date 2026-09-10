@@ -9,6 +9,13 @@
  * archivaron: cargar el resumen del mes los archiva, y a partir de ahí el
  * saldo base ya los trae adentro. Por eso archivar no resta dos veces.
  *
+ * Con los pagos pasa lo mismo y por la misma razón. El saldo anterior de un
+ * resumen ya tiene descontado todo lo que se pagó antes, así que al cargarlo
+ * esos pagos quedan ABSORBIDOS y dejan de restar. Siguen en el historial —no
+ * se borran—, pero contarlos otra vez bajaría el saldo dos veces por el mismo
+ * peso. `is_absorbed` es obligatorio en el tipo justamente para que una
+ * consulta nueva no pueda olvidarse de traerlo y reabrir ese agujero.
+ *
  * La regla dura: al agregar o quitar un gasto no se toca ninguna columna de
  * saldo. Si alguna vez hiciera falta "revertir un parche", el modelo está mal.
  */
@@ -32,6 +39,8 @@ export interface ExpenseLike {
 export interface PaymentLike {
   debt_id: string;
   amount: number;
+  /** Un pago absorbido ya está adentro del saldo base: no vuelve a restar. */
+  is_absorbed: boolean;
 }
 
 /** Saldo vigente de una deuda. */
@@ -41,7 +50,7 @@ export function deriveBalance(
   payments: PaymentLike[]
 ): number {
   const paid = payments
-    .filter((p) => p.debt_id === debt.id)
+    .filter((p) => p.debt_id === debt.id && !p.is_absorbed)
     .reduce((sum, p) => sum + Number(p.amount), 0);
 
   const openCharges = expenses

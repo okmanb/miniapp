@@ -15,7 +15,7 @@ export default async function PaymentsHistoryPage() {
   const { data } = scenario
     ? await supabase
         .from("debt_payments")
-        .select("id, amount, period, paid_on, kind, debts(name)")
+        .select("id, amount, period, paid_on, kind, statement_id, debts(name)")
         .eq("scenario_id", scenario.id)
         .order("period", { ascending: false })
         .order("paid_on", { ascending: false })
@@ -28,6 +28,7 @@ export default async function PaymentsHistoryPage() {
     paidOn: p.paid_on as string | null,
     kind: p.kind as string,
     debtName: p.debts?.name ?? "—",
+    fromStatement: p.statement_id != null,
   }));
 
   return <PaymentsHistory rows={rows} />;

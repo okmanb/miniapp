@@ -93,7 +93,7 @@ export const getDebtDetail = cache(async function getDebtDetail(
       .eq("scenario_id", debt.scenario_id),
     supabase
       .from("debt_payments")
-      .select("id, debt_id, amount, period, paid_on, kind, note")
+      .select("id, debt_id, amount, period, paid_on, kind, note, is_absorbed, statement_id")
       .eq("debt_id", debtId)
       .order("period", { ascending: false }),
     supabase
@@ -127,7 +127,11 @@ export const getDebtDetail = cache(async function getDebtDetail(
       tem: debt.tem,
     },
     expenses,
-    payments.map((p) => ({ debt_id: p.debt_id, amount: Number(p.amount) }))
+    payments.map((p) => ({
+      debt_id: p.debt_id,
+      amount: Number(p.amount),
+      is_absorbed: p.is_absorbed,
+    }))
   );
 
   const annualRate = debt.annual_interest_rate != null ? Number(debt.annual_interest_rate) : null;

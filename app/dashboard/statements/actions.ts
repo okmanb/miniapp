@@ -83,7 +83,36 @@ export async function saveStatement(
     };
   }
 
-  const previousBalance = Number(debt.base_balance);
+  /*
+   * Volver a guardar el mismo resumen tiene que CORREGIRLO, no aplicarle el
+   * mes otra vez. Por eso, si ya existe, su saldo anterior sale de lo que
+   * guardó y no de base_balance — que a esta altura ya es el cierre que dejó
+   * él mismo, y usarlo cobraría el interés dos veces.
+   */
+  const { data: existing } = await supabase
+    .from("card_statements")
+    .select("id, previous_balance")
+    .eq("debt_id", debtId)
+    .eq("period", period)
+    .maybeSingle();
+
+  /*
+   * Los pagos que todavía restan. Lo que la tarjeta debía al cerrar el mes
+   * anterior es el saldo base menos ellos: base_balance guarda el cierre sin
+   * los pagos descontados, y la resta la hace `deriveBalance`.
+   */
+  const { data: livePayments } = await supabase
+    .from("debt_payments")
+    .select("id, amount")
+    .eq("debt_id", debtId)
+    .eq("is_absorbed", false);
+
+  const livePaid = (livePayments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
+
+  const previousBalance = existing
+    ? Number(existing.previous_balance)
+    : Math.max(0, Number(debt.base_balance) - livePaid);
+
   const close = closeStatement({
     previousBalance,
     annualRate: debt.annual_interest_rate,
@@ -103,6 +132,8 @@ export async function saveStatement(
         previous_balance: previousBalance,
         interest_charged: close.interest,
         new_charges: newCharges,
+        // Lo que el banco dice que debés al cerrar, con el pago ya descontado.
+        // Difiere a propósito de base_balance, que lo guarda sin descontar.
         total_due: close.newBalance,
         minimum_payment: minimumPayment,
         amount_paid: amountPaid,
@@ -115,15 +146,73 @@ export async function saveStatement(
 
   if (error) return { message: "No pudimos guardar el resumen." };
 
-  // El saldo base pasa a ser el que cerró el resumen. Es el único lugar donde
-  // se escribe un saldo, y se escribe un dato del banco, no una cuenta nuestra
-  // sobre gastos sueltos.
+  /*
+   * El saldo base pasa a ser el cierre ANTES de restar lo pagado. Es el único
+   * lugar donde se escribe un saldo, y se escribe un dato del banco.
+   *
+   * Antes acá se guardaba el cierre neto y el pago desaparecía adentro: no
+   * quedaba fila en `debt_payments`, así que el Historial de pagos no lo
+   * mostraba y quien lo registraba de nuevo a mano se lo descontaba dos veces.
+   * Ahora el pago se guarda como pago, unas líneas más abajo, y el saldo que
+   * ve la app sigue siendo el mismo porque `deriveBalance` lo resta.
+   */
   const { error: balanceError } = await supabase
     .from("debts")
-    .update({ base_balance: close.newBalance, base_balance_at: new Date().toISOString().slice(0, 10) })
+    .update({
+      base_balance: close.grossBalance,
+      base_balance_at: new Date().toISOString().slice(0, 10),
+    })
     .eq("id", debtId);
 
   if (balanceError) return { message: "Guardamos el resumen pero no pudimos actualizar el saldo." };
+
+  /*
+   * Regla 3, aplicada a los pagos: el resumen ABSORBE lo que ya trae adentro.
+   *
+   * Todo pago vivo hasta acá está metido en el saldo anterior de este resumen,
+   * así que dejar de restarlo no es perderlo — es no contarlo dos veces. Igual
+   * que con los gastos, no se borra: sigue en el historial.
+   *
+   * Solo al crear el resumen. Al corregirlo, el saldo anterior salió de lo que
+   * él ya tenía guardado y esos pagos ya se absorbieron en su momento.
+   */
+  if (!existing && livePayments && livePayments.length > 0) {
+    await supabase
+      .from("debt_payments")
+      .update({ is_absorbed: true, absorbed_by_statement_id: inserted.id })
+      .in(
+        "id",
+        livePayments.map((p) => p.id)
+      );
+  }
+
+  /*
+   * Y el pago de este resumen, que es lo que la persona escribió en "cuánto
+   * pagaste". Se borra y se reescribe en vez de actualizarse: así corregir el
+   * resumen corrige el pago, bajarlo a cero lo elimina, y volver a guardar no
+   * deja dos.
+   */
+  await supabase.from("debt_payments").delete().eq("statement_id", inserted.id);
+
+  if (amountPaid > 0) {
+    const { error: paymentError } = await supabase.from("debt_payments").insert({
+      user_id: auth.user.id,
+      scenario_id: debt.scenario_id,
+      debt_id: debtId,
+      period,
+      amount: amountPaid,
+      // Variable a propósito: 'minimo_estimado' tiene un único por deuda y mes,
+      // y el pago del resumen no puede chocar con el atajo de pagar el mínimo.
+      kind: "pago_variable",
+      note: `Pago del resumen de ${period}`,
+      statement_id: inserted.id,
+      is_absorbed: false,
+    });
+
+    if (paymentError) {
+      return { message: "Guardamos el resumen pero no pudimos registrar el pago." };
+    }
+  }
 
   // Cuotas que trajo el PDF. Se guardan con upsert por (debt_id, cupon):
   // cargar dos meses seguidos el mismo resumen no tiene que duplicarlas, y
@@ -167,5 +256,6 @@ export async function saveStatement(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/cashflow");
   revalidatePath("/dashboard/expenses");
+  revalidatePath("/dashboard/payments");
   redirect(`/dashboard/debts/${debtId}`);
 }

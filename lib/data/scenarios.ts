@@ -72,7 +72,7 @@ export const getScenarioBoard = cache(async function getScenarioBoard(): Promise
       supabase
         .from("expenses")
         .select("scenario_id, debt_id, amount, is_archived, is_recurring, period, ended_period"),
-      supabase.from("debt_payments").select("scenario_id, debt_id, amount, period, kind"),
+      supabase.from("debt_payments").select("scenario_id, debt_id, amount, period, kind, is_absorbed"),
       supabase
         .from("incomes")
         .select("scenario_id, amount, kind, eligible_months, period, ended_period"),
@@ -118,6 +118,7 @@ export const getScenarioBoard = cache(async function getScenarioBoard(): Promise
       amount: number;
       period: string;
       kind: string;
+      is_absorbed: boolean;
     }[];
     const incomes = (incomesBy.get(scenario.id) ?? []) as unknown as IncomeLike[];
     const schedule = (scheduleBy.get(scenario.id) ?? []) as unknown as {

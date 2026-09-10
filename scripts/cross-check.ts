@@ -15,6 +15,7 @@ import { amortize } from "../lib/calc/amortize";
 // La comparación de la pantalla 03 sale del mismo módulo, a propósito: si el
 // motor cambia, este control tiene que moverse con él.
 import { closeStatement } from "../lib/calc/statement";
+import { deriveBalance } from "../lib/calc/balance";
 import { parseMoney, formatMoney, monthlyRateFromAnnual } from "../lib/calc/money";
 import { bridgeCost, compareAgainstWorstDebt } from "../lib/calc/bridge";
 import { simulatePayoff, formatMonthSpan } from "../lib/calc/payoff";
@@ -249,6 +250,45 @@ const orden = plan.debts
 const mismoOrden = orden.length === PLAN.orden.length && orden.every((n, i) => n === PLAN.orden[i]);
 console.log("  " + (mismoOrden ? "= " : "!=") + " orden de cancelacion: " + orden.join(" > "));
 if (!mismoOrden) note("Pantalla 08 - orden de cancelacion: nuestro " + orden.join(" > ") + ".");
+
+/*
+ * El pago del resumen, ida y vuelta.
+ *
+ * El campo "cuanto pagaste" ya no se guarda restado adentro del saldo: se
+ * guarda como pago en debt_payments y la resta la hace deriveBalance. El saldo
+ * que ve la app tiene que dar EXACTAMENTE lo mismo que daba antes, o la
+ * migracion 008 movio plata. Y un pago absorbido no tiene que restar: ese es
+ * el bug que se arreglo, el saldo bajando dos veces por el mismo peso.
+ */
+console.log("");
+console.log("=== 6. El pago del resumen deja recibo y el saldo no se mueve ===\n");
+
+{
+  const visa = DEBTS.find((d) => /Visa/i.test(d.name))!;
+  const cierre = closeStatement({
+    previousBalance: visa.saldo,
+    annualRate: visa.tna,
+    newCharges: 0,
+    minimumPayment: parseMoney(visa.min),
+    amountPaid: parseMoney(visa.min),
+  });
+
+  const deuda = {
+    id: "visa",
+    base_balance: cierre.grossBalance,
+    annual_interest_rate: Number(visa.tna),
+    tem: null,
+  };
+  const delResumen = { debt_id: "visa", amount: parseMoney(visa.min), is_absorbed: false };
+  const yaAbsorbido = { debt_id: "visa", amount: 999_999, is_absorbed: true };
+
+  check("saldo derivado = cierre neto", deriveBalance(deuda, [], [delResumen]), cierre.newBalance);
+  check(
+    "un pago absorbido no vuelve a restar",
+    deriveBalance(deuda, [], [delResumen, yaAbsorbido]),
+    cierre.newBalance
+  );
+}
 
 console.log("");
 console.log("=== Diferencias encontradas ===\n");

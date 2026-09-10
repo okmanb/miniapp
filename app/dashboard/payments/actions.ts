@@ -74,6 +74,27 @@ export async function createPayment(
  */
 export async function deletePayment(id: string): Promise<{ ok: boolean; message?: string }> {
   const supabase = await createClient();
+
+  /*
+   * El pago que salió de un resumen no se borra por su cuenta: su monto es el
+   * campo "cuánto pagaste" de ese resumen, y borrarlo acá dejaría los dos
+   * números diciendo cosas distintas. Se corrige volviendo a cargar el
+   * resumen, que reescribe el pago con lo que se ponga ahí.
+   */
+  const { data: payment } = await supabase
+    .from("debt_payments")
+    .select("statement_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (payment?.statement_id) {
+    return {
+      ok: false,
+      message:
+        "Este pago vino de un resumen. Para cambiarlo, volvé a cargar ese resumen con el monto correcto.",
+    };
+  }
+
   const { error } = await supabase.from("debt_payments").delete().eq("id", id);
   if (error) return { ok: false, message: "No pudimos borrarlo." };
 
