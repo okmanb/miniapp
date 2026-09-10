@@ -14,7 +14,7 @@ import {
 import { parseArgNumber } from "@/app/dashboard/debts/validation";
 import { closeStatement } from "@/lib/calc/statement";
 import { Spinner } from "./ui";
-import { CalendarField } from "./CalendarField";
+import { CalendarField, describeCalendarValue } from "./CalendarField";
 import { ChoiceGroup } from "./ChoiceGroup";
 import { PdfCard } from "./StatementImport";
 
@@ -46,6 +46,13 @@ export interface StatementCard {
   balance: number;
   /** Tasa mensual en decimal. */
   monthlyRate: number;
+  /**
+   * Los dólares que ya convertimos a pesos en el último resumen de esta
+   * tarjeta, si los hubo. Sirve para avisar del doble conteo del mes
+   * siguiente: el banco convierte los dólares que no pagaste y los unifica con
+   * los pesos, y acá ya entraron al saldo.
+   */
+  lastUsd: { period: string; balance: number; rate: number } | null;
 }
 
 /** La opción de la lista de tarjetas que abre el alta acá mismo. */
@@ -173,8 +180,22 @@ export function StatementForm({
         name: cardName.trim() || "la tarjeta nueva",
         balance: parseMoney(cardPrevious),
         monthlyRate: monthlyRateFromAnnual(parseArgNumber(cardRate) ?? 0),
+        // Una tarjeta que se está creando no tiene resúmenes anteriores.
+        lastUsd: null,
       }
     : existingCard;
+
+  /*
+   * El aviso del doble conteo de dólares. Solo si el resumen que se está
+   * cargando es POSTERIOR al que los convirtió: volver a guardar aquel mismo
+   * resumen no tiene nada que avisar.
+   *
+   * Va acá arriba y no al guardar, a diferencia del aviso de gastos: este es un
+   * consejo sobre qué escribir en "consumos nuevos", así que tiene que estar a
+   * la vista ANTES de escribirlo. Uno que aparece al apretar guardar llega
+   * cuando el número ya está puesto.
+   */
+  const usdWarning = card?.lastUsd && period > card.lastUsd.period ? card.lastUsd : null;
 
   // Cómo queda la tarjeta, con la misma función que va a correr el servidor al
   // guardar. Es la cuenta que decide si conviene pagar el mínimo o algo más, y
@@ -379,6 +400,20 @@ export function StatementForm({
             note="El período que cierra este resumen."
           />
         </div>
+
+        {usdWarning && (
+          <div className="mt-5 rounded-surface border border-gold-border bg-gold-bg px-3 py-3">
+            <p className="text-[12px] font-semibold text-gold-ink">Ojo con los dólares</p>
+            <p className="mt-1 text-[11.5px] text-gold-ink">
+              En el resumen de {describeCalendarValue("month", usdWarning.period).toLowerCase()}{" "}
+              había {formatUsd(usdWarning.balance)} que ya
+              sumamos al saldo en pesos, a {formatMoney(usdWarning.rate)} cada uno. Si no los
+              pagaste, el banco los convierte él y te los unifica con los pesos en este resumen:{" "}
+              <strong>no los cargues otra vez en “consumos nuevos”</strong>. Si los convirtió a
+              otra cotización, lo único que va acá es la diferencia.
+            </p>
+          </div>
+        )}
 
         <MoneyField
           id="new_charges"

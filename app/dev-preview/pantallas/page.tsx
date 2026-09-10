@@ -207,6 +207,10 @@ export default function ScreensPreview() {
               name: "Mastercard Banco Patagonia …4139",
               balance: 3_386_911,
               monthlyRate: monthlyRateFromAnnual(83.8),
+              // Con dólares convertidos el mes anterior, para que el aviso del
+              // doble conteo se pueda mirar acá. Sin esto no lo vería nadie:
+              // solo aparece con un resumen previo que los haya convertido.
+              lastUsd: { period: "2026-07", balance: 20.24, rate: 1480 },
             },
           ]}
           defaultDebtId="0"

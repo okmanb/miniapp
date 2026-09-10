@@ -37,6 +37,37 @@ export default async function NewStatementPage({
         .order("name")
     : { data: [] };
 
+  /*
+   * Los dólares que ya convertimos en un resumen anterior.
+   *
+   * Si no se pagan, el banco los convierte él y los unifica con los pesos en
+   * el resumen siguiente. Como acá ya entraron al saldo en pesos, cargarlos de
+   * nuevo en "consumos nuevos" los sumaría dos veces — la misma forma que la
+   * Regla 6 para los gastos. La app no lo puede detectar sola porque no lee el
+   * saldo anterior del PDF, usa el nuestro; pero sí sabe que pasó, y avisar es
+   * lo que puede hacer.
+   */
+  const { data: usdHistory } = scenario
+    ? await supabase
+        .from("card_statements")
+        .select("debt_id, period, usd_balance, usd_rate")
+        .eq("scenario_id", scenario.id)
+        .gt("usd_balance", 0)
+        .not("usd_rate", "is", null)
+        .order("period", { ascending: false })
+    : { data: [] };
+
+  // El más reciente de cada tarjeta: es contra ese que se avisa.
+  const lastUsdByDebt = new Map<string, { period: string; balance: number; rate: number }>();
+  for (const row of usdHistory ?? []) {
+    if (lastUsdByDebt.has(row.debt_id)) continue;
+    lastUsdByDebt.set(row.debt_id, {
+      period: row.period,
+      balance: Number(row.usd_balance),
+      rate: Number(row.usd_rate),
+    });
+  }
+
   return (
     <Screen>
       <Link
@@ -102,6 +133,7 @@ export default async function NewStatementPage({
           // sobre la TNA cuando están las dos.
           monthlyRate:
             c.tem != null ? Number(c.tem) : monthlyRateFromAnnual(c.annual_interest_rate),
+          lastUsd: lastUsdByDebt.get(c.id) ?? null,
         }))}
         defaultDebtId={query.deuda}
         defaultPeriod={previousPeriod()}
