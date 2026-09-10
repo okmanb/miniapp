@@ -28,26 +28,19 @@ export function PaymentForm({
   });
 
   const [kind, setKind] = useState("pago_variable");
+  const [debtId, setDebtId] = useState(defaultDebtId ?? "");
 
   return (
-    <form action={formAction} className="mt-4">
-      <label htmlFor="debt_id" className="block text-label uppercase text-muted">
-        A qué deuda
-      </label>
-      <select
-        id="debt_id"
+    <form action={formAction} className="-mt-1">
+      <ChoiceGroup
         name="debt_id"
+        label="A qué deuda"
+        value={debtId}
+        onChange={setDebtId}
+        layout="list"
         required
-        defaultValue={defaultDebtId}
-        className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
-      >
-        <option value="">Elegí una</option>
-        {debts.map((d) => (
-          <option key={d.id} value={d.id}>
-            {d.name}
-          </option>
-        ))}
-      </select>
+        options={debts.map((d) => ({ value: d.id, label: d.name }))}
+      />
 
       <label htmlFor="amount" className="mt-5 block text-label uppercase text-muted">
         Cuánto pagaste

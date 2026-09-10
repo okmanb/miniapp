@@ -8,6 +8,7 @@ import { formatMoney, formatUsd, parseMoney } from "@/lib/calc/money";
 import { closeStatement } from "@/lib/calc/statement";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
+import { ChoiceGroup } from "./ChoiceGroup";
 import { PdfCard, takeParsedStatement } from "./StatementImport";
 
 /**
@@ -179,24 +180,15 @@ export function StatementForm({
           <input type="hidden" name="installments" value={JSON.stringify(parsed.installments)} />
         )}
 
-        <label htmlFor="debt_id" className="mt-5 block text-label uppercase text-muted">
-          Tarjeta
-        </label>
-        <select
-          id="debt_id"
+        <ChoiceGroup
           name="debt_id"
-          required
+          label="Tarjeta"
           value={debtId}
-          onChange={(e) => setDebtId(e.target.value)}
-          className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
-        >
-          <option value="">Elegí una</option>
-          {cards.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          onChange={setDebtId}
+          layout="list"
+          required
+          options={cards.map((c) => ({ value: c.id, label: c.name }))}
+        />
         {parsed?.ok && parsed.cardName && (
           <p className="help mt-1.5">
             El PDF dice “{parsed.cardName}

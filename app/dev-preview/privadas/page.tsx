@@ -3,6 +3,7 @@ import { DebtDetailView } from "@/components/DebtDetailView";
 import { PaymentsHistory } from "@/components/PaymentsHistory";
 import { SettingsView } from "@/components/SettingsView";
 import { ExpenseForm } from "@/components/ExpenseForm";
+import { PaymentForm } from "@/components/PaymentForm";
 import { currentPeriod } from "@/lib/data/dashboard";
 import type { DebtDetail } from "@/lib/data/debt";
 
@@ -79,6 +80,16 @@ export default function PrivateScreensPreview() {
       <div className="px-[18px]">
         <h1 className="text-screen text-ink">Agregar gasto</h1>
         <ExpenseForm cards={CARDS} />
+      </div>
+
+      {/*
+        El alta de un pago no es una de las dieciséis pantallas del prototipo,
+        pero es la única que quedaba con un selector sin poder mirarse.
+      */}
+      <Rotulo>Registrar un pago</Rotulo>
+      <div className="px-[18px]">
+        <h1 className="text-screen text-ink">Registrar un pago</h1>
+        <PaymentForm debts={CARDS} />
       </div>
 
       <Rotulo>15 · Historial de pagos</Rotulo>

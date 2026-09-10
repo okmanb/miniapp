@@ -6,6 +6,7 @@ import {
   createScenario,
   duplicateScenario,
 } from "@/app/dashboard/scenarios/actions";
+import { ChoiceGroup } from "./ChoiceGroup";
 import { Spinner } from "./ui";
 
 const NOTE_MAX = 200;
@@ -199,26 +200,24 @@ export function NewScenarioForm({
 
         {seeds.length > 0 && (
           <>
-            <label htmlFor="scenario-seed" className="mt-5 block text-label uppercase text-muted">
-              Arrancar copiando las deudas de
-            </label>
-            <select
-              id="scenario-seed"
+            {/*
+              En dos columnas y no apilado: los nombres de escenario son
+              cortos —"Plan base", "Plan de contingencia"— y así lo dibuja el
+              prototipo. El que se pase de largo se recorta con puntos
+              suspensivos, porque acá el nombre lo escribe la persona.
+            */}
+            <ChoiceGroup
               name="seed"
+              label="Arrancar copiando las deudas de"
               value={seed}
-              onChange={(e) => pickSeed(e.target.value)}
-              className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[14px] text-ink outline-none"
-            >
-              {seeds.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-              <option value="">Ninguno (vacío)</option>
-            </select>
-            <p className="help mt-1.5">
-              Precargamos los números de ese plan — cambiá los que quieras probar distinto.
-            </p>
+              onChange={pickSeed}
+              layout="grid"
+              options={[
+                ...seeds.map((s) => ({ value: s.id, label: s.name })),
+                { value: "", label: "Ninguno (vacío)" },
+              ]}
+              help="Precargamos los números de ese plan — cambiá los que quieras probar distinto."
+            />
           </>
         )}
 

@@ -331,11 +331,18 @@ Convertidos: tipo de deuda (`stack`, seis opciones), cada cuánto entra un ingre
 la ayuda que cambia según lo elegido, como el prototipo) y qué tipo de pago (`stack`, porque
 nuestras etiquetas son frases y las del prototipo son de dos palabras).
 
-**Quedan cuatro a propósito**, todos los que eligen de una lista que crece: a qué deuda va un
-pago, con qué tarjeta se paga un gasto, a qué tarjeta corresponde un resumen y de qué
-escenario copiar. El prototipo lista cuatro tarjetas fijas; la app tiene que aguantar a
-alguien con veinte deudas, y veinte opciones a la vista es un problema distinto que hay que
-diseñar, no traducir. Se dejaron para después de usar la app con datos reales.
+**Ya no queda ninguno: la app tiene cero `<select>`.** Los últimos cuatro eran los que
+eligen de una lista que crece —a qué deuda va un pago, con qué tarjeta se paga un gasto, a
+qué tarjeta corresponde un resumen y de qué escenario copiar— y la duda era qué hacer con
+alguien que tenga veinte deudas. La contestó el prototipo, que tiene las dos formas y las
+usa según el largo del nombre: **lista apilada de píldoras a todo el ancho** para las
+tarjetas (nombres largos) y **dos columnas con recorte** para los escenarios (nombres
+cortos, y encima escritos por la persona). Con veinte deudas la lista se hace larga y la
+pantalla scrollea, que sigue siendo mejor que la rueda del sistema operativo.
+
+`ChoiceGroup` tiene entonces cuatro formas, y la que decide no es el campo sino el largo de
+la etiqueta: `row`, `grid`, `stack` (taxonomía cerrada, radio 12, elegido en mint) y `list`
+(datos, píldora a todo el ancho, elegido en pine).
 
 ## El barrido de las dieciséis pantallas
 

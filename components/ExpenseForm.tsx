@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { createExpense } from "@/app/dashboard/expenses/actions";
+import { ChoiceGroup } from "./ChoiceGroup";
 import { Spinner } from "./ui";
 
 /**
@@ -89,25 +90,24 @@ export function ExpenseForm({ cards }: { cards: CardOption[] }) {
         />
       </div>
 
-      <label htmlFor="debt_id" className="mt-5 block text-label uppercase text-muted">
-        {isOneOff ? "A qué tarjeta va" : "Se paga con esta tarjeta en vez de en efectivo (opcional)"}
-      </label>
-      <select
-        id="debt_id"
+      {/*
+        La lista completa a la vista, como el prototipo: son las tarjetas que
+        la persona cargó y no hay tantas. "Efectivo o transferencia" es una
+        opción más y no la ausencia de opción — un gasto pagado en efectivo es
+        una respuesta, no un campo vacío.
+      */}
+      <ChoiceGroup
         name="debt_id"
-        required={isOneOff}
+        label={isOneOff ? "A qué tarjeta va" : "Se paga con esta tarjeta en vez de en efectivo (opcional)"}
         value={debtId}
-        onChange={(e) => setDebtId(e.target.value)}
-        className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none"
-      >
-        {!isOneOff && <option value="">Efectivo o transferencia</option>}
-        {isOneOff && <option value="">Elegí una tarjeta</option>}
-        {cards.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+        onChange={setDebtId}
+        layout="list"
+        required={isOneOff}
+        options={[
+          ...(isOneOff ? [] : [{ value: "", label: "Efectivo o transferencia" }]),
+          ...cards.map((c) => ({ value: c.id, label: c.name })),
+        ]}
+      />
       <p className="help mt-1.5">
         Si lo pagás con tarjeta, el gasto entra en el resumen de esa tarjeta y no en efectivo.
       </p>
