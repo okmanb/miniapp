@@ -5,7 +5,7 @@ import { deriveBalance, type ExpenseLike } from "@/lib/calc/balance";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
 import { bridgeCost, compareAgainstWorstDebt, monthsBetween } from "@/lib/calc/bridge";
 import { BRIDGE_COLUMNS, type BridgeLoanRow } from "@/lib/data/bridges";
-import { EmptyState, Screen } from "@/components/ui";
+import { EmptyState, Screen, Chevron } from "@/components/ui";
 import { BridgeLoanForm, type WorstDebt } from "@/components/BridgeLoanForm";
 import { BridgeLoanCard, type BridgeCardData } from "@/components/BridgeLoanCard";
 
@@ -172,12 +172,7 @@ function Header({ scenarioName }: { scenarioName: string | null }) {
       <details className="group mt-2">
         <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
           Cómo se calcula
-          <span
-            className="transition-transform duration-200 ease-sd group-open:rotate-180"
-            aria-hidden
-          >
-            ⌄
-          </span>
+          <Chevron className="group-open:rotate-180" />
         </summary>
         <p className="help mt-1">
           Un préstamo corto para tapar un mes específico, con devolución programada — a veces

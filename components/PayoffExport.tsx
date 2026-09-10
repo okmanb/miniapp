@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Chevron } from "./ui";
 
 /**
  * Llevarse el plan.
@@ -69,12 +70,7 @@ export function PayoffExport({ text }: { text: string }) {
         <summary className="flex min-h-touch cursor-pointer list-none items-center justify-between gap-2 text-[12px] text-muted hover:text-pine">
           <span className="inline-flex items-center gap-1.5">
             Ver qué se copia
-            <span
-              className="transition-transform duration-200 ease-sd group-open:rotate-180"
-              aria-hidden
-            >
-              ⌄
-            </span>
+            <Chevron className="group-open:rotate-180" />
           </span>
           <span className="font-mono text-[10.5px] uppercase">
             {lines} {lines === 1 ? "línea" : "líneas"}

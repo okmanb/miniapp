@@ -14,7 +14,7 @@ import {
 } from "@/lib/calc/money";
 import { parseArgNumber } from "@/app/dashboard/debts/validation";
 import { closeStatement } from "@/lib/calc/statement";
-import { Spinner } from "./ui";
+import { Spinner, Chevron } from "./ui";
 import { CalendarField, describeCalendarValue } from "./CalendarField";
 import { ChoiceGroup } from "./ChoiceGroup";
 import { PdfCard } from "./StatementImport";
@@ -461,12 +461,7 @@ export function StatementForm({
         >
           <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
             Consumos en dólares
-            <span
-              className="transition-transform duration-200 ease-sd group-open:rotate-180"
-              aria-hidden
-            >
-              ⌄
-            </span>
+            <Chevron className="group-open:rotate-180" />
           </summary>
 
           <p className="help mt-1">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getScenarioBoard } from "@/lib/data/scenarios";
 import { formatMoney } from "@/lib/calc/money";
-import { Screen, Card, Amount, EmptyState } from "@/components/ui";
+import { Screen, Card, Amount, EmptyState, Chevron } from "@/components/ui";
 import { ScenarioActions, NewScenarioForm } from "@/components/ScenarioActions";
 import { ScenarioComparison } from "@/components/ScenarioComparison";
 
@@ -32,12 +32,7 @@ export default async function ScenariosPage() {
       <details className="group mt-2">
         <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
           Cómo se calcula
-          <span
-            className="transition-transform duration-200 ease-sd group-open:rotate-180"
-            aria-hidden
-          >
-            ⌄
-          </span>
+          <Chevron className="group-open:rotate-180" />
         </summary>
         <p className="help mt-1">
           El mismo set de deudas, pero con decisiones distintas — comparalos sin que se pisen

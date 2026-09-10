@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StatementForm } from "@/components/StatementForm";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
-import { Screen } from "@/components/ui";
+import { Screen, Chevron } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -102,12 +102,7 @@ export default async function NewStatementPage({
       <details className="group mt-2">
         <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
           Cómo funciona
-          <span
-            className="transition-transform duration-200 ease-sd group-open:rotate-180"
-            aria-hidden
-          >
-            ⌄
-          </span>
+          <Chevron className="group-open:rotate-180" />
         </summary>
         <p className="help mt-1">
           Con estos cuatro números alcanza. El saldo anterior y el interés se calculan solos; vos

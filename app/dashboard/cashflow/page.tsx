@@ -3,7 +3,7 @@ import { getCashflowScreen } from "@/lib/data/cashflow";
 import { formatMoney } from "@/lib/calc/money";
 import { CashflowBoard } from "@/components/CashflowBoard";
 import { StartingBalanceForm } from "@/components/StartingBalanceForm";
-import { Card, EmptyState, PrimaryButton, Screen, MetaChip, Amount } from "@/components/ui";
+import { Card, EmptyState, PrimaryButton, Screen, MetaChip, Amount, Chevron } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +34,7 @@ export default async function CashflowPage() {
       <details className="group mt-2">
         <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
           Cómo se calcula
-          <span className="transition-transform duration-200 ease-sd group-open:rotate-180" aria-hidden>
-            ⌄
-          </span>
+          <Chevron className="group-open:rotate-180" />
         </summary>
         <p className="help mt-1">
           Cada mes suma tus ingresos, resta los gastos que salen del efectivo y resta lo que

@@ -184,6 +184,48 @@ export function Spinner({ className = "" }: { className?: string }) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Chevron de las secciones que se abren                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * La flecha de un `<details>`, tal como la dibuja el prototipo.
+ *
+ * Acá había un glifo, `⌄` (U+2304), y se veía torcido: ese carácter se apoya
+ * abajo de la caja, así que cerrado quedaba hundido respecto del texto y
+ * abierto —rotado 180°— subía y recién ahí parecía centrado. No hay CSS que lo
+ * arregle sin números mágicos, porque el problema son las métricas de la
+ * fuente.
+ *
+ * El prototipo nunca lo uso: dibuja un SVG de 14px con trazo 2,4 y puntas
+ * redondeadas. Un path rota alrededor de su centro y se ve igual en los dos
+ * estados.
+ *
+ * La rotación la pone quien lo usa, normalmente `group-open:rotate-180` desde
+ * el `<details>`.
+ */
+export function Chevron({ className = "" }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`inline-flex text-muted transition-transform duration-[180ms] ease-sd ${className}`}
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </span>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* Estado vacío y error                                                        */
 /* -------------------------------------------------------------------------- */
 

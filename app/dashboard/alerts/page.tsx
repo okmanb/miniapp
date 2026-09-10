@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getDashboard } from "@/lib/data/dashboard";
 import { nextDueDate, type AlertDebt } from "@/lib/calc/alerts";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
-import { EmptyState, PrimaryButton, Screen } from "@/components/ui";
+import { EmptyState, PrimaryButton, Screen, Chevron } from "@/components/ui";
 import { AlertCard, SnoozedRow } from "@/components/AlertCard";
 import { AlertSettingsPanel, type UpcomingNotice } from "@/components/AlertSettingsPanel";
 
@@ -91,12 +91,7 @@ export default async function AlertsPage() {
       <details className="group mt-2">
         <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
           Qué detectamos solo
-          <span
-            className="transition-transform duration-200 ease-sd group-open:rotate-180"
-            aria-hidden
-          >
-            ⌄
-          </span>
+          <Chevron className="group-open:rotate-180" />
         </summary>
         {/*
           Nombrar las que NO se calculan solas es parte del contrato. La lista

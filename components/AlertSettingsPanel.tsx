@@ -10,7 +10,7 @@ import {
   type AlertSettings,
 } from "@/lib/data/alert-settings";
 import { formatMoney } from "@/lib/calc/money";
-import { Amount, Spinner } from "./ui";
+import { Amount, Spinner, Chevron } from "./ui";
 
 export interface UpcomingNotice {
   debtId: string;
@@ -101,12 +101,7 @@ export function AlertSettingsPanel({
       <details className="group mt-2 rounded-surface-lg border border-border bg-surface px-4 py-3">
         <summary className="flex min-h-touch cursor-pointer list-none items-center justify-between gap-2 text-card text-ink">
           Cómo te avisamos
-          <span
-            className="transition-transform duration-200 ease-sd group-open:rotate-180"
-            aria-hidden
-          >
-            ⌄
-          </span>
+          <Chevron className="group-open:rotate-180" />
         </summary>
 
         <fieldset className="mt-3">
