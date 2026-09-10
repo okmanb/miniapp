@@ -2,7 +2,7 @@
  * Cierre del mes de una tarjeta, portado de `_stmtProj` en
  * handoff/prototipo.html:
  *
- *   nuevo = saldo anterior + interés + punitorio + consumos − pagado
+ *   nuevo = saldo anterior + interés + punitorio + consumos + dólares − pagado
  *
  * Dos cosas que lo separan del motor viejo (lib/card-statements) y que son la
  * razón de que esta sea la implementación que va a producción:
@@ -40,6 +40,8 @@ export interface StatementClose {
    * desaparecer adentro de un saldo, que es lo que pasaba antes.
    */
   grossBalance: number;
+  /** Lo que entró por consumos en dólares, en pesos. 0 si no hay o no hay cotización. */
+  usdCharges: number;
   /** Cuánto se movió el saldo. Positivo = creció. */
   delta: number;
 }
@@ -53,6 +55,15 @@ export function closeStatement(params: {
   minimumPayment: number;
   /** Cuánto se pagó realmente. */
   amountPaid: number;
+  /**
+   * Consumos en dólares del resumen, YA convertidos a pesos.
+   *
+   * Van aparte de `newCharges` para que el preview pueda nombrarlos: un saldo
+   * que sube $ 29.955 sin decir que fueron dólares es la clase de sorpresa que
+   * esta app existe para evitar. La conversión se hace afuera porque la
+   * cotización no sale del PDF — la pone la persona.
+   */
+  usdCharges?: number;
 }): StatementClose {
   const previous = params.previousBalance || 0;
   const interest = Math.round(previous * monthlyRateFromAnnual(params.annualRate));
@@ -64,10 +75,11 @@ export function closeStatement(params: {
       ? Math.round((params.minimumPayment - params.amountPaid) * LATE_FEE_RATE)
       : 0;
 
-  const grossBalance = Math.round(previous + interest + lateFee + params.newCharges);
+  const usdCharges = Math.round(params.usdCharges ?? 0);
+  const grossBalance = Math.round(previous + interest + lateFee + params.newCharges) + usdCharges;
   const newBalance = Math.max(0, grossBalance - Math.round(params.amountPaid));
 
-  return { interest, lateFee, grossBalance, newBalance, delta: newBalance - previous };
+  return { interest, lateFee, usdCharges, grossBalance, newBalance, delta: newBalance - previous };
 }
 
 /**

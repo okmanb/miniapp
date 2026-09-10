@@ -216,7 +216,15 @@ create table if not exists card_statements (
 
   minimum_payment numeric(14, 2),
   amount_paid numeric(14, 2) not null default 0,
+  -- Lo que el parser pudo leer linea por linea en dolares. NO es el total del
+  -- resumen: sirve para avisar cuando no coinciden, no para mostrar.
   usd_charges_excluded numeric(14, 2) not null default 0,
+  -- El total en dolares que declara el resumen, y la cotizacion con la que se
+  -- convirtio. Se guardan los dos porque el peso equivalente ya quedo adentro
+  -- del cierre: sin la cotizacion no hay forma de explicar de donde salio.
+  -- Sin cotizacion cargada, los dolares no entran al saldo.
+  usd_balance numeric(14, 2) not null default 0,
+  usd_rate numeric(14, 4),
   source text not null default 'manual',
   warnings jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
@@ -543,12 +551,14 @@ begin
   insert into card_statements (
     user_id, scenario_id, debt_id, period, closing_date, due_date,
     previous_balance, interest_charged, new_charges, installments_charge,
-    total_due, minimum_payment, amount_paid, usd_charges_excluded, source, warnings
+    total_due, minimum_payment, amount_paid, usd_charges_excluded,
+    usd_balance, usd_rate, source, warnings
   )
   select
     s.user_id, new_scen_id, m.new_id, s.period, s.closing_date, s.due_date,
     s.previous_balance, s.interest_charged, s.new_charges, s.installments_charge,
-    s.total_due, s.minimum_payment, s.amount_paid, s.usd_charges_excluded, s.source, s.warnings
+    s.total_due, s.minimum_payment, s.amount_paid, s.usd_charges_excluded,
+    s.usd_balance, s.usd_rate, s.source, s.warnings
   from card_statements s join _debt_map m on m.old_id = s.debt_id
   where s.scenario_id = source_id;
 

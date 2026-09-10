@@ -93,6 +93,18 @@ export function StatementForm({
   const [newCharges, setNewCharges] = useState("");
   const [minimum, setMinimum] = useState("");
   const [paid, setPaid] = useState("");
+
+  /*
+   * Los dolares. El total sale del PDF; la cotizacion no, porque el resumen no
+   * la trae — se pagan a la del dia del cierre. Sin ella no se convierte nada:
+   * un tipo de cambio inventado por nosotros seria peor que no sumarlos.
+   */
+  const [usdBalance, setUsdBalance] = useState("");
+  const [usdRate, setUsdRate] = useState("");
+  // El bloque arranca cerrado —el prototipo no tiene dolares en esta pantalla—
+  // y se abre solo cuando el PDF declara un saldo en dolares, que es cuando la
+  // pregunta deja de ser hipotetica.
+  const [usdOpen, setUsdOpen] = useState(false);
   const [payKind, setPayKind] = useState<PayKind>("variable");
 
   const needsConfirm = Boolean(state.pendingDuplicates?.length);
@@ -134,6 +146,10 @@ export function StatementForm({
     if (result.previousBalance != null) {
       setCardPrevious(String(Math.round(result.previousBalance)));
     }
+    if (result.usdBalance != null && result.usdBalance > 0) {
+      setUsdBalance(formatArgNumber(result.usdBalance));
+      setUsdOpen(true);
+    }
     if (result.annualRate != null) setCardRate(formatArgNumber(result.annualRate));
     if (result.dueDate) {
       const day = Number(result.dueDate.slice(8, 10));
@@ -146,6 +162,10 @@ export function StatementForm({
    * campos de arriba en vez de la base: el "cómo queda la tarjeta" tiene que
    * funcionar antes de que la fila exista, que es cuando más se lo necesita.
    */
+  // Lo que los dolares suman al saldo, en pesos. Cero mientras falte cualquiera
+  // de los dos: es lo mismo que decir "todavia no se pueden contar".
+  const usdInPesos = Math.round((parseArgNumber(usdBalance) ?? 0) * (parseArgNumber(usdRate) ?? 0));
+
   const existingCard = cards.find((c) => c.id === debtId) ?? null;
   const card: StatementCard | null = creatingCard
     ? {
@@ -167,8 +187,9 @@ export function StatementForm({
       newCharges: parseMoney(newCharges),
       minimumPayment: parseMoney(minimum),
       amountPaid: parseMoney(paid),
+      usdCharges: usdInPesos,
     });
-  }, [card, newCharges, minimum, paid]);
+  }, [card, newCharges, minimum, paid, usdInPesos]);
 
   /**
    * El tipo de pago no es un dato aparte: es un atajo que escribe "cuánto
@@ -179,7 +200,13 @@ export function StatementForm({
     setPayKind(kind);
     if (kind === "minimo") setPaid(minimum);
     if (kind === "total" && preview) {
-      setPaid(String(Math.round(card!.balance + preview.interest + parseMoney(newCharges))));
+      setPaid(
+        String(
+          Math.round(
+            card!.balance + preview.interest + parseMoney(newCharges) + preview.usdCharges
+          )
+        )
+      );
     }
   }
 
@@ -360,6 +387,73 @@ export function StatementForm({
           value={newCharges}
           onChange={setNewCharges}
         />
+        {/*
+          Los dolares, que antes quedaban afuera del saldo con un aviso que
+          decia "cargalos a mano" y no decia donde. Se pagan a la cotizacion del
+          cierre y el PDF no la trae, asi que la unica salida honesta es
+          pedirla: convertir con un numero inventado por nosotros seria peor
+          que no sumarlos.
+        */}
+        <details
+          className="group mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3"
+          open={usdOpen}
+          onToggle={(e) => setUsdOpen((e.currentTarget as HTMLDetailsElement).open)}
+        >
+          <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
+            Consumos en dólares
+            <span
+              className="transition-transform duration-200 ease-sd group-open:rotate-180"
+              aria-hidden
+            >
+              ⌄
+            </span>
+          </summary>
+
+          <p className="help mt-1">
+            Si el resumen cierra con un total en dólares, poné acá cuánto es y a qué cotización
+            lo pagaste. Con las dos cosas entran al saldo como un consumo más. Sin la
+            cotización no los podemos convertir y quedan afuera.
+          </p>
+
+          <div className="mt-4">
+            <label htmlFor="usd_balance" className="block text-label uppercase text-muted">
+              Total en dólares del resumen
+            </label>
+            <div className="mt-2 flex items-center rounded-surface border border-border-input bg-surface px-3">
+              <span className="font-mono text-[15px] text-muted" aria-hidden>
+                US$
+              </span>
+              <input
+                id="usd_balance"
+                name="usd_balance"
+                inputMode="decimal"
+                autoComplete="off"
+                placeholder="0,00"
+                value={usdBalance}
+                onChange={(e) => setUsdBalance(e.target.value)}
+                className="min-h-touch w-full bg-transparent px-2 font-mono text-[15px] text-ink outline-none placeholder:text-muted"
+              />
+            </div>
+            <p className="help mt-1.5">El que dice el resumen, no la suma de los consumos.</p>
+          </div>
+
+          <MoneyField
+            id="usd_rate"
+            label="Cotización del dólar"
+            help="A cuánto se pagó cada dólar. El resumen no la trae — mirá el débito de tu cuenta, o poné la del día que lo pagaste."
+            value={usdRate}
+            onChange={setUsdRate}
+          />
+
+          {usdInPesos > 0 && (
+            <p className="mt-3 text-[12px] text-leaf-deep">
+              Entran{" "}
+              <span className="font-mono font-semibold">{formatMoney(usdInPesos)}</span> al saldo:{" "}
+              {formatUsd(parseArgNumber(usdBalance) ?? 0)} × {formatMoney(parseArgNumber(usdRate) ?? 0)}.
+            </p>
+          )}
+        </details>
+
         <MoneyField
           id="minimum_payment"
           label="Pago mínimo del resumen"
@@ -530,6 +624,9 @@ function StatementPreview({
       <div className="mt-2 space-y-1">
         <PreviewRow label="Saldo anterior" value={formatMoney(card.balance)} />
         <PreviewRow label="Interés del mes" value={formatMoney(close.interest)} />
+        {close.usdCharges > 0 && (
+          <PreviewRow label="Consumos en dólares" value={formatMoney(close.usdCharges)} />
+        )}
         {close.lateFee > 0 && (
           <PreviewRow
             label="Punitorio por pagar menos que el mínimo"
@@ -647,9 +744,9 @@ function ParseSummary({ parsed }: { parsed: ParseResult }) {
       */}
       {parsed.usdBalance != null && parsed.usdBalance > 0 && (
         <p className="mt-2 text-[11px] text-gold-ink">
-          El resumen cierra con {formatUsd(parsed.usdBalance)} en dólares, que NO sumamos: se
-          convierten a la cotización del cierre, y esa no la tenemos. Cargalos a mano si
-          querés que cuenten.
+          El resumen cierra con {formatUsd(parsed.usdBalance)} en dólares. Los pusimos en
+          “Consumos en dólares”, acá abajo: falta la cotización a la que los pagaste, porque el
+          resumen no la trae. Con ella entran al saldo; sin ella quedan afuera.
         </p>
       )}
 

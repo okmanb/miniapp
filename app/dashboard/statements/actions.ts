@@ -112,6 +112,24 @@ export async function saveStatement(
   const minimumPayment = parseArgNumber(String(formData.get("minimum_payment") ?? ""));
   const amountPaid = parseArgNumber(String(formData.get("amount_paid") ?? "")) ?? 0;
 
+  /*
+   * Los dolares del resumen. Entran al saldo solo si estan los DOS: el total en
+   * dolares y la cotizacion a la que se pagaron. El PDF trae el primero y no el
+   * segundo, porque se pagan a la cotizacion del cierre.
+   *
+   * Con uno solo no se convierte nada. Inventar el que falta —tomar una
+   * cotizacion nuestra, o suponer que el total en dolares ya vino en pesos—
+   * meteria plata que nadie confirmo adentro de un saldo que la app presenta
+   * como derivado de datos del banco.
+   */
+  const usdBalance = parseArgNumber(String(formData.get("usd_balance") ?? "")) ?? 0;
+  const usdRate = parseArgNumber(String(formData.get("usd_rate") ?? ""));
+
+  if (usdBalance < 0) return { message: "El total en dólares no puede ser negativo." };
+  if (usdRate !== null && usdRate < 0) return { message: "La cotización no puede ser negativa." };
+
+  const usdCharges = usdRate !== null && usdRate > 0 ? Math.round(usdBalance * usdRate) : 0;
+
   const { data: debt } = await supabase
     .from("debts")
     .select("id, scenario_id, base_balance, annual_interest_rate, tem")
@@ -178,6 +196,7 @@ export async function saveStatement(
     newCharges,
     minimumPayment: minimumPayment ?? 0,
     amountPaid,
+    usdCharges,
   });
 
   const { data: inserted, error } = await supabase
@@ -196,6 +215,11 @@ export async function saveStatement(
         total_due: close.newBalance,
         minimum_payment: minimumPayment,
         amount_paid: amountPaid,
+        // Las dos cifras y no solo el resultado: el equivalente en pesos ya
+        // quedo adentro del cierre, asi que sin la cotizacion no habria forma
+        // de explicar de donde salio.
+        usd_balance: usdBalance,
+        usd_rate: usdRate,
         source: "manual",
       },
       { onConflict: "debt_id,period" }

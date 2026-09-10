@@ -291,7 +291,8 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
   if (saldoActualUsd != null && saldoActualUsd > 0 && usdRounded < saldoActualUsd - 0.01) {
     warnings.push(
       `El resumen cierra con US$ ${saldoActualUsd} en dólares, pero solo pudimos leer ` +
-        `US$ ${usdRounded} línea por línea. Los consumos en dólares hay que revisarlos a mano.`
+        `US$ ${usdRounded} línea por línea. El que vale es el del resumen, y es el que va al ` +
+        `campo de dólares: revisalo antes de ponerle la cotización.`
     );
   }
 
