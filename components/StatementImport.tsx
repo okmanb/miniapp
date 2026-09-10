@@ -17,29 +17,6 @@ import { Spinner } from "./ui";
  * que la persona confirma.
  */
 
-/** Dónde queda lo parseado para que la pantalla siguiente no vuelva a pedir el PDF. */
-const HANDOFF_KEY = "llegas:resumen-parseado";
-
-export function stashParsedStatement(parsed: ParseResult) {
-  try {
-    window.sessionStorage.setItem(HANDOFF_KEY, JSON.stringify(parsed));
-  } catch {
-    // Sin sessionStorage se pierde el atajo, no el dato: la pantalla
-    // siguiente simplemente vuelve a pedir el PDF.
-  }
-}
-
-export function takeParsedStatement(): ParseResult | null {
-  try {
-    const raw = window.sessionStorage.getItem(HANDOFF_KEY);
-    if (!raw) return null;
-    window.sessionStorage.removeItem(HANDOFF_KEY);
-    return JSON.parse(raw) as ParseResult;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * La tarjeta de "subí el PDF", sola.
  *

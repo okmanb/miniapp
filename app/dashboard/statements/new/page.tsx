@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StatementForm } from "@/components/StatementForm";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
-import { EmptyState, PrimaryButton, Screen } from "@/components/ui";
+import { Screen } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -82,33 +82,30 @@ export default async function NewStatementPage({
           Con estos cuatro números alcanza. El saldo anterior y el interés se calculan solos; vos
           confirmás los consumos nuevos, el pago mínimo y cuánto pagaste realmente. El saldo de la
           tarjeta pasa a ser el que cierra este resumen, y los gastos que hayas cargado a mano se
-          archivan porque ya vienen adentro.
+          archivan porque ya vienen adentro. Lo que pongas en “cuánto pagaste” queda como un pago
+          en tu historial. Si la tarjeta todavía no existe, elegí “Es una tarjeta nueva” y se crea
+          acá con los datos del PDF.
         </p>
       </details>
 
-      {!cards || cards.length === 0 ? (
-        <div className="mt-4">
-          <EmptyState
-            title="No hay tarjetas cargadas"
-            note="Un resumen pertenece a una tarjeta. Agregá la tarjeta primero y después cargale el resumen."
-            action={<PrimaryButton href="/dashboard/debts/new">Agregar una tarjeta</PrimaryButton>}
-          />
-        </div>
-      ) : (
-        <StatementForm
-          cards={cards.map((c) => ({
-            id: c.id,
-            name: c.name,
-            balance: Number(c.base_balance),
-            // La misma prioridad que el resto de la app: la TEM cargada manda
-            // sobre la TNA cuando están las dos.
-            monthlyRate:
-              c.tem != null ? Number(c.tem) : monthlyRateFromAnnual(c.annual_interest_rate),
-          }))}
-          defaultDebtId={query.deuda}
-          defaultPeriod={previousPeriod()}
-        />
-      )}
+      {/*
+        Sin tarjetas cargadas esta pantalla mandaba al alta y volvía. Ya no hace
+        falta: el formulario tiene "Es una tarjeta nueva" y la crea con este
+        mismo resumen, que es de donde salen sus cuatro datos.
+      */}
+      <StatementForm
+        cards={(cards ?? []).map((c) => ({
+          id: c.id,
+          name: c.name,
+          balance: Number(c.base_balance),
+          // La misma prioridad que el resto de la app: la TEM cargada manda
+          // sobre la TNA cuando están las dos.
+          monthlyRate:
+            c.tem != null ? Number(c.tem) : monthlyRateFromAnnual(c.annual_interest_rate),
+        }))}
+        defaultDebtId={query.deuda}
+        defaultPeriod={previousPeriod()}
+      />
     </Screen>
   );
 }

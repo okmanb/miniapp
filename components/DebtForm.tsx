@@ -8,7 +8,6 @@ import { formatArgNumber } from "@/lib/calc/money";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
 import { ChoiceGroup } from "./ChoiceGroup";
-import { StatementImport, stashParsedStatement } from "./StatementImport";
 
 /**
  * Formulario de deuda, compartido por el alta y la edición.
@@ -62,40 +61,12 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
 
       {/*
-        Importar va primero porque es el camino corto: seis campos que salen
-        del PDF en vez de copiarse a mano del resumen. Solo para tarjetas
-        nuevas — una deuda ya creada se actualiza cargando su resumen, que es
-        otra pantalla, y un prestamo no tiene resumen que leer.
+        Acá NO va el importador de PDF. El prototipo tiene el bloque del PDF en
+        una sola pantalla, la del resumen, y ahí ahora también se da de alta la
+        tarjeta. Tenerlo en los dos lados partía en dos el camino más común:
+        cargabas el archivo acá, guardabas, y la pantalla siguiente te pedía
+        los montos del mismo resumen.
       */}
-      {!editing && kind === "tarjeta" && (
-        <div className="mb-6">
-          <StatementImport
-            title="Importar resumen"
-            note="Si tenés el PDF a mano, de ahí salen el nombre, el saldo, la tasa y el día de vencimiento. Podés cargarlos a mano igual."
-            onParsed={(parsed) => {
-              if (parsed.cardName) {
-                setName(
-                  parsed.accountLast4
-                    ? `${parsed.cardName} …${parsed.accountLast4}`
-                    : parsed.cardName
-                );
-              }
-              if (parsed.statementBalance != null) {
-                setBalance(String(Math.round(parsed.statementBalance)));
-              }
-              if (parsed.annualRate != null) setRate(formatArgNumber(parsed.annualRate));
-              if (parsed.dueDate) {
-                const day = Number(parsed.dueDate.slice(8, 10));
-                if (day >= 1 && day <= 31) setDueDay(String(day));
-              }
-              // El resto del resumen viaja a la pantalla siguiente: pedir el
-              // mismo PDF dos veces es justo el trabajo manual que esto evita.
-              stashParsedStatement(parsed);
-            }}
-          />
-        </div>
-      )}
-
       {/*
         Las tres secciones salen del prototipo. No son decoración: separan lo
         que identifica la deuda de lo que se calcula con ella, y sin ellas

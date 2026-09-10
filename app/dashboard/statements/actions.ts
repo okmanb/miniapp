@@ -42,12 +42,71 @@ export async function saveStatement(
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { message: "Tenés que iniciar sesión." };
 
-  const debtId = String(formData.get("debt_id") ?? "");
+  let debtId = String(formData.get("debt_id") ?? "");
   const period = String(formData.get("period") ?? "");
   const confirmed = formData.get("confirmed") === "1";
 
   if (!debtId) return { message: "Elegí a qué tarjeta corresponde el resumen." };
   if (!/^\d{4}-\d{2}$/.test(period)) return { message: "Elegí el mes del resumen." };
+
+  /*
+   * La tarjeta puede no existir todavía: este resumen la crea.
+   *
+   * Es el camino más común —"tengo el PDF de una tarjeta que no cargué"— y
+   * antes obligaba a pasar por el alta, guardar, y volver acá con el mismo
+   * archivo. El resumen trae los cuatro datos que pedía el alta.
+   *
+   * El saldo que se guarda es el ANTERIOR. El cierre lo escribe el mismo
+   * camino que cualquier otro resumen, unas líneas más abajo.
+   */
+  if (debtId === "nueva") {
+    const name = String(formData.get("new_card_name") ?? "").trim();
+    if (!name) return { message: "Poné el nombre de la tarjeta nueva." };
+
+    const previous = parseArgNumber(String(formData.get("new_card_previous_balance") ?? "")) ?? 0;
+    if (previous < 0) return { message: "El saldo anterior no puede ser negativo." };
+
+    const rate = parseArgNumber(String(formData.get("new_card_annual_rate") ?? ""));
+    if (rate !== null && (rate < 0 || rate > 1000)) {
+      return { message: "Esa tasa parece un error de tipeo. Es la anual, en porcentaje." };
+    }
+
+    const dayRaw = String(formData.get("new_card_due_day") ?? "").trim();
+    const dueDay = dayRaw ? Number(dayRaw) : null;
+    if (dueDay !== null && (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31)) {
+      return { message: "El día de vencimiento va de 1 a 31." };
+    }
+
+    const { data: scenario } = await supabase
+      .from("scenarios")
+      .select("id")
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!scenario) {
+      return { message: "No hay un escenario activo donde guardar la tarjeta." };
+    }
+
+    const { data: created, error: debtError } = await supabase
+      .from("debts")
+      .insert({
+        user_id: auth.user.id,
+        scenario_id: scenario.id,
+        name,
+        kind: "tarjeta",
+        base_balance: previous,
+        base_balance_at: new Date().toISOString().slice(0, 10),
+        annual_interest_rate: rate,
+        due_day: dueDay,
+        status: "al_dia",
+      })
+      .select("id")
+      .single();
+
+    if (debtError || !created) return { message: "No pudimos crear la tarjeta." };
+
+    debtId = created.id;
+  }
 
   const newCharges = parseArgNumber(String(formData.get("new_charges") ?? "")) ?? 0;
   const minimumPayment = parseArgNumber(String(formData.get("minimum_payment") ?? ""));

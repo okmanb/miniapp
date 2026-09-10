@@ -1,15 +1,22 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
+import { useActionState, useMemo, useState, useTransition } from "react";
 import { saveStatement } from "@/app/dashboard/statements/actions";
 import { EMPTY_STATEMENT_STATE, type StatementState } from "@/app/dashboard/statements/form-state";
 import { parseStatementPdf, type ParseResult } from "@/app/dashboard/statements/parse-actions";
-import { formatMoney, formatUsd, parseMoney } from "@/lib/calc/money";
+import {
+  formatArgNumber,
+  formatMoney,
+  formatUsd,
+  monthlyRateFromAnnual,
+  parseMoney,
+} from "@/lib/calc/money";
+import { parseArgNumber } from "@/app/dashboard/debts/validation";
 import { closeStatement } from "@/lib/calc/statement";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
 import { ChoiceGroup } from "./ChoiceGroup";
-import { PdfCard, takeParsedStatement } from "./StatementImport";
+import { PdfCard } from "./StatementImport";
 
 /**
  * Carga del resumen del mes (pantalla 06).
@@ -24,6 +31,13 @@ import { PdfCard, takeParsedStatement } from "./StatementImport";
  * solo: aparece la lista de los gastos que se van a archivar y el botón cambia
  * de texto. Confirmar es un acto aparte, porque la consecuencia (que esos
  * gastos dejen de sumar al saldo) no se ve hasta después.
+ *
+ * Acá también se da de alta la tarjeta, y por eso el PDF se pide una sola vez
+ * en toda la app. El prototipo tiene el bloque del PDF únicamente en esta
+ * pantalla; el que estaba en el alta de la deuda lo habíamos agregado nosotros,
+ * y partía en dos el camino más común —"tengo el resumen de una tarjeta
+ * nueva"— obligando a cargar el archivo, guardar, y volver a empezar acá. El
+ * resumen ya trae los cuatro datos que pedía el alta.
  */
 export interface StatementCard {
   id: string;
@@ -33,6 +47,9 @@ export interface StatementCard {
   /** Tasa mensual en decimal. */
   monthlyRate: number;
 }
+
+/** La opción de la lista de tarjetas que abre el alta acá mismo. */
+const NEW_CARD = "nueva";
 
 export function StatementForm({
   cards,
@@ -54,6 +71,20 @@ export function StatementForm({
 
   // Controlados para que el PDF pueda prellenarlos y la persona corregirlos.
   const [debtId, setDebtId] = useState(defaultDebtId ?? "");
+
+  /*
+   * Los cuatro datos de una tarjeta que todavía no existe. Son exactamente los
+   * que pide el alta, y los cuatro salen del PDF.
+   *
+   * El saldo que se pide es el ANTERIOR, no el que cierra: esta pantalla
+   * calcula el cierre sumándole el interés y los consumos. El alta pedía
+   * "saldo actual" y se prellenaba con el total del resumen, así que al cargar
+   * ese mismo resumen se le volvía a sumar el mes encima.
+   */
+  const [cardName, setCardName] = useState("");
+  const [cardPrevious, setCardPrevious] = useState("");
+  const [cardRate, setCardRate] = useState("");
+  const [cardDueDay, setCardDueDay] = useState("");
   const [period, setPeriod] = useState(defaultPeriod);
   const [newCharges, setNewCharges] = useState("");
   const [minimum, setMinimum] = useState("");
@@ -61,6 +92,7 @@ export function StatementForm({
   const [payKind, setPayKind] = useState<PayKind>("variable");
 
   const needsConfirm = Boolean(state.pendingDuplicates?.length);
+  const creatingCard = debtId === NEW_CARD;
 
   /*
    * Qué falta para que los atajos de "tipo de pago" se puedan usar. Los dos
@@ -76,18 +108,49 @@ export function StatementForm({
       ? `«Pago variable» es lo que pudiste pagar, sea cual sea el monto. Para usar los otros dos, ${missing.join(" y ")}.`
       : "«Pago variable» es lo que pudiste pagar, sea cual sea el monto. Los otros dos escriben el monto por vos.";
 
-  // Si el PDF ya se leyo al crear la tarjeta, no se vuelve a pedir: los
-  // campos llegan cargados y solo hay que confirmarlos.
-  useEffect(() => {
-    const handed = takeParsedStatement();
-    if (!handed?.ok) return;
-    setParsed(handed);
-    if (handed.period) setPeriod(handed.period);
-    if (handed.newCharges != null) setNewCharges(String(Math.round(handed.newCharges)));
-    if (handed.minimumPayment != null) setMinimum(String(Math.round(handed.minimumPayment)));
-  }, []);
+  /**
+   * Lo que el PDF prellena. Solo se toca lo que el parser SÍ leyó: un campo
+   * que no pudo leer se deja como estaba, no se pisa con cero, porque un cero
+   * puesto por nosotros es indistinguible de un cero real del resumen.
+   */
+  function applyParsed(result: ParseResult) {
+    if (!result.ok) return;
 
-  const card = cards.find((c) => c.id === debtId) ?? null;
+    if (result.period) setPeriod(result.period);
+    if (result.newCharges != null) setNewCharges(String(Math.round(result.newCharges)));
+    if (result.minimumPayment != null) setMinimum(String(Math.round(result.minimumPayment)));
+
+    // Los de la tarjeta se llenan siempre, aunque todavía no se haya elegido
+    // "es una tarjeta nueva": si se elige después, ya están puestos.
+    if (result.cardName) {
+      setCardName(
+        result.accountLast4 ? `${result.cardName} …${result.accountLast4}` : result.cardName
+      );
+    }
+    if (result.previousBalance != null) {
+      setCardPrevious(String(Math.round(result.previousBalance)));
+    }
+    if (result.annualRate != null) setCardRate(formatArgNumber(result.annualRate));
+    if (result.dueDate) {
+      const day = Number(result.dueDate.slice(8, 10));
+      if (day >= 1 && day <= 31) setCardDueDay(String(day));
+    }
+  }
+
+  /*
+   * La tarjeta contra la que se hace la cuenta. Si se está creando, sale de los
+   * campos de arriba en vez de la base: el "cómo queda la tarjeta" tiene que
+   * funcionar antes de que la fila exista, que es cuando más se lo necesita.
+   */
+  const existingCard = cards.find((c) => c.id === debtId) ?? null;
+  const card: StatementCard | null = creatingCard
+    ? {
+        id: NEW_CARD,
+        name: cardName.trim() || "la tarjeta nueva",
+        balance: parseMoney(cardPrevious),
+        monthlyRate: monthlyRateFromAnnual(parseArgNumber(cardRate) ?? 0),
+      }
+    : existingCard;
 
   // Cómo queda la tarjeta, con la misma función que va a correr el servidor al
   // guardar. Es la cuenta que decide si conviene pagar el mínimo o algo más, y
@@ -123,13 +186,7 @@ export function StatementForm({
       data.set("pdf", file);
       const result = await parseStatementPdf(data);
       setParsed(result);
-
-      if (!result.ok) return;
-      // Solo se prellena lo que el parser SÍ leyó. Un campo que no pudo leer
-      // se deja como estaba, no se pisa con cero.
-      if (result.period) setPeriod(result.period);
-      if (result.newCharges != null) setNewCharges(String(Math.round(result.newCharges)));
-      if (result.minimumPayment != null) setMinimum(String(Math.round(result.minimumPayment)));
+      applyParsed(result);
     });
   }
 
@@ -187,14 +244,96 @@ export function StatementForm({
           onChange={setDebtId}
           layout="list"
           required
-          options={cards.map((c) => ({ value: c.id, label: c.name }))}
+          options={[
+            ...cards.map((c) => ({ value: c.id, label: c.name })),
+            { value: NEW_CARD, label: "Es una tarjeta nueva" },
+          ]}
         />
-        {parsed?.ok && parsed.cardName && (
+        {parsed?.ok && parsed.cardName && !creatingCard && (
           <p className="help mt-1.5">
             El PDF dice “{parsed.cardName}
             {parsed.accountLast4 ? ` …${parsed.accountLast4}` : ""}”. Elegí a cuál de tus
-            tarjetas corresponde.
+            tarjetas corresponde, o “Es una tarjeta nueva” si todavía no la cargaste.
           </p>
+        )}
+
+        {/*
+          El alta de la tarjeta, acá mismo. Son los cuatro campos del
+          formulario de deuda y los cuatro salen del PDF, así que en el caso
+          normal no hay nada que escribir: solo confirmar lo leído.
+        */}
+        {creatingCard && (
+          <div className="mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3">
+            <div className="text-label uppercase text-muted">La tarjeta nueva</div>
+            <p className="help mt-1">
+              Se crea con este resumen. Si subiste el PDF ya está todo cargado — revisalo y
+              seguí.
+            </p>
+
+            <div className="mt-4">
+              <label htmlFor="new_card_name" className="block text-label uppercase text-muted">
+                Nombre
+              </label>
+              <input
+                id="new_card_name"
+                name="new_card_name"
+                autoComplete="off"
+                value={cardName}
+                onChange={(e) => setCardName(e.target.value)}
+                placeholder="Visa Signature …2166"
+                className="mt-2 min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 text-[15px] text-ink outline-none placeholder:text-muted"
+              />
+              <p className="help mt-1.5">
+                Así la vas a ver en el dashboard — poné algo que reconozcas de un vistazo.
+              </p>
+            </div>
+
+            <MoneyField
+              id="new_card_previous_balance"
+              label="Saldo anterior"
+              help="Con cuánto venía la tarjeta ANTES de este resumen. No es el total que cierra: ese lo calcula la app sumándole el interés y los consumos de abajo."
+              value={cardPrevious}
+              onChange={setCardPrevious}
+            />
+
+            <div className="mt-5">
+              <label
+                htmlFor="new_card_annual_rate"
+                className="block text-label uppercase text-muted"
+              >
+                Tasa de interés punitorio anual (%)
+              </label>
+              <div className="mt-2 flex items-center rounded-surface border border-border-input bg-surface px-3">
+                <input
+                  id="new_card_annual_rate"
+                  name="new_card_annual_rate"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={cardRate}
+                  onChange={(e) => setCardRate(e.target.value)}
+                  placeholder="98,03"
+                  className="min-h-touch w-full bg-transparent font-mono text-[15px] text-ink outline-none placeholder:text-muted"
+                />
+                <span className="font-mono text-[15px] text-muted" aria-hidden>
+                  %
+                </span>
+              </div>
+              <p className="help mt-1.5">La anual, no la del mes. Es la que mueve todo el cálculo.</p>
+            </div>
+
+            <div className="mt-5">
+              <CalendarField
+                id="new_card_due_day"
+                name="new_card_due_day"
+                label="Día de vencimiento (1–31)"
+                mode="day"
+                value={cardDueDay}
+                onChange={setCardDueDay}
+                kicker="Día de vencimiento"
+                note="Se repite todos los meses. Elegí el día en que cierra el resumen."
+              />
+            </div>
+          </div>
         )}
 
         <div className="mt-5">
@@ -284,7 +423,7 @@ export function StatementForm({
           {blockedHint && <p className="help mt-1.5">{blockedHint}</p>}
         </fieldset>
 
-        {card && preview && (
+        {card && preview && card.balance > 0 && (
           <StatementPreview card={card} close={preview} />
         )}
 
@@ -339,7 +478,11 @@ export function StatementForm({
           className="mt-6 flex min-h-touch w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
         >
           {pending && <Spinner className="text-white" />}
-          {needsConfirm ? "Entiendo, archivar esos gastos y guardar" : "Agregar resumen"}
+          {needsConfirm
+            ? "Entiendo, archivar esos gastos y guardar"
+            : creatingCard
+              ? "Crear la tarjeta y agregar el resumen"
+              : "Agregar resumen"}
         </button>
       </form>
     </>
