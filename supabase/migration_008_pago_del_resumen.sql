@@ -76,7 +76,11 @@ insert into debt_payments (
   statement_id, is_absorbed
 )
 select
-  r.user_id, r.scenario_id, r.debt_id, r.period, r.due_date, r.amount_paid,
+  r.user_id, r.scenario_id, r.debt_id,
+  -- El mes en que se PAGO, que no es el del resumen: el de agosto se paga en
+  -- septiembre. Todo lo que pregunta "que pagaste este mes" mira esta columna.
+  coalesce(to_char(r.due_date, 'YYYY-MM'), r.period),
+  r.due_date, r.amount_paid,
   'pago_variable', 'Pago del resumen de ' || r.period,
   r.id, r.rn > 1
 from ranked r

@@ -113,6 +113,16 @@ export function StatementForm({
   // y se abre solo cuando el PDF declara un saldo en dolares, que es cuando la
   // pregunta deja de ser hipotetica.
   const [usdOpen, setUsdOpen] = useState(false);
+
+  /*
+   * Cuando se pago el resumen. El resumen de agosto se paga en septiembre, asi
+   * que el mes del pago NO es el del resumen: si se guardara con el del
+   * resumen, "ya pagaste el minimo de este mes" nunca lo encontraria.
+   *
+   * Sale del vencimiento que trae el PDF. Sin PDF queda vacio y el servidor
+   * usa hoy, que es cuando se esta cargando.
+   */
+  const [paidOn, setPaidOn] = useState("");
   const [rateBusy, startRate] = useTransition();
   const [rateNote, setRateNote] = useState<string | null>(null);
 
@@ -178,6 +188,7 @@ export function StatementForm({
     if (result.previousBalance != null) {
       setCardPrevious(String(Math.round(result.previousBalance)));
     }
+    if (result.dueDate) setPaidOn(result.dueDate);
     if (result.usdBalance != null && result.usdBalance > 0) {
       setUsdBalance(formatArgNumber(result.usdBalance));
       setUsdOpen(true);
@@ -309,6 +320,7 @@ export function StatementForm({
         </p>
 
         {needsConfirm && <input type="hidden" name="confirmed" value="1" />}
+        {paidOn && <input type="hidden" name="paid_on" value={paidOn} />}
         {/* Las cuotas detectadas viajan enteras: se guardan al confirmar. */}
         {parsed?.ok && parsed.installments && parsed.installments.length > 0 && (
           <input type="hidden" name="installments" value={JSON.stringify(parsed.installments)} />

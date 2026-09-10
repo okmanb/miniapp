@@ -122,6 +122,19 @@ export async function saveStatement(
    * meteria plata que nadie confirmo adentro de un saldo que la app presenta
    * como derivado de datos del banco.
    */
+  /*
+   * Cuando se pago. El resumen de agosto se paga en septiembre, asi que el mes
+   * del pago no es el del resumen — y el mes del pago es el que mira todo lo
+   * que pregunta "que pagaste este mes".
+   *
+   * Sale del vencimiento del PDF; sin el, hoy, que es cuando se esta cargando.
+   * Es el mismo criterio que `createPayment`.
+   */
+  const paidOnRaw = String(formData.get("paid_on") ?? "").trim();
+  const paidOn = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(paidOnRaw)
+    ? paidOnRaw
+    : new Date().toISOString().slice(0, 10);
+
   const usdBalance = parseArgNumber(String(formData.get("usd_balance") ?? "")) ?? 0;
   const usdRate = parseArgNumber(String(formData.get("usd_rate") ?? ""));
 
@@ -282,7 +295,9 @@ export async function saveStatement(
       user_id: auth.user.id,
       scenario_id: debt.scenario_id,
       debt_id: debtId,
-      period,
+      // El mes en que se pago, no el del resumen.
+      period: paidOn.slice(0, 7),
+      paid_on: paidOn,
       amount: amountPaid,
       // Variable a propósito: 'minimo_estimado' tiene un único por deuda y mes,
       // y el pago del resumen no puede chocar con el atajo de pagar el mínimo.

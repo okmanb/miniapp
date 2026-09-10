@@ -165,6 +165,19 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
 
   const period = currentPeriod();
 
+  /**
+   * Lo que se le pagó a una deuda en el mes corriente.
+   *
+   * Cuenta los absorbidos igual que los vivos: absorber dice que ese peso ya
+   * está adentro del saldo, no que no se haya pagado. Para "¿pagué este mes?"
+   * la respuesta es la misma en los dos casos.
+   */
+  function paidThisMonthFor(debtId: string): number {
+    return payments
+      .filter((p) => p.debt_id === debtId && p.period === period)
+      .reduce((sum, p) => sum + Number(p.amount), 0);
+  }
+
   const debts: DashboardDebt[] = rawDebts.map((d) => {
     const balance = deriveBalance(
       {
@@ -235,9 +248,20 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
       recurringCharge,
       minimumPayment,
       monthlyDue: minimumPayment ?? 0,
-      minimumPaidThisMonth: payments.some(
-        (p) => p.debt_id === d.id && p.period === period && p.kind === "minimo_estimado"
-      ),
+      /*
+       * La pregunta es "lo que le pusiste a esta deuda este mes, ¿cubre el
+       * mínimo?", y se contesta con plata, no con etiquetas.
+       *
+       * Antes exigía un pago de kind 'minimo_estimado', que es el que escribe
+       * el botón de "pagar el mínimo". Cualquier otro no contaba: pagabas MÁS
+       * que el mínimo desde el resumen o a mano, y la alerta te seguía pidiendo
+       * que pagaras el mínimo. Un aviso que sigue prendido después de hacer lo
+       * que pide enseña a ignorar los avisos.
+       */
+      minimumPaidThisMonth:
+        minimumPayment != null
+          ? paidThisMonthFor(d.id) >= minimumPayment
+          : paidThisMonthFor(d.id) > 0,
       growth:
         minimumPayment != null
           ? explainGrowth({
@@ -252,8 +276,14 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
 
   const total = debts.reduce((sum, d) => sum + d.balance, 0);
 
+  /*
+   * Los pagos del mes, solo de las deudas vivas. Antes sumaba los de todas, y
+   * una deuda archivada le seguía moviendo el "bajó $X este mes" al dashboard
+   * — un número que no corresponde a ninguna de las deudas que se ven abajo.
+   */
+  const activeIds = new Set(rawDebts.map((d) => d.id));
   const paidThisMonth = payments
-    .filter((p) => p.period === period)
+    .filter((p) => p.period === period && activeIds.has(p.debt_id))
     .reduce((sum, p) => sum + Number(p.amount), 0);
   const delta = -paidThisMonth;
 
