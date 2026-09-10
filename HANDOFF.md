@@ -426,6 +426,32 @@ que cuelga de `/dashboard` y no es Flujo, Plan ni Alertas.
    el código de 6 dígitos que la pantalla 14 ya espera empieza a funcionar sin tocar una
    línea de la app.
 
+   **El trabajo de elegir proveedor ya está hecho y medido; falta un dominio.** Se corrió el
+   descubrimiento del Marketplace y en la categoría `messaging` hay **un solo** producto:
+   Resend, con plan gratuito de $0 (los otros son $20 y $90 por mes). Y ahí aparece el
+   bloqueo real: **Resend exige un dominio del que controles el DNS**, para verificar que
+   podés enviar desde él. `llegas.vercel.app` no sirve, y la cuenta no tiene ningún dominio
+   (`vercel domains ls` → 0).
+
+   Cuando haya dominio, esto es todo lo que falta:
+
+   ```bash
+   # 1. Provisionar Resend. sa-east-1 es São Paulo, el más cerca de acá.
+   vercel integration add resend/resend-email --plan free      -m domain=TUDOMINIO.com -m region=sa-east-1
+   ```
+
+   2. Verificar el dominio en el panel de Resend cargando los registros DNS que te da
+      (SPF y DKIM) en tu registrador. Hasta que verifique no manda nada.
+   3. En *Supabase → Authentication → SMTP Settings*: servidor `smtp.resend.com`, puerto
+      `587`, usuario `resend`, contraseña **la API key de Resend**, y como remitente una
+      dirección de ese dominio. La API key hace de contraseña SMTP: no hay una aparte.
+   4. Recién ahí se desbloquean las plantillas y corre el `curl` del código de recuperación
+      que está más abajo.
+
+   El CLI de Vercel quedó instalado (59.15.0) y con sesión iniciada como `okmanb`. El
+   proyecto **no** está linkeado (no hay `.vercel/`): si querés que la API key entre además
+   como variable de entorno del proyecto, hay que correr `vercel link` antes.
+
    **Ojo con cómo falla cada uno, porque no fallan igual.** Crear cuenta muestra el error
    (`signup` redirige con `?error=`), pero recuperar la clave **falla en silencio**:
    `requestPasswordReset` devuelve `{ ok: true }` pase lo que pase, a propósito, para no
