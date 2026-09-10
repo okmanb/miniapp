@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DebtActionsSheet } from "./DebtActionsSheet";
 import { formatMoney } from "@/lib/calc/money";
 import { DEBT_KINDS } from "@/app/dashboard/debts/validation";
 import type { DashboardDebt } from "@/lib/data/dashboard";
@@ -82,10 +83,20 @@ export function DebtCard({ debt, today }: { debt: DashboardDebt; today: Date }) 
   const pct = Math.round(debt.paidFraction * 100);
 
   return (
-    <Link
-      href={`/dashboard/debts/${debt.id}`}
-      className="relative block overflow-hidden rounded-[16px] border border-border bg-surface py-[14px] pl-[18px] pr-[28px] shadow-[0_16px_30px_-16px_rgba(14,58,49,.14),0_2px_6px_rgba(14,58,49,.05)] transition-colors duration-150 ease-sd hover:bg-surface-sunken"
-    >
+    /*
+      La tarjeta entera es un enlace, pero el ⋯ tiene que poder tocarse aparte.
+      Un `<button>` adentro de un `<a>` no es HTML válido y el toque igual
+      navegaría, así que se hace como el prototipo: el enlace es una capa
+      absoluta que cubre la tarjeta, el contenido va encima sin recibir
+      punteros, y el ⋯ se los devuelve solo para él.
+    */
+    <div className="group relative overflow-hidden rounded-[16px] border border-border bg-surface py-[14px] pl-[18px] pr-[28px] shadow-[0_16px_30px_-16px_rgba(14,58,49,.14),0_2px_6px_rgba(14,58,49,.05)] transition-colors duration-150 ease-sd hover:bg-surface-sunken">
+      <Link
+        href={`/dashboard/debts/${debt.id}`}
+        aria-label={`Ver detalle de ${debt.name}`}
+        className="absolute inset-0 z-[1] rounded-[16px]"
+      />
+      <DebtActionsSheet debtId={debt.id} debtName={debt.name} />
       {/* La barra del borde y el resplandor: decoración con dato adentro. */}
       <span
         aria-hidden
@@ -107,7 +118,7 @@ export function DebtCard({ debt, today }: { debt: DashboardDebt; today: Date }) 
         ›
       </span>
 
-      <div className="relative flex items-start gap-3 pr-10">
+      <div className="pointer-events-none relative z-[2] flex items-start gap-3 pr-10">
         <span
           aria-hidden
           className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full"
@@ -153,7 +164,7 @@ export function DebtCard({ debt, today }: { debt: DashboardDebt; today: Date }) 
         </span>
       </div>
 
-      <div className="relative mt-4 flex items-baseline justify-between gap-3 border-t border-dashed border-border pt-[14px]">
+      <div className="pointer-events-none relative z-[2] mt-4 flex items-baseline justify-between gap-3 border-t border-dashed border-border pt-[14px]">
         <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-muted">Saldo</span>
         <span className="whitespace-nowrap font-mono text-[18px] font-semibold tracking-[-0.01em] text-ink">
           {formatMoney(debt.balance)}
@@ -173,7 +184,7 @@ export function DebtCard({ debt, today }: { debt: DashboardDebt; today: Date }) 
       {debt.paid > 0 && (
         <>
           <div
-            className="relative mt-[14px] h-2 overflow-hidden rounded-pill border border-border"
+            className="pointer-events-none relative z-[2] mt-[14px] h-2 overflow-hidden rounded-pill border border-border"
             style={{ backgroundColor: "#EFF2EE" }}
             role="img"
             aria-label={`${pct}% saldado`}
@@ -190,7 +201,7 @@ export function DebtCard({ debt, today }: { debt: DashboardDebt; today: Date }) 
             />
           </div>
 
-          <div className="relative mt-[7px] flex justify-between gap-2.5">
+          <div className="pointer-events-none relative z-[2] mt-[7px] flex justify-between gap-2.5">
             <span className="text-[10.5px] text-muted">{formatMoney(debt.paid)} pagado</span>
             <span className="font-mono text-[11px] font-semibold" style={{ color: tone.pct }}>
               {pct}%
@@ -200,12 +211,12 @@ export function DebtCard({ debt, today }: { debt: DashboardDebt; today: Date }) 
       )}
 
       {debt.growth && (
-        <p className="relative mt-2 border-t border-border-row pt-2 text-[11.5px] text-brick-ink">
+        <p className="pointer-events-none relative z-[2] mt-2 border-t border-border-row pt-2 text-[11.5px] text-brick-ink">
           {debt.growth.kind === "interes"
             ? `El mínimo no cubre el interés de ${formatMoney(debt.growth.amount)} por mes — el saldo va a seguir creciendo.`
             : `Al mínimo le faltan ${formatMoney(debt.growth.amount)} por mes para que el saldo deje de crecer.`}
         </p>
       )}
-    </Link>
+    </div>
   );
 }

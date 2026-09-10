@@ -351,26 +351,37 @@ usa dos.
 
 Coinciden sin tocar: 01, 02, 03, 06, 07, 08, 09, 10 y 11.
 
-### Lo que el barrido dejó sin resolver
+### Lo que el barrido dejó sin resolver — ya resuelto
 
-Son diferencias que no se arreglan con una etiqueta, y ninguna se decidió sola:
+Las seis se hicieron. Quedan acá con su razón, porque tres tocaron el modelo:
 
-1. **La 04 no tiene MONTO ORIGINAL ni ESTADO (al día / en mora)**, que el prototipo sí
-   tiene. Son columnas nuevas. La sesión que las dejó afuera argumentó que ningún cálculo
-   las usaría; con la regla de que el prototipo manda, eso hay que volver a mirarlo — pero
-   es un cambio de esquema, no de pantalla.
-2. **La 04 rotula la tasa "TASA DE INTERÉS PUNITORIO ANUAL (%)" en el prototipo** y acá
-   "Tasa anual (TNA)". Ojo: el propio detalle del prototipo (pantalla 03) muestra esa misma
-   cifra como "Tasa (TNA)", y su motor la usa como nominal anual. Todo indica que el rótulo
-   del formulario es un error del prototipo, y por eso no se copió: copiarlo cambiaría el
-   significado de un campo que alimenta el cálculo.
-3. **La 04 tiene PLAZO, CUOTAS TOTALES y YA PAGADAS**, que el prototipo no tiene. Sacarlos
-   rompería los préstamos con cuotas contadas.
-4. **La 16 tiene un cuarto enlace, "Préstamos puente"**, que el prototipo no lista.
-5. **El vacío de la 15**: el prototipo ofrece "Ir a mis deudas" y acá dice "Registrar un
-   pago", que lleva directo a la pantalla de alta.
-6. **Falta el kebab "⋯" de la tarjeta de deuda**, que en el prototipo abre las acciones que
-   la tarjeta no hace. Es un menú, no un retoque.
+1. **MONTO ORIGINAL y ESTADO** son columnas nuevas (migración 007, aplicada). Ninguna se
+   deriva, que es lo que las hace legítimas en una app donde ninguna cifra visible se
+   escribe a mano: `original_amount` es lo que se debía al empezar, y el modelo solo conoce
+   los pagos hechos desde que la app existe; `status` es la mora, que es un hecho del banco.
+   Las dos hacen algo: el monto original corrige el porcentaje saldado de una deuda anterior
+   a la app, y la mora declarada pinta la tarjeta de brick y encabeza el globo del detalle.
+   `copy_scenario` las arrastra — la migración se generó desde `schema.sql` en vez de
+   escribirla a mano, porque copiar una función de ochenta líneas de memoria es cómo se
+   pierde una tabla.
+2. **El rótulo de la tasa se copió del prototipo: "Tasa de interés punitorio anual (%)".**
+   Queda dicho para quien venga: **el campo NO es punitorio**. Es `annual_interest_rate`, la
+   nominal anual, y con eso la usa todo el motor; el propio detalle del prototipo (pantalla
+   03) muestra esa misma cifra como "Tasa (TNA)". Se copió porque el prototipo manda, pero
+   si alguien carga ahí una tasa punitoria de verdad, el cálculo entero se va al demonio.
+   Si el rótulo se corrige alguna vez, es acá.
+3. **PLAZO, CUOTAS TOTALES y YA PAGADAS salieron del formulario.** Las columnas siguen en
+   la base: las únicas que las leían son las de `lib/debt-engine/`, el motor viejo que queda
+   como control cruzado, y el motor vivo (`lib/calc/`) nunca las miró. Si hay que volver a
+   cargarlas, el formulario es lo único que falta.
+4. **La 16 quedó con tres enlaces**, como el prototipo. A los puentes se entra desde el
+   flujo de caja, que es donde importan.
+5. **El vacío de la 15** ofrece "Ir a mis deudas", como el prototipo.
+6. **El kebab "⋯" está**, con las cuatro acciones del prototipo. La tarjeta entera sigue
+   siendo un enlace: el enlace es una capa absoluta, el contenido va encima sin recibir
+   punteros y el ⋯ se los devuelve solo para él — un `<button>` adentro de un `<a>` no es
+   HTML válido y el toque igual navegaría. "Borrar" archiva: los pagos y resúmenes de esa
+   deuda son historial real, y la ayuda debajo del botón lo dice.
 
 ### La diferencia que se dejó a propósito
 

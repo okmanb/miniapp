@@ -28,6 +28,7 @@ const KIND_LABEL: Record<string, string> = {
  */
 const HEALTH: Record<string, { label: string }> = {
   al_dia: { label: "Al día" },
+  en_mora: { label: "En mora" },
   crece: { label: "Crece" },
   sin_datos: { label: "Sin resumen" },
 };

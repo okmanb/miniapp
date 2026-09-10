@@ -38,6 +38,8 @@ export async function saveDebt(
   const values = {
     name: input.name,
     kind: input.kind,
+    status: input.status,
+    original_amount: input.originalAmount,
     base_balance: input.baseBalance,
     annual_interest_rate: input.annualRate,
     due_day: input.dueDay,

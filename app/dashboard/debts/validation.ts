@@ -26,9 +26,22 @@ export const DEBT_KINDS: { value: DebtKind; label: string }[] = [
   { value: "otro", label: "Otro" },
 ];
 
+export type DebtStatus = "al_dia" | "en_mora";
+
+/**
+ * Al día o en mora. Lo dice la persona y no la app: la app puede ver que el
+ * vencimiento pasó, pero no sabe si el pago entró al banco.
+ */
+export const DEBT_STATUSES: { value: DebtStatus; label: string }[] = [
+  { value: "al_dia", label: "Al día" },
+  { value: "en_mora", label: "En mora" },
+];
+
 export interface DebtInput {
   name: string;
   kind: string;
+  status: string;
+  originalAmount: number | null;
   baseBalance: number | null;
   annualRate: number | null;
   dueDay: number | null;
@@ -65,6 +78,8 @@ export function readDebtInput(formData: FormData): DebtInput {
   return {
     name: String(formData.get("name") ?? "").trim(),
     kind: String(formData.get("kind") ?? "otro"),
+    status: String(formData.get("status") ?? "al_dia"),
+    originalAmount: parseArgNumber(String(formData.get("original_amount") ?? "")),
     baseBalance: parseArgNumber(String(formData.get("base_balance") ?? "")),
     annualRate: parseArgNumber(String(formData.get("annual_interest_rate") ?? "")),
     dueDay: parseArgNumber(String(formData.get("due_day") ?? "")),
@@ -83,6 +98,22 @@ export function validateDebt(input: DebtInput): FieldErrors {
 
   if (!DEBT_KINDS.some((k) => k.value === input.kind)) {
     errors.kind = "Elegí uno de los tipos de la lista.";
+  }
+
+  if (!DEBT_STATUSES.some((s) => s.value === input.status)) {
+    errors.status = "Elegí si está al día o en mora.";
+  }
+
+  // El monto original es opcional: una deuda puede no saber con cuánto empezó.
+  // Lo que no puede es ser menor que lo que todavía se debe.
+  if (input.originalAmount !== null && input.originalAmount < 0) {
+    errors.originalAmount = "El monto original no puede ser negativo.";
+  } else if (
+    input.originalAmount !== null &&
+    input.baseBalance !== null &&
+    input.originalAmount < input.baseBalance
+  ) {
+    errors.originalAmount = "No puede ser menor que el saldo actual.";
   }
 
   if (input.baseBalance === null) {

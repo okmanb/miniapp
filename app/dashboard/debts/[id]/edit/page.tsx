@@ -12,7 +12,7 @@ export default async function EditDebtPage({ params }: { params: Promise<{ id: s
 
   const { data: debt } = await supabase
     .from("debts")
-    .select("id, name, kind, base_balance, annual_interest_rate, due_day, monthly_payment, installments_total, installments_paid")
+    .select("id, name, kind, base_balance, annual_interest_rate, due_day, monthly_payment, installments_total, installments_paid, status, original_amount")
     .eq("id", id)
     .maybeSingle();
 
@@ -38,6 +38,8 @@ export default async function EditDebtPage({ params }: { params: Promise<{ id: s
           id: debt.id,
           name: debt.name,
           kind: debt.kind,
+          status: debt.status,
+          originalAmount: debt.original_amount != null ? Number(debt.original_amount) : null,
           baseBalance: debt.base_balance != null ? Number(debt.base_balance) : null,
           annualRate: debt.annual_interest_rate != null ? Number(debt.annual_interest_rate) : null,
           dueDay: debt.due_day,

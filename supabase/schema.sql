@@ -95,6 +95,15 @@ create table if not exists debts (
   -- holgado de lo que es.
   monthly_payment numeric(14, 2),
 
+  -- Lo que se debia al empezar. No se deriva ni se puede: el modelo solo
+  -- conoce los pagos hechos desde que la app existe, asi que sin esto el
+  -- porcentaje saldado de una deuda anterior a la app cuenta de menos.
+  original_amount numeric(14, 2),
+
+  -- al_dia | en_mora. Lo dice la persona, no la app: la app ve que el
+  -- vencimiento paso, pero no sabe si el pago entro al banco.
+  status text not null default 'al_dia' check (status in ('al_dia', 'en_mora')),
+
   account_last4 text,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
@@ -466,7 +475,8 @@ begin
       user_id, scenario_id, name, kind, base_balance, base_balance_at,
       annual_interest_rate, tem, credit_limit, due_day, closing_day,
       installments_total, installments_paid, min_payment_formula,
-      monthly_payment, account_last4, is_active
+      monthly_payment, account_last4, is_active,
+      original_amount, status
     )
     values (
       old_debt.user_id, new_scen_id, old_debt.name, old_debt.kind,
@@ -474,7 +484,8 @@ begin
       old_debt.annual_interest_rate, old_debt.tem, old_debt.credit_limit,
       old_debt.due_day, old_debt.closing_day, old_debt.installments_total,
       old_debt.installments_paid, old_debt.min_payment_formula,
-      old_debt.monthly_payment, old_debt.account_last4, old_debt.is_active
+      old_debt.monthly_payment, old_debt.account_last4, old_debt.is_active,
+      old_debt.original_amount, old_debt.status
     )
     returning id into copied_debt_id;
 

@@ -70,7 +70,7 @@ export function PaymentsHistory({ rows }: { rows: PaymentRow[] }) {
           <EmptyState
             title="Todavía no registraste pagos"
             note="Cada pago que cargues baja el saldo de esa deuda y queda acá con su fecha."
-            action={<PrimaryButton href="/dashboard/payments/new">Registrar un pago</PrimaryButton>}
+            action={<PrimaryButton href="/dashboard">Ir a mis deudas</PrimaryButton>}
           />
         </div>
       ) : (

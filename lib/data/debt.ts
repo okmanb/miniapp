@@ -59,7 +59,7 @@ export interface DebtDetail {
   recurringCharge: number;
   breakevenAmount: number;
   growth: GrowthCause | null;
-  health: "al_dia" | "crece" | "sin_datos";
+  health: "al_dia" | "en_mora" | "crece" | "sin_datos";
   payoff: { minimum: PayoffOption; double: PayoffOption; savings: number | null } | null;
   installments: DebtInstallment[];
   payments: DebtPaymentRow[];
@@ -79,7 +79,7 @@ export const getDebtDetail = cache(async function getDebtDetail(
 
   const { data: debt, error } = await supabase
     .from("debts")
-    .select("id, name, kind, scenario_id, base_balance, annual_interest_rate, tem, due_day")
+    .select("id, name, kind, scenario_id, base_balance, annual_interest_rate, tem, due_day, status")
     .eq("id", debtId)
     .maybeSingle();
 
@@ -202,7 +202,19 @@ export const getDebtDetail = cache(async function getDebtDetail(
     recurringCharge,
     breakevenAmount: Math.round(breakeven({ balance, annualRate, recurringCharge })),
     growth,
-    health: minimumPayment == null ? "sin_datos" : growth ? "crece" : "al_dia",
+    /*
+     * La mora declarada va primero: es la única de las cuatro que la persona
+     * afirma en vez de que la app deduzca, y un saldo que crece importa menos
+     * que un pago que no entró.
+     */
+    health:
+      debt.status === "en_mora"
+        ? "en_mora"
+        : minimumPayment == null
+          ? "sin_datos"
+          : growth
+            ? "crece"
+            : "al_dia",
     payoff,
     installments,
     payments: payments.map((p) => ({

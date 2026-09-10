@@ -38,7 +38,8 @@ export function SettingsView({
     { label: "Alertas y avisos", note: "Cuándo y por dónde te avisamos", href: "/dashboard/alerts" },
     { label: "Historial de pagos", note: "Todo lo que registraste", href: "/dashboard/payments" },
     { label: "Escenarios", note: "Con qué supuestos proyectamos", href: "/dashboard/scenarios" },
-    { label: "Préstamos puente", note: "Plata que entra un mes y se devuelve en otro", href: "/dashboard/bridge-loans" },
+    // El prototipo lista tres. Los puentes se entran desde el flujo de caja,
+    // que es donde importan: son plata que entra un mes y sale en otro.
   ];
 
   return (

@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { saveDebt } from "@/app/dashboard/debts/actions";
 import { EMPTY_STATE, type DebtFormState } from "@/app/dashboard/debts/form-state";
-import { DEBT_KINDS } from "@/app/dashboard/debts/validation";
+import { DEBT_KINDS, DEBT_STATUSES } from "@/app/dashboard/debts/validation";
 import { formatArgNumber } from "@/lib/calc/money";
 import { Spinner } from "./ui";
 import { CalendarField } from "./CalendarField";
@@ -23,6 +23,8 @@ export interface DebtFormValues {
   id?: string;
   name?: string;
   kind?: string;
+  status?: string;
+  originalAmount?: number | null;
   baseBalance?: number | null;
   annualRate?: number | null;
   dueDay?: number | null;
@@ -36,6 +38,10 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
   const editing = Boolean(initial.id);
   const [dueDay, setDueDay] = useState(initial.dueDay != null ? String(initial.dueDay) : "");
   const [kind, setKind] = useState(initial.kind ?? "tarjeta");
+  const [status, setStatus] = useState(initial.status ?? "al_dia");
+  const [originalAmount, setOriginalAmount] = useState(
+    initial.originalAmount != null ? String(Math.round(initial.originalAmount)) : ""
+  );
 
   // Lo que el PDF prellena. Son controlados solo desde que se importa: antes
   // van sin valor para que el navegador conserve lo tipeado si la pagina se
@@ -130,7 +136,39 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         error={state.errors.kind}
       />
 
+      <ChoiceGroup
+        name="status"
+        label="Estado"
+        value={status}
+        onChange={setStatus}
+        layout="grid"
+        options={DEBT_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+        help="Lo decís vos, no la app: la app ve que el vencimiento pasó, pero no sabe si el pago entró al banco."
+        error={state.errors.status}
+      />
+
       <Section title="Montos" />
+
+      {/*
+        MONTO ORIGINAL va antes que SALDO ACTUAL, como el prototipo. No se
+        deriva ni se puede: el modelo solo conoce los pagos hechos desde que la
+        app existe, así que sin este dato el "% saldado" de una deuda que
+        arrancó antes cuenta de menos.
+      */}
+      <Field
+        id="original_amount"
+        label="Monto original"
+        error={state.errors.originalAmount}
+        help="Con cuánto arrancó esta deuda, si lo sabés. Sirve para que el porcentaje saldado cuente también lo que pagaste antes de usar la app."
+      >
+        <MoneyInput
+          id="original_amount"
+          name="original_amount"
+          value={originalAmount}
+          onChange={setOriginalAmount}
+          optional
+        />
+      </Field>
 
       <Field
         id="base_balance"
@@ -145,7 +183,7 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
 
       <Field
         id="annual_interest_rate"
-        label="Tasa anual (TNA)"
+        label="Tasa de interés punitorio anual (%)"
         error={state.errors.annualRate}
         help="La anual, no la del mes. Dejalo vacío si no la sabés todavía; cero es válido si de verdad no tiene interés."
       >
@@ -203,35 +241,13 @@ export function DebtForm({ initial = {} }: { initial?: DebtFormValues }) {
         )}
       </div>
 
-      <fieldset className="mt-6">
-        <legend className="text-label uppercase text-muted">Plazo (si lo tiene)</legend>
-        <p className="help mt-1">
-          Para un préstamo con cuotas contadas. Una tarjeta no tiene plazo: dejalos vacíos y la
-          app calcula el pago mes a mes en vez de una cuota fija.
-        </p>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <Field id="installments_total" label="Cuotas totales" error={state.errors.installmentsTotal}>
-            <input
-              id="installments_total"
-              name="installments_total"
-              inputMode="numeric"
-              defaultValue={initial.installmentsTotal ?? ""}
-              className="min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 font-mono text-[15px] text-ink outline-none"
-            />
-          </Field>
-          <Field id="installments_paid" label="Ya pagadas" error={state.errors.installmentsPaid}>
-            <input
-              id="installments_paid"
-              name="installments_paid"
-              inputMode="numeric"
-              defaultValue={initial.installmentsPaid ?? ""}
-              className="min-h-touch w-full rounded-surface border border-border-input bg-surface px-3 font-mono text-[15px] text-ink outline-none"
-            />
-          </Field>
-        </div>
-      </fieldset>
-
+      {/*
+        El prototipo no tiene plazo, cuotas totales ni ya pagadas, así que acá
+        tampoco. Las columnas siguen en la base: las únicas que las leían son
+        las de `lib/debt-engine/`, el motor viejo que queda como control
+        cruzado, y el motor vivo (`lib/calc/`) nunca las miró. Si algún día hay
+        que volver a cargarlas, el formulario es lo único que falta.
+      */}
       {state.message && (
         <p
           role="alert"

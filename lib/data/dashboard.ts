@@ -113,7 +113,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
     await Promise.all([
       supabase
         .from("debts")
-        .select("id, name, kind, base_balance, annual_interest_rate, tem, due_day, monthly_payment")
+        .select("id, name, kind, base_balance, annual_interest_rate, tem, due_day, monthly_payment, status, original_amount")
         .eq("scenario_id", scenario.id)
         .eq("is_active", true),
       supabase
@@ -195,6 +195,7 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
       .filter((p) => p.debt_id === d.id)
       .reduce((sum, p) => sum + Number(p.amount), 0);
     const totalEverOwed = paid + balance;
+    const original = d.original_amount != null ? Number(d.original_amount) : null;
 
     // Cuotas que corren este mes: una que ya terminó no se "incluye" en nada.
     const activePlans = plans.filter((p) => {
@@ -207,10 +208,24 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
 
     return {
       paid,
-      paidFraction: totalEverOwed > 0 ? paid / totalEverOwed : 0,
+      /*
+       * Con monto original, la fracción saldada es la de verdad: cuánto de la
+       * deuda entera queda. Sin él solo se puede medir contra lo que la app
+       * vio pagar, y una deuda que arrancó antes que la app se ve más nueva de
+       * lo que es. Por eso el campo se carga a mano: no hay de dónde derivarlo.
+       */
+      paidFraction: original != null && original > 0
+        ? Math.min(Math.max((original - balance) / original, 0), 1)
+        : totalEverOwed > 0
+          ? paid / totalEverOwed
+          : 0,
       installmentCount: activePlans.length,
       installmentTotal: activePlans.reduce((sum, p) => sum + Number(p.installment_amount), 0),
-      overdue: d.due_day != null && d.due_day < todayDay && balance > 0,
+      // La mora declarada gana sobre la deducida: la app ve que el vencimiento
+      // pasó, la persona sabe si el pago entró.
+      overdue:
+        d.status === "en_mora" ||
+        (d.due_day != null && d.due_day < todayDay && balance > 0),
       id: d.id,
       name: d.name,
       kind: d.kind,
