@@ -42,9 +42,15 @@ y la respuesta honesta a veces es que no.
 escenario activo. Si una pantalla necesita un número que el modelo no puede derivar, el
 problema es el modelo, no la pantalla.
 
-**El saldo se deriva, no se guarda.** Saldo base − pagos + gastos abiertos. No hay columna
-de saldo que parchear al agregar o quitar un gasto. El único lugar donde se escribe un
-saldo es al cargar un resumen, y lo que se escribe es el total que dice el banco.
+**El saldo se deriva, no se guarda.** Saldo base − pagos vivos + gastos abiertos. No hay
+columna de saldo que parchear al agregar o quitar un gasto. El único lugar donde se escribe
+un saldo es al cargar un resumen, y lo que se escribe es el cierre del banco **antes de
+restar lo pagado**: el pago se guarda como pago, no adentro del saldo.
+
+**Un pago absorbido no resta.** El saldo anterior de un resumen ya trae adentro todo lo que
+se pagó antes, así que al cargarlo esos pagos quedan absorbidos (`is_absorbed`) y dejan de
+restar. No se borran: siguen en el historial. Es la Regla 3 —la que archiva los gastos que
+el resumen ya trae— aplicada a los pagos.
 
 El resto está en `handoff/PRODUCT-RULES.md`. Las reglas rescatadas del spec viejo, en
 `handoff/RESCATE-integridad-y-alertas.md`.
@@ -315,6 +321,59 @@ suelto con una o dos cifras detrás como decimal, porque un grupo de miles tiene
 leer tiene que hacer el viaje redondo.** El onboarding ya lo hacía bien con `toLocaleString`
 y por eso nunca falló; los otros dos usaban `String()` y ninguna pantalla lo delataba.
 
+## Lo que encontró buscar un pago hecho
+
+Usando la app con datos reales, la pregunta fue "¿dónde pongo el pago que hice?". Detrás
+había un bug de datos y, al lado, uno peor.
+
+**El pago del resumen no dejaba recibo.** El campo "cuánto pagaste" se guardaba restado
+adentro del saldo de cierre y no creaba ninguna fila en `debt_payments`, que es la única
+tabla que lee el Historial de pagos. El pago movía el saldo y no existía en ningún lado.
+
+**Y como el saldo se deriva restando los pagos, quien no lo veía lo registraba de nuevo a
+mano y se lo descontaban dos veces, sin un solo mensaje.** Nada cruzaba las dos tablas.
+`createPayment` solo tenía el único parcial contra dos mínimos en el mismo mes.
+
+Ahora el pago del resumen es un pago como cualquier otro y `base_balance` guarda el cierre
+antes de restarlo, así que el saldo derivado da idéntico. Para que eso funcione a partir
+del segundo resumen hizo falta **absorber**: sin eso, el pago de un resumen seguía restando
+contra el saldo del siguiente. Migración 008, ya aplicada.
+
+`is_absorbed` es **obligatorio** en `PaymentLike` a propósito. TypeScript marcó los cinco
+lugares que derivan saldo y va a marcar el sexto que alguien agregue: una consulta que se
+olvide de traerlo no compila, en vez de reabrir el agujero en silencio.
+
+De regalo salieron dos bugs que estaban al lado: **volver a guardar el mismo resumen ahora
+lo corrige** en vez de cobrar el interés del mes otra vez (el saldo anterior sale de lo que
+el resumen ya guardó, no de `base_balance`), y **un pago manual hecho antes de cargar el
+resumen ya no descuenta para siempre**.
+
+## El PDF se pide una sola vez
+
+Cargar el resumen de una tarjeta nueva pedía dos pantallas: el alta leía el PDF, guardabas,
+y la pantalla del resumen pedía los montos del mismo archivo.
+
+**El prototipo tiene el bloque del PDF una sola vez, en "Agregar resumen del mes".** El
+importador del alta lo habíamos agregado nosotros, y era el que partía el flujo. Así que
+juntarlo no se aparta del prototipo: vuelve a él.
+
+La lista de tarjetas del resumen tiene ahora "Es una tarjeta nueva", y con eso aparecen los
+cuatro campos que pedía el alta. Los cuatro salen del PDF.
+
+**Y eso cerró un bug de cálculo que la división escondía.** El alta pedía "saldo actual" y
+lo prellenaba con `statementBalance`, que es el total con el que **cierra** el resumen;
+después la pantalla del resumen lo tomaba como saldo anterior y le sumaba el interés y los
+consumos encima. Es exactamente lo que el comentario de `closeStatement` viene advirtiendo
+desde que se portó. El campo nuevo pide el saldo **anterior** y se prellena con
+`parsed.previousBalance`, que ya venía en el parser y no lo usaba nadie.
+
+Como el PDF se lee en un solo lugar, el traspaso por `sessionStorage` entre pantallas dejó
+de tener sentido y se fue con él.
+
+**Ojo con `statementBalance` vs `previousBalance` si alguna vez volvés a prellenar un saldo
+desde un PDF.** Son dos números distintos y el error no da ningún mensaje: infla el saldo
+un mes entero de interés.
+
 ## Los `<select>` que el prototipo no tiene
 
 El prototipo **no tiene un solo `<select>` en ninguna pantalla**: cada elección es un grupo
@@ -504,6 +563,11 @@ repo como `supabase/migration_003_*.sql` a `_006_*.sql`. `supabase/schema.sql` q
 - Tabla nueva `alert_settings` (cuándo, por dónde y sobre qué deudas).
 - Función nueva `create_scenario_from`, y `copy_scenario` al día con las columnas nuevas.
 - `debts`: se sumó `monthly_payment` (migración 005), la cuota de una deuda sin resumen.
+- `debt_payments`: se sumaron `statement_id`, `is_absorbed` y `absorbed_by_statement_id`
+  (migración 008), con un único parcial por `statement_id` —un pago por resumen— y un
+  índice de los vivos. `copy_scenario` copia `is_absorbed` y **no** las dos referencias a
+  resúmenes, por lo mismo que ya hacía con `expenses.is_archived`: el flag es lo que decide
+  si el pago resta, y los ids apuntan a resúmenes del escenario viejo.
 - Se le revocó el `EXECUTE` público a `rls_auto_enable()` (migración 006). Es un objeto de
   la plataforma, no nuestro, así que no está en `schema.sql`. Verificado que el guardarraíl
   sigue funcionando: una tabla creada después del revoke sigue quedando con RLS activa.
