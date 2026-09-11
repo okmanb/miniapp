@@ -625,11 +625,12 @@ que cuelga de `/dashboard` y no es Flujo, Plan ni Alertas.
    password protection via HaveIBeenPwned.org is available on Pro Plans and up"*. El
    proyecto está en Free. **El warning del linter de seguridad no se va a poder cerrar
    mientras el plan sea Free**, y no es por falta de configurar nada: no lo persigas.
-5. **Borrar los dos esquemas de backup** cuando el modelo nuevo esté verificado.
-   `backup_pre_reset` tiene el snapshot de los datos viejos (33 deudas, 28 consumos) y es la
-   única copia. `backup_limpieza_20260910` tiene las seis deudas archivadas que quedaron de
-   las pruebas con datos reales —con sus 5 pagos y 4 resúmenes— borradas del esquema público
-   el 10 de septiembre a pedido. Las dos se borran con `drop schema ... cascade`.
+5. ~~**Borrar los dos esquemas de backup.**~~ **Hecho** (11 de septiembre, a pedido).
+   `backup_pre_reset` —33 deudas, 28 líneas de consumo, dos escenarios del esquema viejo— y
+   `backup_limpieza_20260910` —6 deudas archivadas con sus 5 pagos y 4 resúmenes— se
+   borraron con `drop schema ... cascade`. **No hay copia.** Se decidió cuando el modelo
+   nuevo ya estaba verificado contra dos resúmenes reales del banco, que es lo que los hacía
+   dejar de ser una red. Los datos vivos quedaron intactos, verificado después del borrado.
 6. **El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)** sigue en el repo como
    control cruzado. Decidir si se borra.
 
