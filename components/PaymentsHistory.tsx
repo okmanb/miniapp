@@ -17,6 +17,7 @@ export interface PaymentRow {
   period: string;
   paidOn: string | null;
   kind: string;
+  debtId: string;
   debtName: string;
   /**
    * Si salió del campo "cuánto pagaste" de un resumen. Se marca porque es la
@@ -56,8 +57,25 @@ const KIND_LABEL: Record<string, string> = {
  * `currentPeriod` vino de `lib/calc/dates` y no de `lib/data/dashboard` por
  * eso mismo: aquel módulo arrastra el cliente de Supabase al bundle.
  */
-export function PaymentsHistory({ rows }: { rows: PaymentRow[] }) {
+export function PaymentsHistory({
+  rows,
+  initialDebtId = null,
+}: {
+  rows: PaymentRow[];
+  /** Se llega filtrado desde el detalle de una deuda. */
+  initialDebtId?: string | null;
+}) {
   const [filter, setFilter] = useState<string>(TODOS);
+  const [debtId, setDebtId] = useState<string | null>(initialDebtId);
+
+  /*
+   * El filtro por deuda va ANTES que el de tipo, como en el prototipo, y eso
+   * ordena todo lo demás: los tipos que se ofrecen salen de los pagos de esa
+   * deuda, y los totales de arriba también la siguen. El de tipo, en cambio,
+   * no mueve los totales.
+   */
+  const deLaDeuda = debtId == null ? rows : rows.filter((r) => r.debtId === debtId);
+  const debtName = debtId == null ? null : (rows.find((r) => r.debtId === debtId)?.debtName ?? null);
 
   /*
    * Los tipos que hay, no los que podría haber: el prototipo arma la fila con
@@ -65,9 +83,9 @@ export function PaymentsHistory({ rows }: { rows: PaymentRow[] }) {
    * tenés ninguna es una promesa vacía.
    */
   const kinds: string[] = [];
-  for (const row of rows) if (!kinds.includes(row.kind)) kinds.push(row.kind);
+  for (const row of deLaDeuda) if (!kinds.includes(row.kind)) kinds.push(row.kind);
 
-  const shown = filter === TODOS ? rows : rows.filter((r) => r.kind === filter);
+  const shown = filter === TODOS ? deLaDeuda : deLaDeuda.filter((r) => r.kind === filter);
 
   /*
    * No hay estado de "nada con este filtro", y es a propósito.
@@ -80,12 +98,13 @@ export function PaymentsHistory({ rows }: { rows: PaymentRow[] }) {
    */
 
   /*
-   * Los totales NO siguen al filtro, como en el prototipo: son de todo lo
-   * pagado. "Este mes" filtrado por tipo contestaría una pregunta que nadie
-   * hizo, y encima se leería como si fuera el total del mes.
+   * Los totales siguen al filtro por DEUDA pero no al de tipo, como en el
+   * prototipo. Filtrados por tipo contestarían una pregunta que nadie hizo y
+   * se leerían como si fueran el total del mes; filtrados por deuda contestan
+   * "cuánto le puse a esta", que es con lo que llegás desde su detalle.
    */
-  const total = rows.reduce((sum, r) => sum + r.amount, 0);
-  const thisMonth = rows
+  const total = deLaDeuda.reduce((sum, r) => sum + r.amount, 0);
+  const thisMonth = deLaDeuda
     .filter((r) => r.period === currentPeriod())
     .reduce((sum, r) => sum + r.amount, 0);
 
@@ -130,6 +149,41 @@ export function PaymentsHistory({ rows }: { rows: PaymentRow[] }) {
               <Amount className="text-[13px] text-ink">{formatMoney(total)}</Amount>
             </div>
           </Card>
+
+          {/*
+            El chip de la deuda, cuando se llegó filtrando desde su detalle.
+            Tocarlo lo saca y vuelve a mostrar todo — y también resetea el
+            filtro de tipo, como el prototipo: los tipos que había eran los de
+            esa deuda y pueden no existir en el resto.
+          */}
+          {debtName && (
+            <button
+              type="button"
+              onClick={() => {
+                setDebtId(null);
+                setFilter(TODOS);
+              }}
+              className="mt-4 flex min-h-touch max-w-full items-center gap-[9px] rounded-pill px-[13px] text-[12px] font-semibold transition-colors duration-150 ease-sd active:scale-[.97]"
+              style={{ backgroundColor: "#E0F4E9", color: "#0E3A31", borderWidth: 1, borderColor: "#BEE1CE" }}
+            >
+              <span className="min-w-0 truncate">{debtName}</span>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                className="flex-none"
+                aria-hidden
+              >
+                <path d="M6 6l12 12" />
+                <path d="M18 6L6 18" />
+              </svg>
+              <span className="sr-only">Quitar el filtro</span>
+            </button>
+          )}
 
           {/*
             La fila de filtros. Píldoras que scrollean al costado cuando no

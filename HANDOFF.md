@@ -514,6 +514,23 @@ Las seis se hicieron. Quedan acá con su razón, porque tres tocaron el modelo:
    HTML válido y el toque igual navegaría. "Borrar" archiva: los pagos y resúmenes de esa
    deuda son historial real, y la ayuda debajo del botón lo dice.
 
+### Los dos filtros de la pantalla 15
+
+El prototipo filtra por **deuda** y por **tipo**, y el orden importa: el de deuda va primero,
+así que los tipos que se ofrecen son los de esa deuda y los totales de arriba la siguen. El
+de tipo no mueve los totales — filtrado por tipo, "este mes" se leería como el total del mes.
+
+El de deuda necesita una puerta, y esa puerta es la que faltaba: en el detalle de una deuda
+va **"Ver los N pagos en el historial"**, que lleva a `/dashboard/payments?deuda=<id>`. Sin
+ella el chip no tenía desde dónde aparecer, y por eso el filtro entero no existía acá.
+
+Quitar el chip resetea también el filtro de tipo, como el prototipo: los tipos que había eran
+los de esa deuda y pueden no existir en el resto.
+
+Las dos vistas se miran sin sesión en `/dev-preview/privadas`: la 15 normal y la 15 llegando
+desde una deuda, con el chip puesto. La segunda existe solo para eso — el chip no aparece si
+no se llega filtrando, y lo que no se puede mirar es lo que nadie compara.
+
 ### El toast
 
 `components/Toast.tsx`. Escrito, no instalado: cada píxel de la app está atado al prototipo

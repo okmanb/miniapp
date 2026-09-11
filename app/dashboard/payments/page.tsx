@@ -13,7 +13,13 @@ export const dynamic = "force-dynamic";
  * sus pagos se van con ella; si se desarchiva, vuelven solos, porque no se
  * borró nada.
  */
-export default async function PaymentsHistoryPage() {
+export default async function PaymentsHistoryPage({
+  searchParams,
+}: {
+  // Se llega filtrado desde el detalle de una deuda.
+  searchParams: Promise<{ deuda?: string }>;
+}) {
+  const { deuda } = await searchParams;
   const supabase = await createClient();
 
   const { data: scenario } = await supabase
@@ -25,7 +31,7 @@ export default async function PaymentsHistoryPage() {
   const { data } = scenario
     ? await supabase
         .from("debt_payments")
-        .select("id, amount, period, paid_on, kind, statement_id, debts(name, is_active)")
+        .select("id, amount, period, paid_on, kind, statement_id, debt_id, debts(name, is_active)")
         .eq("scenario_id", scenario.id)
         .order("period", { ascending: false })
         .order("paid_on", { ascending: false })
@@ -45,9 +51,10 @@ export default async function PaymentsHistoryPage() {
       period: p.period,
       paidOn: p.paid_on as string | null,
       kind: p.kind as string,
+      debtId: p.debt_id as string,
       debtName: p.debts?.name ?? "—",
       fromStatement: p.statement_id != null,
     }));
 
-  return <PaymentsHistory rows={rows} />;
+  return <PaymentsHistory rows={rows} initialDebtId={deuda ?? null} />;
 }

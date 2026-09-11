@@ -163,6 +163,23 @@ export function DebtDetailView({ debt }: { debt: DebtDetail }) {
       )}
 
       {/*
+        La puerta al historial filtrado por esta deuda, que es del prototipo.
+        Sin ella el chip de la 15 no tendría desde dónde aparecer: el filtro
+        existía en el prototipo y acá no, justamente porque faltaba esto.
+      */}
+      {debt.payments.length > 0 && (
+        <Link
+          href={`/dashboard/payments?deuda=${debt.id}`}
+          className="mt-3 inline-flex min-h-touch items-center gap-1.5 text-[12.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:text-leaf"
+        >
+          {debt.payments.length === 1
+            ? "Ver el pago en el historial"
+            : `Ver los ${debt.payments.length} pagos en el historial`}
+          <span aria-hidden>→</span>
+        </Link>
+      )}
+
+      {/*
         Las cuotas tienen pantalla propia: cada compra es su propia deuda, con
         su plazo y su tasa, y listarlas acá abajo del historial de pagos las
         mezclaba con el ritmo del saldo de la tarjeta, que es otro.

@@ -50,13 +50,14 @@ const DEBT: DebtDetail = {
   ],
 };
 
-// p3 viene de un resumen a propósito: es la fila con la píldora "Del resumen",
-// y sin una acá el banco de pruebas no la mostraría nunca.
+// p3 viene de un resumen a propósito —es la fila con la píldora "Del resumen"— y comparte
+// deuda con p1, para que filtrar por esa tarjeta deje dos filas de meses distintos y se vea
+// que los totales de arriba acompañan al filtro. Sin eso el chip no se podría mirar.
 const PAYMENTS = [
-  { id: "p1", amount: 290017, period: currentPeriod(), paidOn: "2026-09-08", kind: "minimo_estimado", debtName: "Mastercard Banco Patagonia …4139", fromStatement: false },
-  { id: "p2", amount: 1085218, period: currentPeriod(), paidOn: "2026-09-07", kind: "minimo_estimado", debtName: "Mastercard Black …3311", fromStatement: false },
-  { id: "p3", amount: 664234, period: "2026-08", paidOn: null, kind: "pago_variable", debtName: "Mastercard Banco Patagonia …4139", fromStatement: true },
-  { id: "p4", amount: 262695, period: "2026-08", paidOn: "2026-08-05", kind: "cuota_fija", debtName: "Prestamo 1 BBVA", fromStatement: false },
+  { id: "p1", debtId: "d1", amount: 290017, period: currentPeriod(), paidOn: "2026-09-08", kind: "minimo_estimado", debtName: "Mastercard Banco Patagonia …4139", fromStatement: false },
+  { id: "p2", debtId: "d2", amount: 1085218, period: currentPeriod(), paidOn: "2026-09-07", kind: "minimo_estimado", debtName: "Mastercard Black …3311", fromStatement: false },
+  { id: "p3", debtId: "d1", amount: 664234, period: "2026-08", paidOn: null, kind: "pago_variable", debtName: "Mastercard Banco Patagonia …4139", fromStatement: true },
+  { id: "p4", debtId: "d3", amount: 262695, period: "2026-08", paidOn: "2026-08-05", kind: "cuota_fija", debtName: "Prestamo 1 BBVA", fromStatement: false },
 ];
 
 const CARDS = [
@@ -96,6 +97,16 @@ export default function PrivateScreensPreview() {
 
       <Rotulo>15 · Historial de pagos</Rotulo>
       <PaymentsHistory rows={PAYMENTS} />
+
+      {/*
+        La misma pantalla, pero como se llega desde el detalle de una deuda:
+        con el chip puesto. Es la única forma de mirarlo sin sesión — el chip
+        no existe si no se llega filtrando, y sin poder mirarlo nadie lo
+        compara contra el prototipo, que es como la 03 y la 16 pasaron meses
+        rotas.
+      */}
+      <Rotulo>15 · Historial, llegando desde una deuda</Rotulo>
+      <PaymentsHistory rows={PAYMENTS} initialDebtId="d1" />
 
       <Rotulo>16 · Ajustes</Rotulo>
       <SettingsView
