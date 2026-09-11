@@ -12,14 +12,64 @@
  * (misma fila visual) y ordenando por X dentro de cada fila.
  */
 
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+
+/**
+ * Dónde quedaron los .pfb de pdfjs, preguntándoselo a Node.
+ *
+ * NO se arma con `new URL("../../node_modules/...", import.meta.url)`: eso
+ * resuelve contra la ubicación del archivo, y en el build de produccion este
+ * archivo vive adentro de `.next/`, desde donde esa ruta relativa no lleva a
+ * ningún lado. Andaría en desarrollo y fallaría desplegado, que es la peor
+ * forma de fallar.
+ *
+ * `createRequire().resolve` le pregunta a Node dónde está el paquete de
+ * verdad, y funciona igual empaquetado o no. `pdfjs-dist` está en
+ * `serverExternalPackages`, así que en produccion sigue siendo un paquete real
+ * adentro de node_modules.
+ *
+ * Si aun así no se puede resolver, se devuelve undefined y pdfjs vuelve a
+ * quedar como estaba: esto tiene que poder mejorar la situación, nunca
+ * empeorarla.
+ */
+function resolveStandardFonts(): string | undefined {
+  try {
+    const require = createRequire(import.meta.url);
+    const packageJson = require.resolve("pdfjs-dist/package.json");
+    // pdfjs pide una URL o una ruta terminada en separador.
+    return join(dirname(packageJson), "standard_fonts") + "/";
+  } catch {
+    return undefined;
+  }
+}
+
 export async function extractLayoutText(buffer: Buffer): Promise<string> {
   // Import dinámico: la build "legacy" de pdfjs-dist no depende de
   // APIs de browser (DOM/Worker), así que corre en Node sin drama.
   const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
+  /*
+   * Los datos de las fuentes estándar, y nada de fuentes del sistema.
+   *
+   * Sin `standardFontDataUrl`, pdfjs avisa "Ensure that the
+   * standardFontDataUrl API parameter is provided" y en un PDF simple sigue de
+   * largo — pero un documento que de verdad necesita esos datos falla al
+   * abrirse, y el error sale como "no pudimos abrir ese PDF". Un resumen de
+   * banco usa fuentes estándar por todos lados.
+   *
+   * `useSystemFonts: false` va con esto: en Node, pdfjs intenta por defecto
+   * resolver fuentes contra las del sistema operativo, que en Windows es
+   * justamente donde se rompe — y para extraer texto no hace falta ninguna
+   * fuente de verdad.
+   */
+  const standardFontDataUrl = resolveStandardFonts();
+
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(buffer),
     isEvalSupported: false,
+    standardFontDataUrl,
+    useSystemFonts: false,
   });
   const pdf = await loadingTask.promise;
 

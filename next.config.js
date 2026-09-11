@@ -10,6 +10,14 @@ const nextConfig = {
   // Node. En Next 16 esta opción salió de `experimental`.
   serverExternalPackages: ["pdfjs-dist"],
 
+  // Y los datos de las fuentes estandar van al deploy aunque nadie los importe:
+  // son archivos .pfb que pdfjs lee en ejecucion, asi que el rastreador de
+  // dependencias no los ve viniendo de ningun `import`. Sin esto andaria en
+  // desarrollo y fallaria en produccion al abrir un PDF que las necesite.
+  outputFileTracingIncludes: {
+    "/dashboard/statements/**": ["./node_modules/pdfjs-dist/standard_fonts/**"],
+  },
+
   // Sin esto Turbopack sube buscando un lockfile y encuentra uno en el home
   // del usuario, fuera del repo. La raíz es este proyecto y nada más.
   turbopack: {
