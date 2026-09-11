@@ -687,11 +687,25 @@ que cuelga de `/dashboard` y no es Flujo, Plan ni Alertas.
    borraron con `drop schema ... cascade`. **No hay copia.** Se decidió cuando el modelo
    nuevo ya estaba verificado contra dos resúmenes reales del banco, que es lo que los hacía
    dejar de ser una red. Los datos vivos quedaron intactos, verificado después del borrado.
-6. **El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)** sigue en el repo como
-   control cruzado. Decidir si se borra.
+6. ~~**El motor viejo (`lib/debt-engine/`, `lib/card-statements/`)**: decidir si se borra.~~
+   **Decidido el 11 de septiembre: se queda.** Es el control cruzado del `cross-check` —la
+   segunda opinión sobre el motor vivo— y borrarlo nos deja sin forma de notar que el motor
+   cambió. No es codigo muerto: lo corre un script en cada verificación.
 
-El 1 ya está. El 2 dejó de ser un minuto de dashboard: pide dar de alta un servicio de
-envío afuera. El 3 sigue siendo donde está el valor, y no depende del 2.
+**Al 11 de septiembre quedan abiertos solo dos, y ninguno se resuelve escribiendo código:**
+
+- **El 2 (SMTP)** está bloqueado por no tener dominio propio. Hasta entonces solo
+  `okmanb@gmail.com` puede crear cuenta o recuperar la clave.
+- **El 3 (usarla con datos reales)** es donde sigue estando todo el valor. Lleva tres
+  sesiones seguidas encontrando un bug por vuelta.
+
+Los otros cuatro están cerrados: el 1 y el 5 hechos, el 4 imposible en el plan Free, el 6
+decidido.
+
+**Y dos decisiones de producto esperan tu criterio, no trabajo:** si vale la pena modelar el
+interés sobre el saldo diario promedio —medido y descartado, ver la sección 4 de
+`NOTAS-PARA-REVISAR.md`— y qué hacer con el aviso de "hasta cuándo" al posponer una alerta,
+que el prototipo da con un toast y ahora existe el mecanismo para copiarlo.
 El linter de seguridad de Supabase quedó con **un solo warning**, el 4: los dos de
 `rls_auto_enable` se cerraron en la migración 006.
 
