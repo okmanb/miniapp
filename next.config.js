@@ -10,12 +10,28 @@ const nextConfig = {
   // Node. En Next 16 esta opción salió de `experimental`.
   serverExternalPackages: ["pdfjs-dist"],
 
-  // Y los datos de las fuentes estandar van al deploy aunque nadie los importe:
-  // son archivos .pfb que pdfjs lee en ejecucion, asi que el rastreador de
-  // dependencias no los ve viniendo de ningun `import`. Sin esto andaria en
-  // desarrollo y fallaria en produccion al abrir un PDF que las necesite.
+  // Lo que pdfjs carga en EJECUCION y el rastreador de dependencias no ve venir,
+  // porque no sale de ningun `import`: su propio worker y los datos de las
+  // fuentes estandar. En desarrollo anda igual —node_modules esta entero— y en
+  // produccion falla, que es la peor forma de fallar.
+  //
+  // El worker es el que rompia de verdad: sin el, pdfjs cae a su "fake worker",
+  // que lo importa por ruta absoluta, y en /var/task el archivo no estaba:
+  //   Setting up fake worker failed: Cannot find module
+  //   '/var/task/node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs'
+  //
+  // Las dos rutas son las dos desde donde se puede subir un PDF: la pantalla
+  // del resumen y la raiz, que es donde vive el onboarding. Una accion de
+  // servidor se empaqueta con la ruta que la invoca, no donde esta declarada.
   outputFileTracingIncludes: {
-    "/dashboard/statements/**": ["./node_modules/pdfjs-dist/standard_fonts/**"],
+    "/dashboard/statements/**": [
+      "./node_modules/pdfjs-dist/legacy/build/**",
+      "./node_modules/pdfjs-dist/standard_fonts/**",
+    ],
+    "/": [
+      "./node_modules/pdfjs-dist/legacy/build/**",
+      "./node_modules/pdfjs-dist/standard_fonts/**",
+    ],
   },
 
   // Sin esto Turbopack sube buscando un lockfile y encuentra uno en el home
