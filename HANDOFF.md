@@ -90,9 +90,13 @@ npx tsx scripts/forms-check.ts    # los números que van y vuelven entre campo y
 
 El cross-check compara contra las cifras que el prototipo muestra en pantalla. Hoy
 coinciden **al peso**: saldo total $47.133.454, 26 meses al mínimo para la Patagonia,
-$3.875.621 de interés total, $2.757.627 de ahorro pagando el doble, los seis valores del
-gráfico de flujo, las cuatro cifras del préstamo puente ($800.000 a un mes al 5%) y las
-tres del plan destructor (plazo, interés total y orden de cancelación).
+$3.875.621 de interés total, $2.757.627 de ahorro pagando el doble, las cuatro cifras del
+préstamo puente ($800.000 a un mes al 5%) y las tres del plan destructor (plazo, interés
+total y orden de cancelación).
+
+**Ojo: el gráfico de flujo NO está verificado contra el prototipo.** Esta lista decía "los
+seis valores del gráfico de flujo" y era falso — no hay ninguna sección que los compare.
+Se descubrió el 11 de septiembre al ir a tocar la proyección justamente por eso.
 
 Y hay un banco de pruebas visual, que ahora cubre **las dieciséis pantallas**:
 

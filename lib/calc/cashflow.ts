@@ -79,6 +79,91 @@ export function incomeAppliesTo(income: IncomeLike, period: string): boolean {
   return income.eligible_months.includes(month);
 }
 
+/**
+ * Una deuda, como la ve la proyección mes a mes.
+ */
+export interface ProjectedDebt {
+  /** Saldo de hoy, ya derivado. */
+  balance: number;
+  /** Tasa mensual en decimal. La declarada por el banco si la hay. */
+  monthlyRate: number;
+  /** Un préstamo paga la misma cuota todos los meses. Null en una tarjeta. */
+  fixedPayment: number | null;
+  /**
+   * Qué fracción del saldo pidió el banco como mínimo en el último resumen.
+   *
+   * Se observa, no se deduce. La composición del mínimo depende de cosas que
+   * el resumen no lista —qué compras son de un pago, de 2 a 6 o de 7 o más,
+   * adelantos, exceso de límite— y modelarla a ojo sale muy caro: medido
+   * contra dos resúmenes reales, un "10% del saldo + intereses + cuotas" da
+   * 22% de MENOS en una Visa con diez planes de financiación y 32% de más en
+   * una Mastercard con seis. Los errores van para lados opuestos, así que
+   * ninguna corrección constante los arregla.
+   *
+   * La proporción que el banco efectivamente cobró ya trae adentro la mezcla
+   * de cuotas de esa tarjeta: 57% del saldo en esa Visa, 14,5% en esa
+   * Mastercard. Eso es un dato, no una suposición.
+   */
+  minimumRatio: number | null;
+}
+
+/**
+ * La obligación de deuda de cada mes, proyectada.
+ *
+ * Antes esto era un número solo, repetido para todos los meses: la suma de los
+ * mínimos del último resumen. Pero el mínimo NO es fijo — crece con el saldo,
+ * porque se calcula sobre él. En un escenario donde el saldo sube, congelarlo
+ * hace que la obligación proyectada se quede corta y que el mes en que te
+ * quedás sin plata salga más tarde de lo que va a ser. Es justo la pregunta
+ * que la app existe para contestar, y erraba para el lado optimista.
+ *
+ * El saldo de cada mes sale del anterior: se le suma el interés y se le resta
+ * lo que se pagó. Sin capitalizar, que es lo que manda la ley 25.065 y lo que
+ * los dos bancos declaran en sus resúmenes.
+ */
+export function projectDebtDueByPeriod(
+  debts: ProjectedDebt[],
+  startPeriod: string,
+  months: number
+): Map<string, number> {
+  const out = new Map<string, number>();
+  const saldos = debts.map((d) => d.balance);
+
+  for (let i = 0; i < months; i++) {
+    const period = addMonths(startPeriod, i);
+    let total = 0;
+
+    debts.forEach((debt, idx) => {
+      const saldo = saldos[idx];
+      if (saldo <= 0 && debt.fixedPayment == null) return;
+
+      const interes = saldo * debt.monthlyRate;
+
+      let due: number;
+      if (debt.fixedPayment != null) {
+        // Un préstamo paga su cuota hasta que no queda saldo.
+        due = Math.min(debt.fixedPayment, saldo + interes);
+      } else if (debt.minimumRatio != null) {
+        /*
+         * El mínimo no puede ser menor que el interés del mes: si lo fuera, el
+         * saldo crecería aunque se pague, y el banco no deja que eso pase sin
+         * pedir más. Y no puede pedir más de lo que se debe.
+         */
+        due = Math.min(Math.max(saldo * debt.minimumRatio, interes), saldo + interes);
+      } else {
+        due = 0;
+      }
+
+      total += due;
+      saldos[idx] = Math.max(0, saldo + interes - due);
+    });
+
+    out.set(period, Math.round(total));
+  }
+
+  return out;
+}
+
 export interface CashflowResult {
   months: CashflowMonth[];
   /** Índice del último mes con acumulado ≥ 0. -1 = no alcanza ni el primero. */

@@ -1,9 +1,9 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { deriveBalance, type ExpenseLike } from "@/lib/calc/balance";
-import { projectCashflow, addMonths, type CashflowResult, type IncomeLike } from "@/lib/calc/cashflow";
 import { currentPeriod } from "@/lib/calc/dates";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
+import { addMonths, projectCashflow, projectDebtDueByPeriod, type CashflowResult, type IncomeLike } from "@/lib/calc/cashflow";
 import { BRIDGE_COLUMNS, toBridgeFlows, type BridgeLoanRow } from "@/lib/data/bridges";
 
 /**
@@ -90,7 +90,9 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
         .eq("scenario_id", scenario.id),
       supabase
         .from("card_statements")
-        .select("debt_id, period, minimum_payment")
+        // total_due va porque el minimo se calcula SOBRE el saldo de cierre: es el
+        // denominador de la proporcion que despues se proyecta.
+        .select("debt_id, period, minimum_payment, total_due")
         .eq("scenario_id", scenario.id)
         .order("period", { ascending: false }),
       supabase
@@ -183,6 +185,36 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
   for (const e of schedule) {
     scheduleByPeriod.set(e.period, (scheduleByPeriod.get(e.period) ?? 0) + Number(e.amount));
   }
+  /*
+   * La obligación de cada mes, proyectada en vez de congelada.
+   *
+   * La proporción sale del último resumen de cada tarjeta —lo que el banco
+   * efectivamente pidió sobre el saldo con el que cerró— y no de una fórmula
+   * nuestra. El texto legal da la composición del mínimo, pero necesita datos
+   * que el resumen no lista, y aproximarla se midió: erra 22% para un lado en
+   * una Visa con diez planes y 32% para el otro en una Mastercard con seis.
+   */
+  const proyectadas = rawDebts.map((d) => {
+    const balanceHoy = deriveBalance(
+      { id: d.id, base_balance: Number(d.base_balance), annual_interest_rate: d.annual_interest_rate, tem: d.tem },
+      expenses,
+      payments
+    );
+    const latest = statements.find((st) => st.debt_id === d.id);
+    const cierre = latest?.total_due != null ? Number(latest.total_due) : 0;
+    const minimo = latest?.minimum_payment != null ? Number(latest.minimum_payment) : null;
+
+    return {
+      balance: balanceHoy,
+      monthlyRate: d.tem != null ? Number(d.tem) : monthlyRateFromAnnual(d.annual_interest_rate),
+      // Una tarjeta no tiene cuota fija; un préstamo no tiene resumen.
+      fixedPayment:
+        d.kind === "tarjeta" ? null : d.monthly_payment != null ? Number(d.monthly_payment) : null,
+      minimumRatio: minimo != null && cierre > 0 ? minimo / cierre : null,
+    };
+  });
+
+  const duePorPeriodo = projectDebtDueByPeriod(proyectadas, period, 6);
   const totalDue = debts.reduce((sum, d) => sum + d.dueThisMonth, 0);
 
   const cashflow = projectCashflow({
@@ -191,7 +223,12 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
     months: 6,
     incomes,
     expenses,
-    debtDueFor: (p) => scheduleByPeriod.get(p) ?? totalDue,
+    /*
+     * Una entrada del plan cargada a mano manda sobre todo: es un compromiso
+     * que la persona escribió. Después va la proyección, y el total de hoy
+     * queda solo como red para el primer mes si la proyección no lo tiene.
+     */
+    debtDueFor: (p) => scheduleByPeriod.get(p) ?? duePorPeriodo.get(p) ?? totalDue,
     bridges,
   });
 

@@ -16,7 +16,7 @@ import { amortize } from "../lib/calc/amortize";
 // motor cambia, este control tiene que moverse con él.
 import { closeStatement } from "../lib/calc/statement";
 import { deriveBalance } from "../lib/calc/balance";
-import { projectCashflow } from "../lib/calc/cashflow";
+import { projectCashflow, projectDebtDueByPeriod } from "../lib/calc/cashflow";
 import { toBridgeFlows } from "../lib/data/bridges";
 import { parseMoney, formatMoney, monthlyRateFromAnnual } from "../lib/calc/money";
 import { bridgeCost, compareAgainstWorstDebt } from "../lib/calc/bridge";
@@ -340,6 +340,43 @@ console.log("=== 7. El puente entra al flujo de caja ===\n");
   check("y deja el acumulado en el costo", conPuente.months[1].cumulative, -40_000);
   check("un puente simulado no mueve nada", simulado.months[0].bridgeIn, 0);
   check("ni su devolucion", simulado.months[1].bridgeDue, 0);
+}
+
+/*
+ * El minimo de una tarjeta NO es fijo: se calcula sobre el saldo, asi que si
+ * el saldo crece, crece. Congelarlo hacia que la obligacion proyectada se
+ * quedara corta y que el mes de quedarse sin plata saliera mas tarde de lo que
+ * va a ser — el error para el lado optimista, que es el peor.
+ *
+ * La proporcion se OBSERVA del ultimo resumen. Los numeros de abajo son los de
+ * la Visa real: cerro en $8.089.852 y el banco pidio $4.614.770, el 57%.
+ */
+console.log("");
+console.log("=== 8. El minimo proyectado sigue al saldo ===\n");
+
+{
+  const visa = {
+    balance: 8_089_852,
+    monthlyRate: 0.05641,
+    fixedPayment: null,
+    minimumRatio: 4_614_770 / 8_089_852,
+  };
+
+  const meses = projectDebtDueByPeriod([visa], "2026-09", 3);
+  const primero = meses.get("2026-09")!;
+  const segundo = meses.get("2026-10")!;
+
+  check("el primer mes reproduce lo que pidio el banco", primero, 4_614_770);
+  console.log(
+    "  " + (segundo < primero ? "= " : "!=") +
+      " y el siguiente baja, porque el saldo bajo: " + formatMoney(segundo)
+  );
+  if (segundo >= primero) note("El minimo proyectado no acompana al saldo.");
+
+  // Un prestamo paga lo mismo todos los meses, pase lo que pase con el saldo.
+  const prestamo = { balance: 1_356_072, monthlyRate: 0.0599, fixedPayment: 262_695, minimumRatio: null };
+  const fijos = projectDebtDueByPeriod([prestamo], "2026-09", 3);
+  check("la cuota de un prestamo no se mueve", fijos.get("2026-10")!, 262_695);
 }
 
 console.log("");
