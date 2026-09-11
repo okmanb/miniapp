@@ -16,6 +16,8 @@ import { amortize } from "../lib/calc/amortize";
 // motor cambia, este control tiene que moverse con él.
 import { closeStatement } from "../lib/calc/statement";
 import { deriveBalance } from "../lib/calc/balance";
+import { projectCashflow } from "../lib/calc/cashflow";
+import { toBridgeFlows } from "../lib/data/bridges";
 import { parseMoney, formatMoney, monthlyRateFromAnnual } from "../lib/calc/money";
 import { bridgeCost, compareAgainstWorstDebt } from "../lib/calc/bridge";
 import { simulatePayoff, formatMonthSpan } from "../lib/calc/payoff";
@@ -288,6 +290,56 @@ console.log("=== 6. El pago del resumen deja recibo y el saldo no se mueve ===\n
     deriveBalance(deuda, [], [delResumen, yaAbsorbido]),
     cierre.newBalance
   );
+}
+
+/*
+ * El puente tiene que LLEGAR al flujo de caja.
+ *
+ * La seccion 4 verifica que la cuenta del puente de bien, pero esa cuenta ya
+ * daba bien cuando el bug era que `bridge_loans` se escribia y no lo leia
+ * nadie: la pantalla 11 estaba completa y era decorativa. Lo que hay que
+ * probar es el camino entero — fila de la base -> BridgeFlow -> proyeccion —,
+ * que es donde se corto.
+ *
+ * Y que un puente SIMULADO no mueva nada: mirar cuanto costaria un prestamo
+ * no puede cambiar el mes que viene.
+ */
+console.log("");
+console.log("=== 7. El puente entra al flujo de caja ===\n");
+
+{
+  const fila = {
+    id: "b1",
+    lender: "Un amigo",
+    amount: 800_000,
+    taken_period: "2026-09",
+    repay_period: "2026-10",
+    monthly_interest_rate: 5,
+    is_taken: true,
+    note: null,
+  };
+
+  const proyectar = (tomado: boolean) =>
+    projectCashflow({
+      startBalance: 0,
+      startPeriod: "2026-09",
+      months: 3,
+      incomes: [],
+      expenses: [],
+      debtDueFor: () => 0,
+      bridges: toBridgeFlows([{ ...fila, is_taken: tomado }]),
+    });
+
+  const conPuente = proyectar(true);
+  const simulado = proyectar(false);
+
+  check("la plata entra el mes que se toma", conPuente.months[0].bridgeIn, 800_000);
+  check("no entra dos veces", conPuente.months[1].bridgeIn, 0);
+  check("se devuelve el mes pactado, con interes", conPuente.months[1].bridgeDue, 840_000);
+  check("la devolucion pesa como deuda del mes", conPuente.months[1].debtDue, 840_000);
+  check("y deja el acumulado en el costo", conPuente.months[1].cumulative, -40_000);
+  check("un puente simulado no mueve nada", simulado.months[0].bridgeIn, 0);
+  check("ni su devolucion", simulado.months[1].bridgeDue, 0);
 }
 
 console.log("");

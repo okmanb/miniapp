@@ -147,11 +147,20 @@ Esta distinción importa más que la lista de pantallas, porque marca dónde bus
 **Las dieciséis pantallas ya se compararon** contra el prototipo (sesión del 7 de
 septiembre, a la tarde). Lo que sigue sin mirarse:
 
-- Todo lo nuevo de esta tanda **con datos reales**. El banco de pruebas
-  (`/dev-preview/pantallas`) verifica el layout y las cifras con el dataset del prototipo,
-  pero ninguna de estas pantallas se ejercitó con una sesión de verdad: no se probó cargar
-  un puente y verlo entrar al flujo, ni posponer una alerta, ni crear un escenario copiando
-  otro, ni borrar todos los datos.
+- **Borrar todos los datos** sigue sin ejercitarse.
+- Lo que sí se ejercitó (11 de septiembre), con lo que encontró cada uno:
+  - **Copiar un escenario** — corrido contra la base de verdad. Encontró un bug de plata:
+    los pagos copiados perdían `statement_id`, así que volver a guardar ese resumen en la
+    copia agregaba un segundo pago en vez de corregir el primero. Migración 010.
+  - **El puente entrando al flujo** — cubierto por la sección 7 del `cross-check`, que
+    recorre el camino entero (fila de la base → `BridgeFlow` → proyección) y no solo la
+    cuenta del puente. La cuenta ya daba bien cuando el bug era que nadie leía
+    `bridge_loans`, así que verificarla sola no probaba nada. Anda.
+  - **Posponer una alerta** — auditado contra el prototipo, no ejercitado con sesión. La
+    lógica de `snoozeUntil` es idéntica a la suya, incluido el caso raro: **si el
+    vencimiento es hoy, `pre` queda en el pasado y la alerta se esconde hasta mañana**, o
+    sea justo el día que importa. Es lo que hace el prototipo, así que se deja. El único
+    `onConflict` del upsert está respaldado por la constraint real en la base, verificado.
 - El flujo de **recuperar clave por código**, que depende de una plantilla de Supabase que
   todavía hay que tocar (ver pendientes).
 - **El parseo de PDF por el camino nuevo.** Importar desde el alta de la tarjeta y que lo
@@ -490,6 +499,19 @@ Las seis se hicieron. Quedan acá con su razón, porque tres tocaron el modelo:
    punteros y el ⋯ se los devuelve solo para él — un `<button>` adentro de un `<a>` no es
    HTML válido y el toque igual navegaría. "Borrar" archiva: los pagos y resúmenes de esa
    deuda son historial real, y la ayuda debajo del botón lo dice.
+
+### Lo que falta de posponer una alerta
+
+El prototipo, al posponer, avisa **hasta cuándo** con dos mensajes distintos —"Pospuesta
+hasta un día antes del vencimiento" o "Pospuesta hasta mañana"— según cuál de los dos casos
+haya caído. Acá la alerta simplemente desaparece: lo único que queda es la fila de
+pospuestas, que dice la regla general ("vuelve mañana, o antes si el vencimiento aprieta")
+pero no qué pasó con la que acabás de tocar.
+
+No se implementó porque **la app no tiene toasts en ningún lado** y el prototipo usa el
+suyo. Copiarlo implica decidir un mecanismo de avisos efímeros para toda la app, que es más
+grande que esta pantalla. La alternativa barata, si no se quiere ese mecanismo, es que
+`snoozeAlert` devuelva el `until` y la fila de pospuestas diga cuándo vuelve la más próxima.
 
 ### La diferencia que se dejó a propósito
 
