@@ -216,7 +216,44 @@ Y en la pantalla 02, los seis valores del gráfico de disponible por mes (−0.6
   Después de migrar: build limpio sin avisos, las 24 rutas responden (públicas 200, privadas
   307 al login), cero errores de consola, y el control cruzado sigue dando las mismas cifras
   al peso.
-- **Contrastar el cierre de resumen contra un PDF real** de la Visa, por la diferencia de
-  seis cifras de arriba.
+- ~~**Contrastar el cierre de resumen contra un PDF real**~~ — hecho el 11 de septiembre, con
+  dos resúmenes reales de la Patagonia. Ver la sección 4.
 - El `lib/debt-engine/` viejo queda en el repo como control cruzado, no como
   implementación. Cuando las pantallas estén, conviene decidir si se borra o se deja.
+
+---
+
+## 4. El motor contra un banco de verdad
+
+Hasta acá el motor se había medido contra el prototipo y contra el motor viejo. **Nunca
+contra la aritmética de un banco.** Con los resúmenes de agosto y septiembre de la Patagonia
+se pudo, porque encadenan: el saldo con el que cierra agosto ($3.295.526,81) es exactamente
+el saldo anterior de septiembre. El banco da su propia verdad de referencia.
+
+Con TNA 80,5% —TEM 6,7083%— y el interés despejado de cada resumen (cierre − anterior −
+consumos):
+
+| | Interés del motor | Interés del banco | Diferencia |
+|---|---|---|---|
+| Agosto (cierre 30/07) | $143.328 | $181.241 | **−$37.913** |
+| Septiembre (cierre 27/08) | $221.075 | $197.950 | **+$23.124** |
+
+**El signo cambia, y eso es lo que importa.** Si fuera la tasa mal puesta, o el interés
+aplicado sobre el saldo equivocado, el error iría siempre para el mismo lado. Que un mes
+falte y al otro sobre dice que la base de cálculo es otra: el banco casi con seguridad cobra
+sobre el **saldo diario promedio** del período, no sobre el saldo de apertura.
+
+Encaja con lo que muestran los dos resúmenes: en agosto los consumos entraron temprano y
+levantaron el promedio por encima del saldo inicial; en septiembre un pago lo bajó.
+
+### Qué hacer con esto
+
+**Por ahora, nada — pero que quede escrito.** La fórmula actual es la del prototipo
+(`interés = saldo anterior × TEM`) y el prototipo manda. El error es de entre el 1% y el 2%
+del saldo por mes, y en una proyección a doce meses se acumula.
+
+Si alguna vez se quiere cerrar esa brecha, **el dato está**: el parser ya extrae las líneas
+de consumo con su fecha (22 en el resumen de septiembre). Con eso se puede promediar el
+saldo día por día. Es un cambio al modelo, no un arreglo, así que se propone antes de
+hacerlo — y habría que decidir qué pasa con el control cruzado contra el prototipo, que
+dejaría de coincidir al peso.

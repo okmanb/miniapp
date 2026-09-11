@@ -693,6 +693,13 @@ modela. Sobre la Visa son **$106.199 por mes**.
 Gana el prototipo, por instrucción del brief. Está todo medido en `NOTAS-PARA-REVISAR.md`,
 que es el documento que hay que leer antes de tocar cualquier cosa del cálculo.
 
+**Y hay una tercera diferencia, medida el 11 de septiembre contra dos resúmenes reales: el
+interés del motor no coincide con el del banco, y falla para los dos lados** —$37.913 de
+menos en agosto, $23.124 de más en septiembre—. Que el signo cambie descarta que sea la tasa:
+el banco cobra sobre el saldo diario promedio y nosotros sobre el de apertura. Es la primera
+vez que el motor se mide contra la aritmética de un banco y no contra el prototipo. Sección 4
+de `NOTAS-PARA-REVISAR.md`.
+
 ---
 
 ## Dos cosas que el brief decía y resultaron falsas
