@@ -13,6 +13,8 @@ import { BridgeLoanCard } from "@/components/BridgeLoanCard";
 import { ScenarioComparison } from "@/components/ScenarioComparison";
 import { DebtForm } from "@/components/DebtForm";
 import { StatementForm } from "@/components/StatementForm";
+import { ToastDemo } from "../ToastDemo";
+import { ToastHost } from "@/components/Toast";
 
 /**
  * Banco de pruebas de las pantallas 04, 06 y 07 a 11.
@@ -195,6 +197,10 @@ export default function ScreensPreview() {
         />
       </Section>
 
+      <Section title="El toast (no es una pantalla del prototipo, es su aviso)">
+        <ToastDemo />
+      </Section>
+
       <Section title="04 · Agregar deuda — tarjeta nueva">
         <DebtForm />
       </Section>
@@ -334,6 +340,9 @@ export default function ScreensPreview() {
           />
         </div>
       </Section>
+
+      {/* El host, una vez. Sin esto los botones de arriba no muestran nada. */}
+      <ToastHost />
     </Screen>
   );
 }

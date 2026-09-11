@@ -104,6 +104,16 @@ const config: Config = {
           "100%": { opacity: "0", transform: "translateY(6px)" },
         },
         sdFadeOut: { "0%": { opacity: "1" }, "100%": { opacity: "0" } },
+        // El toast entra y sale deslizando desde abajo. Los valores son los del
+        // prototipo: 130% fuera de vista, y la salida mas corta que la entrada.
+        sdToastIn: {
+          "0%": { opacity: "0", transform: "translateY(130%)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        sdToastOut: {
+          "0%": { opacity: "1", transform: "translateY(0)" },
+          "100%": { opacity: "0", transform: "translateY(130%)" },
+        },
         sdSpin: { "100%": { transform: "rotate(360deg)" } },
         sdSlide: {
           "0%": { transform: "translateX(-100%)" },
@@ -120,6 +130,8 @@ const config: Config = {
         "banner-in": "sdBannerIn 190ms cubic-bezier(.23,1,.32,1) both",
         "card-out": "sdCardOut 140ms cubic-bezier(.23,1,.32,1) both",
         "fade-out": "sdFadeOut 140ms cubic-bezier(.23,1,.32,1) both",
+        "toast-in": "sdToastIn 260ms cubic-bezier(.23,1,.32,1) both",
+        "toast-out": "sdToastOut 160ms cubic-bezier(.23,1,.32,1) both",
         spin: "sdSpin 700ms linear infinite",
         slide: "sdSlide 620ms cubic-bezier(.23,1,.32,1) infinite",
         shimmer: "sdShimmer 1200ms cubic-bezier(.23,1,.32,1) infinite",

@@ -500,18 +500,41 @@ Las seis se hicieron. Quedan acá con su razón, porque tres tocaron el modelo:
    HTML válido y el toque igual navegaría. "Borrar" archiva: los pagos y resúmenes de esa
    deuda son historial real, y la ayuda debajo del botón lo dice.
 
-### Lo que falta de posponer una alerta
+### El toast
 
-El prototipo, al posponer, avisa **hasta cuándo** con dos mensajes distintos —"Pospuesta
-hasta un día antes del vencimiento" o "Pospuesta hasta mañana"— según cuál de los dos casos
-haya caído. Acá la alerta simplemente desaparece: lo único que queda es la fila de
-pospuestas, que dice la regla general ("vuelve mañana, o antes si el vencimiento aprieta")
-pero no qué pasó con la que acabás de tocar.
+`components/Toast.tsx`. Escrito, no instalado: cada píxel de la app está atado al prototipo
+y una librería traería su propio DOM, sus animaciones y su theming. Son sesenta líneas.
 
-No se implementó porque **la app no tiene toasts en ningún lado** y el prototipo usa el
-suyo. Copiarlo implica decidir un mecanismo de avisos efímeros para toda la app, que es más
-grande que esta pantalla. La alternativa barata, si no se quiere ese mecanismo, es que
-`snoozeAlert` devuelva el `until` y la fila de pospuestas diga cuándo vuelve la más próxima.
+Medido contra el prototipo y verificado en el banco: fondo `#12211D`, radio 12, padding
+`13px 16px`, sombra `0 18px 34px -12px rgba(0,0,0,.5)`, círculo de 18px en `#25835D` con el
+✓, texto 13px/500, **88px del piso** en reposo y curva `cubic-bezier(.23,1,.32,1)`. Dura
+2400ms y se limpia a los 2600. **Uno a la vez**: el nuevo pisa al anterior, sin cola.
+
+Tres decisiones que conviene no deshacer:
+
+- **Va por un portal al `body`.** Por lo mismo que el calendario: `Screen` anima su opacidad,
+  eso crea un contexto de apilado, y adentro el z-index del toast perdería contra la barra.
+- **Entra y sale con keyframes (`animate-toast-in` / `-out`), no con una transición.** El
+  prototipo usa una transición, pero él no monta el elemento en ese momento. Una transición
+  necesita un estado anterior del que salir, así que hay que pintar el toast escondido y
+  moverlo en el frame siguiente — y ese baile depende de `requestAnimationFrame`. **Cuando
+  rAF no corre, el toast se queda en opacidad 0 y no aparece nunca.** Se midió: invisible los
+  2,6 segundos y desmontado sin haberse visto. Un keyframe corre solo al montar.
+- **Lleva `data-motion`**, que es como `prefers-reduced-motion` apaga el movimiento en esta
+  app. Con la transición correspondía `data-motion-move`; con keyframes, `data-motion`.
+
+El estado vive en un store de `zustand`, que estaba en `package.json` **sin que lo usara
+nadie**. Cualquier componente cliente dispara un toast con `useToast().show(...)`, sin
+prop-drilling ni un provider que re-renderice el árbol.
+
+Se usa en los dos lugares donde el prototipo lo usa: al posponer una alerta —con sus dos
+mensajes, que salen del `until` que ahora devuelve `snoozeAlert`— y al archivar gastos
+duplicados desde un resumen. Ese segundo cruza un redirect, así que el número viaja en la
+query (`?archivados=N`) y `ArchivedExpensesToast` lo consume y limpia la URL.
+
+**Se puede mirar sin sesión** en `/dev-preview/pantallas`, con tres botones que disparan los
+mensajes reales. Sin eso, la única forma de verlo sería iniciar sesión, posponer una alerta
+de verdad y llegar antes de los 2,4 segundos.
 
 ### La diferencia que se dejó a propósito
 

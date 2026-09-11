@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { snoozeAlert, unsnoozeAllAlerts } from "@/app/dashboard/alerts/actions";
+import { useToast } from "./Toast";
 import { formatMoney } from "@/lib/calc/money";
 import type { DerivedAlert } from "@/lib/calc/alerts";
 import { Amount, Spinner } from "./ui";
@@ -23,6 +24,7 @@ export function AlertCard({ alert }: { alert: DerivedAlert }) {
   const c = SEVERITY[alert.severity];
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const showToast = useToast((s) => s.show);
 
   return (
     <div
@@ -73,7 +75,28 @@ export function AlertCard({ alert }: { alert: DerivedAlert }) {
             startTransition(async () => {
               setError(null);
               const result = await snoozeAlert(alert.kind, alert.subjectId, alert.debtId);
-              if (!result.ok) setError(result.message);
+              if (!result.ok) {
+                setError(result.message);
+                return;
+              }
+
+              /*
+               * Los dos mensajes del prototipo. La diferencia no es cosmética:
+               * posponer se acorta solo cuando el vencimiento aprieta, y si no
+               * se dice, quien pospone se queda creyendo que tiene un día
+               * entero de silencio cuando en realidad la alerta vuelve antes.
+               *
+               * El umbral es el mismo que usa él: si vuelve apreciablemente
+               * antes de las 24 horas, fue por la víspera del vencimiento.
+               */
+              const until = result.until ? new Date(result.until).getTime() : 0;
+              const acortada = until > 0 && until < Date.now() + 86_400_000 - 60_000;
+
+              showToast(
+                acortada
+                  ? "Pospuesta hasta un día antes del vencimiento"
+                  : "Pospuesta hasta mañana"
+              );
             })
           }
           className="flex min-h-touch shrink-0 items-center gap-2 rounded-pill border border-border bg-surface px-[14px] py-[10px] text-[12.5px] font-semibold text-muted transition-colors duration-150 ease-sd hover:text-pine disabled:opacity-70"

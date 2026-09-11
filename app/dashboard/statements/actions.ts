@@ -355,5 +355,17 @@ export async function saveStatement(
   revalidatePath("/dashboard/cashflow");
   revalidatePath("/dashboard/expenses");
   revalidatePath("/dashboard/payments");
-  redirect(`/dashboard/debts/${debtId}`);
+
+  /*
+   * Cuántos gastos se archivaron viaja en la URL porque el aviso tiene que
+   * aparecer DESPUÉS del redirect: archivar un gasto lo saca de la vista sin
+   * decir nada, y que el saldo deje de contarlo es justo la consecuencia que
+   * no se ve. La pantalla de destino lo consume y limpia la query.
+   */
+  const archived = duplicates.length > 0 ? duplicates.length : 0;
+  redirect(
+    archived > 0
+      ? `/dashboard/debts/${debtId}?archivados=${archived}`
+      : `/dashboard/debts/${debtId}`
+  );
 }

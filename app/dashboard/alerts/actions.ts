@@ -5,7 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { nextDueDate, snoozeUntil, type AlertKind } from "@/lib/calc/alerts";
 import type { AlertChannel } from "@/lib/data/alert-settings";
 
-export type AlertActionResult = { ok: true } | { ok: false; message: string };
+/**
+ * `until` viaja de vuelta porque el aviso de "hasta cuándo" se arma con él: el
+ * prototipo distingue entre posponer hasta mañana y posponer hasta la víspera
+ * del vencimiento, y sin el dato el cliente no puede saber cuál cayó.
+ */
+export type AlertActionResult =
+  | { ok: true; until?: string }
+  | { ok: false; message: string };
 
 function revalidateAlerts() {
   revalidatePath("/dashboard/alerts");
@@ -79,7 +86,7 @@ export async function snoozeAlert(
   if (error) return { ok: false, message: "No pudimos posponer esa alerta." };
 
   revalidateAlerts();
-  return { ok: true };
+  return { ok: true, until: until.toISOString() };
 }
 
 export async function unsnoozeAllAlerts(): Promise<AlertActionResult> {

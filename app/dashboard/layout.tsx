@@ -1,4 +1,5 @@
 import { BottomNav } from "@/components/BottomNav";
+import { ToastHost } from "@/components/Toast";
 import { DraftImporter } from "@/components/onboarding/DraftImporter";
 import { getDashboard } from "@/lib/data/dashboard";
 
@@ -26,6 +27,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <DraftImporter />
       {children}
       <BottomNav alertCount={alertCount} />
+      {/* Una sola vez para todas las pantallas privadas: el toast se dispara
+          desde cualquier componente cliente por el store, no por props. */}
+      <ToastHost />
     </>
   );
 }
