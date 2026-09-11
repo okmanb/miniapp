@@ -147,7 +147,14 @@ Esta distinción importa más que la lista de pantallas, porque marca dónde bus
 **Las dieciséis pantallas ya se compararon** contra el prototipo (sesión del 7 de
 septiembre, a la tarde). Lo que sigue sin mirarse:
 
-- **Borrar todos los datos** sigue sin ejercitarse.
+- **Borrar todos los datos** sigue sin ejercitarse con sesión, pero **se verificó contra el
+  esquema real** (11 de septiembre). La acción borra los escenarios y confía en el cascade:
+  se listaron las once tablas de `public` y las nueve que tienen `scenario_id` cascadean
+  desde `scenarios`, la propia `scenarios` se borra directo, y `alert_settings` —la única sin
+  `scenario_id`, porque la preferencia es de la persona y no del escenario— la borra la
+  acción aparte. No queda nada suelto. El cascade además se ejercitó de verdad: los dos
+  escenarios de prueba que se crearon para probar `copy_scenario` se borraron y no dejaron
+  una fila.
 - Lo que sí se ejercitó (11 de septiembre), con lo que encontró cada uno:
   - **Copiar un escenario** — corrido contra la base de verdad. Encontró un bug de plata:
     los pagos copiados perdían `statement_id`, así que volver a guardar ese resumen en la
@@ -635,10 +642,10 @@ El linter de seguridad de Supabase quedó con **un solo warning**, el 4: los dos
 
 - **Las preferencias de aviso se guardan y no mandan nada.** La pantalla lo dice, pero no hay
   backend de notificaciones. La anticipación sí cambia cómo se agrupan los vencimientos.
-- **Editar deuda no tiene ESTADO (al día / en mora) ni MONTO ORIGINAL**, que el prototipo sí
-  tiene. Se dejaron afuera porque ningún cálculo los usaría: serían campos que no mueven
-  ningún número. Si la mora tiene que disparar punitorio o cambiar una alerta, hay que
-  modelarlo con consumidor antes de agregar el campo.
+- ~~Editar deuda no tiene ESTADO ni MONTO ORIGINAL.~~ **Esto quedó viejo**: los dos campos
+  existen desde la migración 007 y funcionan en el alta y en la edición, porque `DebtForm` es
+  el mismo formulario para las dos. Verificado el 11 de septiembre: la página de edición los
+  lee, los pasa y `validateDebt` los guarda. La nota sobrevivió a su propio arreglo.
 
 ---
 
