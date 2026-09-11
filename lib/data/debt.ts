@@ -6,7 +6,7 @@ import { explainGrowth, type GrowthCause } from "@/lib/calc/statement";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
 import { addMonths } from "@/lib/calc/cashflow";
 import { nextDueDate, formatLongDate } from "@/lib/calc/dates";
-import { currentPeriod } from "@/lib/data/dashboard";
+import { currentPeriod } from "@/lib/calc/dates";
 
 /**
  * Lectura del detalle de una deuda (pantalla 03) y de sus cuotas (09).

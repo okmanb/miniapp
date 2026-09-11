@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { currentPeriod } from "@/lib/data/dashboard";
+import { currentPeriod } from "@/lib/calc/dates";
 import { formatMoney } from "@/lib/calc/money";
 import { viewInstallmentPlan, type InstallmentPlanRow, type InstallmentPlanView } from "@/lib/calc/installments";
 import { Screen, Card, Amount, EmptyState } from "@/components/ui";

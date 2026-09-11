@@ -8,7 +8,7 @@ import {
   type CashflowResult,
   type IncomeLike,
 } from "@/lib/calc/cashflow";
-import { currentPeriod } from "@/lib/data/dashboard";
+import { currentPeriod } from "@/lib/calc/dates";
 import { BRIDGE_COLUMNS, toBridgeFlows, type BridgeLoanRow } from "@/lib/data/bridges";
 
 /**

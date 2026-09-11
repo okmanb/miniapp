@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { currentPeriod } from "@/lib/data/dashboard";
+import { currentPeriod } from "@/lib/calc/dates";
 import { deriveBalance, type ExpenseLike } from "@/lib/calc/balance";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
 import { bridgeCost, compareAgainstWorstDebt, monthsBetween } from "@/lib/calc/bridge";

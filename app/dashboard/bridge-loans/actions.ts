@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { parseArgNumber } from "@/app/dashboard/debts/validation";
-import { currentPeriod } from "@/lib/data/dashboard";
+import { currentPeriod } from "@/lib/calc/dates";
 import { monthsBetween } from "@/lib/calc/bridge";
 
 export type BridgeResult = { ok: true } | { ok: false; message: string };

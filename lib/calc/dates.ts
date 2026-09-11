@@ -71,3 +71,15 @@ export function dueInLabel(days: number): string {
   if (days === 1) return "vence mañana";
   return `vence en ${days} días`;
 }
+
+/**
+ * El mes corriente como "YYYY-MM".
+ *
+ * Vive acá y no en `lib/data/dashboard.ts`, donde estaba: es una función pura
+ * de fecha, pero ese módulo importa el cliente de Supabase, así que cualquier
+ * componente de cliente que la necesitara se traía el servidor entero al
+ * bundle. Es la trampa de los bordes, en el sentido inverso al de `use client`.
+ */
+export function currentPeriod(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}

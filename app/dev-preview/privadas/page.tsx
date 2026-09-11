@@ -4,7 +4,7 @@ import { PaymentsHistory } from "@/components/PaymentsHistory";
 import { SettingsView } from "@/components/SettingsView";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { PaymentForm } from "@/components/PaymentForm";
-import { currentPeriod } from "@/lib/data/dashboard";
+import { currentPeriod } from "@/lib/calc/dates";
 import type { DebtDetail } from "@/lib/data/debt";
 
 /**

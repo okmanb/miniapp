@@ -5,6 +5,7 @@ import { explainGrowth, type GrowthCause } from "@/lib/calc/statement";
 import { BRIDGE_COLUMNS, toBridgeFlows, type BridgeLoanRow } from "@/lib/data/bridges";
 import { deriveAlerts, type AlertDebt, type DerivedAlert } from "@/lib/calc/alerts";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
+import { currentPeriod } from "@/lib/calc/dates";
 import {
   ALERT_SETTINGS_COLUMNS,
   DEFAULT_ALERT_SETTINGS,
@@ -89,9 +90,7 @@ export interface DashboardData {
   alertSettings: AlertSettings;
 }
 
-export function currentPeriod(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
+
 
 /**
  * Memoizado por request: el layout lo usa para el contador de alertas del nav

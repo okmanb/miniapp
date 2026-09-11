@@ -2,7 +2,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { deriveBalance, type ExpenseLike } from "@/lib/calc/balance";
 import { projectCashflow, addMonths, type CashflowResult, type IncomeLike } from "@/lib/calc/cashflow";
-import { currentPeriod } from "@/lib/data/dashboard";
+import { currentPeriod } from "@/lib/calc/dates";
 import { monthlyRateFromAnnual } from "@/lib/calc/money";
 import { BRIDGE_COLUMNS, toBridgeFlows, type BridgeLoanRow } from "@/lib/data/bridges";
 

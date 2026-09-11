@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/calc/money";
 import { expenseAppliesTo, type ExpenseLike } from "@/lib/calc/balance";
-import { currentPeriod } from "@/lib/data/dashboard";
+import { currentPeriod } from "@/lib/calc/dates";
 import { Card, EmptyState, PrimaryButton, Screen, Amount, MetaChip } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
