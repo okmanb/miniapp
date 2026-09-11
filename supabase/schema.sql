@@ -531,18 +531,6 @@ begin
     insert into _debt_map (old_id, new_id) values (old_debt.id, copied_debt_id);
   end loop;
 
-  -- Se copia is_absorbed pero no las dos referencias a resumenes: el flag es
-  -- lo que decide si el pago sigue restando, y los ids apuntan a resumenes del
-  -- escenario viejo. Mismo criterio que expenses.is_archived, unas lineas mas
-  -- abajo.
-  insert into debt_payments (
-    user_id, scenario_id, debt_id, period, paid_on, amount, kind, note, is_absorbed
-  )
-  select p.user_id, new_scen_id, m.new_id, p.period, p.paid_on, p.amount, p.kind, p.note,
-         p.is_absorbed
-  from debt_payments p join _debt_map m on m.old_id = p.debt_id
-  where p.scenario_id = source_id;
-
   insert into debt_schedule_entries (user_id, scenario_id, debt_id, period, amount, kind, is_estimate, note)
   select e.user_id, new_scen_id, m.new_id, e.period, e.amount, e.kind, e.is_estimate, e.note
   from debt_schedule_entries e join _debt_map m on m.old_id = e.debt_id
@@ -561,6 +549,38 @@ begin
     s.usd_balance, s.usd_rate, s.source, s.warnings
   from card_statements s join _debt_map m on m.old_id = s.debt_id
   where s.scenario_id = source_id;
+
+  /*
+   * Los pagos van DESPUES de los resumenes, y no al reves, porque cada pago
+   * que salio de un resumen tiene que quedar apuntando al resumen COPIADO.
+   *
+   * Dejarlos en null era lo primero que se hizo, por analogia con
+   * expenses.is_archived, y estaba mal: sin `statement_id`, volver a guardar
+   * ese resumen en la copia no encuentra el pago para corregirlo y agrega otro
+   * — dos pagos por el mismo resumen, y el saldo bajando dos veces.
+   *
+   * El emparejamiento no necesita un mapa aparte: (debt_id, period) es unico
+   * en card_statements, asi que con la deuda copiada y el periodo se llega al
+   * resumen copiado.
+   */
+  insert into debt_payments (
+    user_id, scenario_id, debt_id, period, paid_on, amount, kind, note,
+    statement_id, is_absorbed, absorbed_by_statement_id
+  )
+  select
+    p.user_id, new_scen_id, m.new_id, p.period, p.paid_on, p.amount, p.kind, p.note,
+    ns.id, p.is_absorbed, na.id
+  from debt_payments p
+  join _debt_map m on m.old_id = p.debt_id
+  -- El resumen del que salio, viejo y copiado.
+  left join card_statements os on os.id = p.statement_id
+  left join card_statements ns
+    on ns.scenario_id = new_scen_id and ns.debt_id = m.new_id and ns.period = os.period
+  -- Y el que lo absorbio, viejo y copiado.
+  left join card_statements oa on oa.id = p.absorbed_by_statement_id
+  left join card_statements na
+    on na.scenario_id = new_scen_id and na.debt_id = m.new_id and na.period = oa.period
+  where p.scenario_id = source_id;
 
   insert into card_installment_plans (
     user_id, scenario_id, debt_id, cupon, description, first_period,

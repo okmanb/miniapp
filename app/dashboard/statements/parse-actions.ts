@@ -81,6 +81,23 @@ export async function parseStatementPdf(formData: FormData): Promise<ParseResult
       error instanceof Error ? `${error.name} ${error.message}` : String(error)
     );
 
+    /*
+     * El error de verdad, al log del servidor.
+     *
+     * Sin esto, todo lo que no sea una contraseña se colapsa en un solo
+     * mensaje —"puede estar dañado o no ser un resumen"— y no queda rastro de
+     * la causa en ningún lado: ni en la pantalla, que no debe mostrarla, ni en
+     * el servidor. Depurar por qué un PDF real no entra se vuelve adivinar.
+     *
+     * Va el nombre y el mensaje del error, no el archivo ni su contenido.
+     */
+    if (!isProtected) {
+      console.error(
+        "[parse-statement] no se pudo leer el PDF:",
+        error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+      );
+    }
+
     return {
       ok: false,
       message: isProtected
