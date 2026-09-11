@@ -54,6 +54,15 @@ export interface ParsedStatement {
   cardName: string | null;
   accountLast4: string | null;
   tnaPunitorio: number | null; // tasa nominal anual punitoria (%)
+  /**
+   * La tasa MENSUAL que declara el resumen, en porcentaje.
+   *
+   * Vale más que la anual y por eso se lee aparte: el banco no saca la mensual
+   * dividiendo la anual por doce. Usa treinta días sobre trescientos sesenta y
+   * cinco — 80,5% anual le da 6,616% mensual, no 6,7083%. Está declarada en el
+   * resumen al lado de la TNA, así que no hay que deducirla.
+   */
+  temDeclarada: number | null;
   cierreActual: string | null;
   vencimientoActual: string | null;
   saldoActual: number | null;
@@ -113,16 +122,33 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
   // siguiente: "69,440 %   -   5,707 %   -" (TNA $, TNA U$S, TEM $,
   // TEM U$S, en ese orden). También se acepta el caso en que sí
   // vengan juntos en una sola línea, por si algún resumen los trae así.
+  //
+  // Las cuatro ranuras son TNA $, TNA U$S, TEM $, TEM U$S, y las que no
+  // aplican vienen como "-". Se leen la primera y la TERCERA: la mensual vale
+  // más que la anual porque el banco no la saca dividiendo por doce, usa
+  // 30/365 — 69,44% anual le da 5,707% mensual, no 5,787%.
   let tnaPunitorio: number | null = null;
+  let temDeclarada: number | null = null;
+
   const tasasSameLineIdx = lines.findIndex((l) => /^Tasas\s+[\d,]+\s*%/.test(l));
-  if (tasasSameLineIdx >= 0) {
-    const match = lines[tasasSameLineIdx].match(/^Tasas\s+([\d,]+)\s*%/);
-    if (match) tnaPunitorio = parseArgNumber(match[1]);
-  } else {
-    const tasasLabelIdx = lines.findIndex((l) => l.trim() === "Tasas");
-    const valueLine = tasasLabelIdx >= 0 ? lines[tasasLabelIdx + 1] : undefined;
-    const match = valueLine?.match(/^([\d,]+)\s*%/);
-    if (match) tnaPunitorio = parseArgNumber(match[1]);
+  const tasasLabelIdx = lines.findIndex((l) => l.trim() === "Tasas");
+  const tasasLine =
+    tasasSameLineIdx >= 0
+      ? lines[tasasSameLineIdx].replace(/^Tasas\s+/, "")
+      : tasasLabelIdx >= 0
+        ? lines[tasasLabelIdx + 1]
+        : undefined;
+
+  if (tasasLine) {
+    // Cada ranura es un número o un guion; el orden es lo que las identifica.
+    const slots = tasasLine.match(/[\d,]+\s*%|-/g) ?? [];
+    const valor = (i: number) => {
+      const raw = slots[i];
+      if (!raw || raw === "-") return null;
+      return parseArgNumber(raw.replace(/\s*%/, ""));
+    };
+    tnaPunitorio = valor(0);
+    temDeclarada = valor(2);
   }
 
   // --- Bloque de cabecera: CIERRE ACTUAL / VENCIMIENTO ACTUAL / SALDO ACTUAL $ / SALDO ACTUAL U$S / PAGO MÍNIMO $ ---
@@ -300,6 +326,7 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
     cardName,
     accountLast4,
     tnaPunitorio,
+    temDeclarada,
     cierreActual,
     vencimientoActual,
     saldoActual,

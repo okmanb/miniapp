@@ -99,12 +99,22 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     if (match) saldoAnterior = parseArgNumber(match[1]);
   }
 
-  // --- Tasa punitoria (TNA $) ---
+  /*
+   * Las dos tasas, de la misma línea: "TNA $ 80,500 % TEM $ 6,616 %".
+   *
+   * La mensual se lee en vez de deducirse porque el banco NO la saca
+   * dividiendo la anual por doce: usa 30/365. Con 80,5% anual declara 6,616%
+   * mensual, y nosotros calcularíamos 6,7083% — un 1,4% de más, todos los
+   * meses, sobre todo el saldo.
+   */
   let tnaPunitorio: number | null = null;
+  let temDeclarada: number | null = null;
   const tnaLine = lines.find((l) => /TNA\s*\$/.test(l));
   if (tnaLine) {
     const match = tnaLine.match(/TNA\s*\$\s*([\d,]+)\s*%/);
     if (match) tnaPunitorio = parseArgNumber(match[1]);
+    const temMatch = tnaLine.match(/TEM\s*\$\s*([\d,]+)\s*%/);
+    if (temMatch) temDeclarada = parseArgNumber(temMatch[1]);
   }
 
   // --- Consumos: todo entre el header de la tabla y "Tarjeta XXXX Total Consumos" ---
@@ -168,6 +178,7 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     cardName,
     accountLast4,
     tnaPunitorio,
+    temDeclarada,
     cierreActual,
     vencimientoActual,
     saldoActual,

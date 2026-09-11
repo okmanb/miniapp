@@ -34,6 +34,15 @@ export interface ParseResult {
   cardName?: string | null;
   accountLast4?: string | null;
   annualRate?: number | null;
+  /**
+   * La tasa mensual que declara el resumen, en porcentaje (6.616, no 0.06616).
+   *
+   * Va aparte de la anual porque el banco no la saca dividiendo por doce: usa
+   * 30/365. Con 80,5% anual declara 6,616% mensual y nosotros calculábamos
+   * 6,7083% — 1,4% de más, todos los meses, sobre todo el saldo. Medido contra
+   * dos resúmenes reales, de dos bancos distintos.
+   */
+  monthlyRate?: number | null;
   period?: string | null;
   dueDate?: string | null;
   newCharges?: number | null;
@@ -123,6 +132,7 @@ export async function parseStatementPdf(formData: FormData): Promise<ParseResult
     cardName: parsed.cardName,
     accountLast4: parsed.accountLast4,
     annualRate: parsed.tnaPunitorio,
+    monthlyRate: parsed.temDeclarada,
     // El período del resumen es el del cierre, no el de hoy.
     period: parsed.cierreActual ? parsed.cierreActual.slice(0, 7) : null,
     dueDate: parsed.vencimientoActual,

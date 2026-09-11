@@ -58,6 +58,18 @@ console.log("=== Cabecera ===\n");
 check("tarjeta", parsed.cardName, "Visa Signature");
 check("últimos 4", parsed.accountLast4, "2166");
 check("TNA punitoria", parsed.tnaPunitorio, 69.44);
+/*
+ * La TEM que declara el resumen, que es la TERCERA ranura de esa linea —
+ * "69,440 % - 5,707 % -" son TNA $, TNA U$S, TEM $, TEM U$S, y las que no
+ * aplican vienen como guion.
+ *
+ * Vale mas que la anual y por eso se lee: el banco no la saca dividiendo por
+ * doce, usa 30/365. 69,44 x 30/365 = 5,707, y nosotros calculariamos 5,787 —
+ * 1,4% de mas todos los meses. Verificado tambien contra dos resumenes reales
+ * de Patagonia: declara 6,888 con TNA 83,8 y 6,616 con TNA 80,5.
+ */
+check("TEM declarada", parsed.temDeclarada, 5.707);
+check("y no es la anual dividida por doce", Math.round((69.44 / 12) * 1000) / 1000, 5.787);
 check("cierre", parsed.cierreActual, "2026-07-26");
 check("vencimiento", parsed.vencimientoActual, "2026-08-07");
 check("pago mínimo", parsed.pagoMinimo, 3086770);

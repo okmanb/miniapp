@@ -106,6 +106,8 @@ export function parseGenericStatement(layoutText: string): ParsedStatement {
     vencimientoActual,
     saldoActual,
     // Banco no reconocido: no sabemos dónde buscar la columna de dólares.
+    // Banco no reconocido: tampoco sabemos dónde declara su tasa mensual.
+    temDeclarada: null,
     saldoActualUsd: null,
     pagoMinimo,
     saldoAnterior: null,

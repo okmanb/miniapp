@@ -96,6 +96,13 @@ export function StatementForm({
   const [cardName, setCardName] = useState("");
   const [cardPrevious, setCardPrevious] = useState("");
   const [cardRate, setCardRate] = useState("");
+  /*
+   * La mensual que declara el resumen, tal cual viene. No tiene campo propio:
+   * es un dato del banco que no se edita, y mostrarlo como un segundo campo de
+   * tasa al lado de la anual invitaría a tocarlo. Se dice en la ayuda de la
+   * anual y viaja escondido.
+   */
+  const [cardMonthlyRate, setCardMonthlyRate] = useState<number | null>(null);
   const [cardDueDay, setCardDueDay] = useState("");
   const [period, setPeriod] = useState(defaultPeriod);
   const [newCharges, setNewCharges] = useState("");
@@ -194,6 +201,7 @@ export function StatementForm({
       setUsdOpen(true);
     }
     if (result.annualRate != null) setCardRate(formatArgNumber(result.annualRate));
+    if (result.monthlyRate != null) setCardMonthlyRate(result.monthlyRate);
     if (result.dueDate) {
       const day = Number(result.dueDate.slice(8, 10));
       if (day >= 1 && day <= 31) setCardDueDay(String(day));
@@ -215,7 +223,11 @@ export function StatementForm({
         id: NEW_CARD,
         name: cardName.trim() || "la tarjeta nueva",
         balance: parseMoney(cardPrevious),
-        monthlyRate: monthlyRateFromAnnual(parseArgNumber(cardRate) ?? 0),
+        // La declarada manda sobre la derivada, igual que en el resto de la app.
+        monthlyRate:
+          cardMonthlyRate != null
+            ? cardMonthlyRate / 100
+            : monthlyRateFromAnnual(parseArgNumber(cardRate) ?? 0),
         // Una tarjeta que se está creando no tiene resúmenes anteriores.
         lastUsd: null,
       }
@@ -407,7 +419,19 @@ export function StatementForm({
                   %
                 </span>
               </div>
-              <p className="help mt-1.5">La anual, no la del mes. Es la que mueve todo el cálculo.</p>
+              {cardMonthlyRate != null ? (
+                <p className="help mt-1.5">
+                  La anual, del resumen. Para calcular vamos a usar la{" "}
+                  <strong>mensual que él mismo declara, {formatArgNumber(cardMonthlyRate)}%</strong>:
+                  el banco no la saca dividiendo la anual por doce, y la diferencia es de un
+                  1,4% todos los meses.
+                </p>
+              ) : (
+                <p className="help mt-1.5">La anual, no la del mes. Es la que mueve todo el cálculo.</p>
+              )}
+              {cardMonthlyRate != null && (
+                <input type="hidden" name="new_card_monthly_rate" value={cardMonthlyRate} />
+              )}
             </div>
 
             <div className="mt-5">

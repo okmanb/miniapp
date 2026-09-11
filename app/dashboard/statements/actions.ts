@@ -67,6 +67,14 @@ export async function saveStatement(
     if (previous < 0) return { message: "El saldo anterior no puede ser negativo." };
 
     const rate = parseArgNumber(String(formData.get("new_card_annual_rate") ?? ""));
+    /*
+     * La mensual que declaró el resumen, en decimal. Se guarda porque el motor
+     * la prefiere sobre la anual cuando está: el banco convierte con 30/365 y
+     * nosotros con /12, así que derivarla da 1,4% de más todos los meses.
+     */
+    const monthlyRaw = Number(formData.get("new_card_monthly_rate"));
+    const monthlyRate =
+      Number.isFinite(monthlyRaw) && monthlyRaw > 0 && monthlyRaw < 100 ? monthlyRaw / 100 : null;
     if (rate !== null && (rate < 0 || rate > 1000)) {
       return { message: "Esa tasa parece un error de tipeo. Es la anual, en porcentaje." };
     }
@@ -97,6 +105,7 @@ export async function saveStatement(
         base_balance: previous,
         base_balance_at: new Date().toISOString().slice(0, 10),
         annual_interest_rate: rate,
+        tem: monthlyRate,
         due_day: dueDay,
         status: "al_dia",
       })
