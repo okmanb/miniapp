@@ -1,20 +1,47 @@
 # Dónde quedó esto — para retomar
 
-Última actualización: 9 de septiembre de 2026.
+Última actualización: 11 de septiembre de 2026.
 
-Cuatro sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
+Seis sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
 pantallas contra el prototipo y la desplegó; la tercera la usó en producción y arregló lo
-que aparece solo cuando la abrís; la cuarta arregló los cuatro controles que la tercera
-dejó rotos al mirarlos en un teléfono de verdad.
+que aparece solo cuando la abrís; la cuarta arregló los cuatro controles que la tercera dejó
+rotos al mirarlos en un teléfono de verdad. Las dos últimas la usaron con resúmenes reales
+del banco, y ahí apareció casi todo lo que sigue.
 
 ---
 
 ## Si vas a hacer una sola cosa
 
-Tocar los dos settings de Supabase del pendiente 1 y 2 —cuatro campos en el dashboard— y
-después **abrir la app y cargar una deuda real con su PDF**. Todo lo construido está
-verificado contra el prototipo y contra el motor viejo; nada está verificado contra una
-sesión de verdad, y ahí es donde vienen apareciendo los bugs.
+**Cargar los resúmenes de agosto y de septiembre, en ese orden, sobre la misma tarjeta.**
+
+Es el único camino que ejercita tres cosas que solo existen en el código: el segundo resumen
+sobre una tarjeta que ya tiene uno, la absorción del pago anterior, y el aviso de doble
+conteo de dólares. Los dos PDF están en `Downloads` y encadenan —el cierre de agosto es
+exactamente el saldo anterior de septiembre— así que sirven además como control.
+
+El patrón lleva tres sesiones seguidas cumpliéndose: **cada vez que la app se usó con datos
+reales apareció un bug, y casi ninguno se veía leyendo el código.**
+
+---
+
+## Lo que pasó en las dos últimas sesiones
+
+Por si venís en frío y querés el titular de cada cosa. El detalle está más abajo y en los
+mensajes de commit, que explican el porqué.
+
+- **El pago del resumen no dejaba recibo** y se podía descontar dos veces. Ahora es un pago
+  como cualquier otro y el resumen absorbe los que ya trae adentro.
+- **El PDF se pide una sola vez**: el resumen crea la tarjeta. De paso se cerró un bug que
+  sumaba un mes entero de interés de más.
+- **Los dólares cuentan**, con la cotización que trae un botón y su aviso de doble conteo.
+- **El worker de pdfjs no viajaba al deploy**, así que ningún PDF entraba en producción
+  aunque anduviera local.
+- **La tasa mensual la declara el resumen** y no es la anual sobre doce: el banco usa 30/365.
+  Calculábamos 1,4% de más todos los meses.
+- **El mínimo proyectado ya no se congela**: sigue al saldo, con la proporción que el banco
+  efectivamente pidió. La fórmula literal NO se implementó, y la razón está medida.
+- **Tres notas de este mismo documento resultaron falsas** al ir a usarlas. Están corregidas,
+  pero la lección es del documento: **si vas a apoyarte en algo de acá, verificalo.**
 
 ---
 
@@ -22,10 +49,15 @@ sesión de verdad, y ahí es donde vienen apareciendo los bugs.
 
 `llegas.vercel.app` responde 200 y es público, sirviendo lo que hay en `main`. El dominio y
 la Deployment Protection se configuraron a mano en Vercel — el deploy solo NO los resolvía,
-como se creía, y se comprobó midiéndolo. `main` y `reset` apuntan al mismo commit.
+como se creía, y se comprobó midiéndolo.
 
-Hay **una cosa rota en producción ahora mismo**, y es el pendiente número uno: crear cuenta
-falla hasta que el dominio esté en los Redirect URLs de Supabase.
+**No hay nada roto en producción.** Crear cuenta funciona para la dirección de la
+organización; para cualquier otra hace falta el SMTP del pendiente 2, que sigue bloqueado
+por no tener dominio propio.
+
+**Commitear y pushear van juntos** en este proyecto: `main` se despliega solo y la app se
+prueba en la web, así que un commit sin pushear deja a alguien usando código viejo sin
+saberlo. Verificar antes de pushear, no después.
 
 ## La app
 
