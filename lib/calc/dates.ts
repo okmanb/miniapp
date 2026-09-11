@@ -35,6 +35,27 @@ export function formatDayMonth(date: Date): string {
 }
 
 /**
+ * "2026-08-10" -> "10 de agosto de 2026".
+ *
+ * Parsea a mano en vez de `new Date(iso)`: ese constructor trata una fecha sin
+ * hora como UTC, y en Argentina —UTC-3— la medianoche UTC cae el día anterior,
+ * así que el 10 se mostraría como 9. Un error de un día que solo aparece de
+ * este lado del mundo.
+ */
+export function formatIsoDate(iso: string): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  if (!year || !month || !day) return iso;
+  return `${day} de ${MONTHS_ES[month - 1]} de ${year}`;
+}
+
+/** "2026-08" -> "agosto de 2026". Para cuando no se sabe el día. */
+export function formatPeriodLong(period: string): string {
+  const [year, month] = period.split("-").map(Number);
+  if (!year || !month) return period;
+  return `${MONTHS_ES[month - 1]} de ${year}`;
+}
+
+/**
  * Cuántos días faltan, contando por día calendario y no por horas: si vence
  * mañana a la mañana, falta 1 día, no 0 porque no pasaron 24 horas.
  */

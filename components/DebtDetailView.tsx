@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatMoney, formatRate } from "@/lib/calc/money";
+import { formatIsoDate, formatPeriodLong } from "@/lib/calc/dates";
 import { Card, Screen, Amount, PrimaryButton, EmptyState } from "@/components/ui";
 import { PayoffComparison } from "@/components/PayoffComparison";
 import type { DebtDetail } from "@/lib/data/debt";
@@ -142,7 +143,15 @@ export function DebtDetailView({ debt }: { debt: DebtDetail }) {
               <Card className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <div className="text-card text-ink">{PAYMENT_KIND[p.kind] ?? p.kind}</div>
-                  <div className="mt-0.5 text-[11px] text-muted">{p.paidOn ?? p.period}</div>
+                  {/*
+                    Acá va la fecha entera, a diferencia de la 15, que muestra
+                    solo el día: esta lista no agrupa por mes, así que un "Día
+                    7" suelto no diría de qué mes. Antes salía la ISO cruda
+                    —"2026-08-10"—, que es la fecha sin traducir.
+                  */}
+                  <div className="mt-0.5 text-[11px] text-muted">
+                    {p.paidOn ? formatIsoDate(p.paidOn) : formatPeriodLong(p.period)}
+                  </div>
                 </div>
                 <Amount className="text-[15px] font-semibold text-leaf-deep">
                   −{formatMoney(p.amount)}

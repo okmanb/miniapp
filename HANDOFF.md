@@ -158,6 +158,17 @@ septiembre, a la tarde). Lo que sigue sin mirarse:
   leído llegue al resumen sin volver a pedir el archivo está verificado en estructura, no
   con un PDF de verdad.
 
+**Una función exportada de un archivo `"use client"` no se puede llamar desde un componente
+de servidor, y el build NO lo agarra.** Todos los exports de un módulo `"use client"` se
+vuelven referencias de cliente al importarlos desde el servidor; llamarlas tira *"Attempted
+to call X() from the server"* en runtime. `npx next build` compila igual, porque las
+pantallas con sesión son `force-dynamic` y no se prerenderizan, así que el error aparece
+recién al abrir la página. Pasó importando `describeCalendarValue` de `CalendarField` en
+`DebtDetailView`. Si hace falta una función pura en los dos lados, va en `lib/calc/` — que
+es exactamente para lo que existe `lib/calc/dates.ts`, y su comentario lo dice. **Es
+hermana de la regla de `"use server"`: un archivo con directiva de borde no es un módulo
+común.**
+
 **El patrón se repitió tres veces y ya es una regla del proyecto: donde se comparó contra
 algo real apareció un bug; donde se razonó sin dato, se inventó.** Vale para el prototipo
 renderizado, para un PDF del banco, para la base — y, la última vez, para la app abierta en
@@ -556,8 +567,12 @@ que cuelga de `/dashboard` y no es Flujo, Plan ni Alertas.
    "abrirla y mirar" destapó uno (el `<select>` de días, el `+` sin respuesta, la falta de
    login en la raíz, el botón de importar que rebotaba al login). Nada de lo construido se
    ejercitó todavía con un PDF de verdad ni con una sesión.
-4. **Activar la protección de contraseñas filtradas** en Supabase Auth. El linter la marca
-   desactivada.
+4. ~~**Activar la protección de contraseñas filtradas** en Supabase Auth.~~ **No se puede
+   en este plan** (probado el 11 de septiembre): el toggle está en *Authentication → Sign In
+   / Providers → Email*, pero al guardarlo el dashboard contesta *"Configuring leaked
+   password protection via HaveIBeenPwned.org is available on Pro Plans and up"*. El
+   proyecto está en Free. **El warning del linter de seguridad no se va a poder cerrar
+   mientras el plan sea Free**, y no es por falta de configurar nada: no lo persigas.
 5. **Borrar los dos esquemas de backup** cuando el modelo nuevo esté verificado.
    `backup_pre_reset` tiene el snapshot de los datos viejos (33 deudas, 28 consumos) y es la
    única copia. `backup_limpieza_20260910` tiene las seis deudas archivadas que quedaron de
