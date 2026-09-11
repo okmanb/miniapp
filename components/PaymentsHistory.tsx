@@ -112,7 +112,14 @@ export function PaymentsHistory({ rows }: { rows: PaymentRow[] }) {
                           <div className="mt-1.5 flex flex-wrap gap-1.5">
                             <MetaChip>{KIND_LABEL[row.kind] ?? row.kind}</MetaChip>
                             {row.fromStatement && <MetaChip>Del resumen</MetaChip>}
-                            {row.paidOn && <MetaChip>{row.paidOn}</MetaChip>}
+                            {/*
+                              El día solo, como el prototipo: el encabezado del
+                              grupo ya dice el mes y el año, y repetirlos en cada
+                              fila con la fecha ISO cruda —"2026-09-07"— era lo
+                              único de esta pantalla escrito en un idioma que no
+                              es el de la app.
+                            */}
+                            {row.paidOn && <MetaChip>Día {Number(row.paidOn.slice(8, 10))}</MetaChip>}
                           </div>
                         </div>
                         <Amount className="shrink-0 text-card-lg text-leaf-deep">
