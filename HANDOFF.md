@@ -489,6 +489,9 @@ Las seis se hicieron. Quedan acá con su razón, porque tres tocaron el modelo:
    escribirla a mano, porque copiar una función de ochenta líneas de memoria es cómo se
    pierde una tabla.
 2. **El rótulo de la tasa se copió del prototipo: "Tasa de interés punitorio anual (%)".**
+   *(Matiz del 11 de septiembre: el resumen de la Patagonia dice que "la tasa de interés
+   punitorio en pesos es igual a la tasa de interés de financiación", TNA 80,50% las dos.
+   Así que acá cargar una no corrompe la otra. Lo de abajo sigue valiendo como principio.)*
    Queda dicho para quien venga: **el campo NO es punitorio**. Es `annual_interest_rate`, la
    nominal anual, y con eso la usa todo el motor; el propio detalle del prototipo (pantalla
    03) muestra esa misma cifra como "Tasa (TNA)". Se copió porque el prototipo manda, pero

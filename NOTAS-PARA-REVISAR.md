@@ -257,3 +257,61 @@ de consumo con su fecha (22 en el resumen de septiembre). Con eso se puede prome
 saldo día por día. Es un cambio al modelo, no un arreglo, así que se propone antes de
 hacerlo — y habría que decidir qué pasa con el control cruzado contra el prototipo, que
 dejaría de coincidir al peso.
+
+---
+
+## 5. Lo que el propio resumen dice sobre cómo cobra
+
+Del texto legal del resumen de la Patagonia (septiembre 2026). No es interpretación: está
+escrito ahí, y contesta tres cosas que se venían suponiendo.
+
+### El interés se devenga desde el vencimiento anterior
+
+> Los intereses de financiación se calculan desde el Vto. de su resumen anterior.
+
+**Desde el vencimiento, no desde el cierre.** Eso explica por qué ninguna de las dos
+hipótesis que se midieron cerró: ni el saldo de apertura ni el saldo diario promedio
+calculado entre cierres, porque el período de devengamiento es otro y arranca once días
+después del cierre anterior.
+
+Y: **"Banco Patagonia S.A. no aplica capitalización de intereses"** — es simple, no compuesto.
+
+### La tasa punitoria es la misma que la de financiación
+
+> La tasa de interés punitorio en pesos es igual a la tasa de interés de financiación en su
+> respectiva moneda.
+
+Esto **relaja la advertencia** del rótulo del formulario. El campo dice "Tasa de interés
+punitorio anual (%)" porque así lo dice el prototipo, y se venía avisando que el campo en
+realidad es la nominal de financiación. Para este banco son el mismo número —TNA 80,50% las
+dos— así que cargar una no corrompe la otra. La advertencia sigue valiendo como principio
+—son conceptos distintos— pero deja de ser un riesgo concreto acá.
+
+### La fórmula del pago mínimo, completa
+
+> El pago mínimo está compuesto por el 10% de los consumos en 1 pago, el 10% del saldo
+> financiado, el 25% de las compras de 2 a 6 cuotas, el 50% de las compras en 7 cuotas o
+> más, el 100% de adelantos en efectivo en pesos y dólares, el 100% intereses y cargos del
+> período, el 100% del pago mínimo anterior impago, el 100% de todo saldo que exceda el
+> límite de financiación asignado.
+
+Es consistente con los números de septiembre: mínimo $675.505, de los cuales $190.581 son
+los intereses al 100%, y los $484.924 restantes se acercan al 10% del saldo ($464.444) más
+lo que aportan los tramos de cuotas.
+
+### Y acá está la consecuencia que importa
+
+**La proyección congela el mínimo.** `debtDueFor` devuelve el mismo `totalDue` para todos los
+meses futuros: la suma de los mínimos del último resumen de cada tarjeta. Pero el mínimo real
+**crece con el saldo** —es 10% del financiado más el 100% de los intereses— así que en un
+escenario donde el saldo sube, la obligación mensual que proyectamos se queda corta y **el
+mes en que te quedás sin plata sale más tarde de lo que va a ser**. Es exactamente la
+pregunta que la app existe para contestar.
+
+La columna `debts.min_payment_formula` (jsonb) existe desde la migración 002 justamente para
+esto, y **no la lee nadie**: solo la menciona `lib/debt-engine/`, el motor viejo.
+
+**No se cambió nada.** Tocar `debtDueFor` mueve los seis valores del gráfico de flujo que el
+control cruzado compara contra el prototipo al peso. Es un cambio de modelo y se propone
+antes de hacerse. Pero es, de todo lo encontrado, lo que más afecta la respuesta que la app
+da.
