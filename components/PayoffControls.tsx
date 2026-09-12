@@ -84,7 +84,7 @@ export function PayoffControls({
 
       <button
         type="submit"
-        className="mt-5 flex min-h-touch w-full items-center justify-center rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+        className="mt-5 flex min-h-[52px] w-full items-center justify-center rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
       >
         Calcular plan
       </button>

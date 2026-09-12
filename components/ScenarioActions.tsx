@@ -43,7 +43,7 @@ export function ScenarioActions({
                 if (!result.ok) setError(result.message);
               })
             }
-            className="flex min-h-touch items-center gap-2 rounded-pill bg-teal px-[14px] py-2 text-[12px] font-semibold text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
+            className="flex min-h-[52px] items-center gap-2 rounded-pill bg-teal px-[14px] py-2 text-[12px] font-semibold text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
           >
             {pending && <Spinner className="text-white" />}
             Activar
@@ -54,7 +54,7 @@ export function ScenarioActions({
           type="button"
           onClick={() => setCopying((v) => !v)}
           aria-expanded={copying}
-          className="min-h-touch rounded-pill border border-border bg-surface px-[14px] py-2 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+          className="min-h-[52px] rounded-pill border border-border bg-surface px-[14px] py-2 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
         >
           {copying ? "Cancelar" : "Copiar tal cual"}
         </button>
@@ -84,7 +84,7 @@ export function ScenarioActions({
           <button
             type="submit"
             disabled={pending}
-            className="flex min-h-touch items-center gap-2 rounded-pill bg-teal px-[14px] py-2 text-[12px] font-semibold text-white hover:bg-teal-hover disabled:opacity-70"
+            className="flex min-h-[52px] items-center gap-2 rounded-pill bg-teal px-[14px] py-2 text-[12px] font-semibold text-white hover:bg-teal-hover disabled:opacity-70"
           >
             {pending && <Spinner className="text-white" />}
             Copiar
@@ -247,7 +247,7 @@ export function NewScenarioForm({
         <button
           type="submit"
           disabled={pending}
-          className="mt-6 flex min-h-touch w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
+          className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
         >
           {pending && <Spinner className="text-white" />}
           Crear escenario

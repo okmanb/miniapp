@@ -36,8 +36,35 @@ export function Card({
 /* Botones — un solo primario por vista                                        */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * La altura de TODO botón de acción de la app. Una sola, sin excepciones.
+ *
+ * Son 52 y no los 44 de `min-h-touch` porque 44 es el mínimo accesible, no una
+ * medida cómoda: en el teléfono, un botón de 44 se puede tocar pero se toca
+ * con cuidado. Un botón es lo único que hay que apretar en su pantalla y de
+ * eso depende que la cosa avance.
+ *
+ * `min-h-touch` sigue existiendo y sigue siendo correcto para lo que NO es un
+ * botón: las píldoras de filtro, las opciones de un `ChoiceGroup`, los
+ * renglones que se tocan. Esos van en fila y no son la acción de la pantalla.
+ */
+const BUTTON_HEIGHT = "min-h-[52px]";
+
+/*
+ * El borde va en la base aunque el primario no lo muestre, y esa es la parte
+ * que importa: el secundario tiene borde de 1px y el primario no, así que con
+ * `box-sizing: border-box` y una altura mínima el secundario terminaba 2px más
+ * alto. 44 contra 46, en TODO par de la app.
+ *
+ * Dos píxeles no se notan mirando un botón; se notan mirando dos, uno encima
+ * del otro, y se leen como que el de arriba quedó más finito. Así se descubrió,
+ * en la puerta de entrada.
+ *
+ * El ANCHO del borde va acá y el COLOR en cada variante, para que no dependa
+ * de cuál regla de Tailwind gane: las dos escriben `border-color`.
+ */
 const BUTTON_BASE =
-  "inline-flex min-h-touch items-center justify-start gap-2 rounded-pill " +
+  `inline-flex ${BUTTON_HEIGHT} items-center justify-start gap-2 rounded-pill border ` +
   "px-[14px] py-[11px] text-card transition-colors duration-150 ease-sd";
 
 export function PrimaryButton({
@@ -53,7 +80,7 @@ export function PrimaryButton({
   type?: "button" | "submit";
   className?: string;
 }) {
-  const cls = `${BUTTON_BASE} bg-teal text-white hover:bg-teal-hover ${className}`;
+  const cls = `${BUTTON_BASE} border-transparent bg-teal text-white hover:bg-teal-hover ${className}`;
   if (href) {
     return (
       <Link href={href} className={cls}>
@@ -79,7 +106,7 @@ export function SecondaryButton({
   onClick?: () => void;
   className?: string;
 }) {
-  const cls = `${BUTTON_BASE} border border-border bg-surface text-pine hover:bg-surface-sunken ${className}`;
+  const cls = `${BUTTON_BASE} border-border bg-surface text-pine hover:bg-surface-sunken ${className}`;
   if (href) {
     return (
       <Link href={href} className={cls}>
@@ -93,6 +120,31 @@ export function SecondaryButton({
     </button>
   );
 }
+
+/**
+ * Los botones de la puerta de entrada: la landing y las pantallas de cuenta.
+ *
+ * Misma altura que los de adentro —no hay un botón grande de bienvenida y otro
+ * chico adentro— y lo único que cambia es que acá ocupan todo el ancho y la
+ * etiqueta se centra o se separa de la flecha. Son las mismas piezas puestas
+ * en una pantalla vacía.
+ */
+/*
+ * Sin `justify-*` en la base, a proposito: lo pone cada uso. Ponerlo acá y
+ * pisarlo después no funciona —`justify-between` y `justify-center` escriben
+ * la misma propiedad, y cuál gana lo decide el orden de la hoja de estilos de
+ * Tailwind, no el orden en que uno escribe las clases—. Un botón que a veces
+ * sale centrado y a veces no, según qué más se compiló ese día.
+ */
+const ENTRY_BASE =
+  `flex ${BUTTON_HEIGHT} w-full items-center gap-2 rounded-pill border px-5 py-[13px] ` +
+  "text-card transition-colors duration-150 ease-sd";
+
+export const ENTRY_PRIMARY =
+  `${ENTRY_BASE} border-transparent bg-teal text-white hover:bg-teal-hover`;
+
+export const ENTRY_SECONDARY =
+  `${ENTRY_BASE} border-border-input bg-surface text-pine hover:bg-surface-sunken`;
 
 /* -------------------------------------------------------------------------- */
 /* Cifras — toda cifra va en mono, alineada a la derecha en pares              */

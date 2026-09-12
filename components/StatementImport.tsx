@@ -90,7 +90,7 @@ export function PdfCard({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="mt-3 flex min-h-touch w-full items-center justify-center rounded-pill bg-teal px-[14px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+          className="mt-3 flex min-h-[52px] w-full items-center justify-center rounded-pill bg-teal px-[14px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
         >
           Volver a leer el PDF
         </button>

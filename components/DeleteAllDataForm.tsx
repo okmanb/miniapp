@@ -32,7 +32,7 @@ export function DeleteAllDataForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 flex min-h-touch w-full items-center justify-center rounded-pill border border-brick-border bg-surface px-[14px] py-[11px] text-card text-brick-ink transition-colors duration-150 ease-sd hover:bg-brick-bg"
+        className="mt-2 flex min-h-[52px] w-full items-center justify-center rounded-pill border border-brick-border bg-surface px-[14px] py-[11px] text-card text-brick-ink transition-colors duration-150 ease-sd hover:bg-brick-bg"
       >
         Borrar todos mis datos
       </button>
@@ -72,7 +72,7 @@ export function DeleteAllDataForm() {
         <button
           type="submit"
           disabled={pending}
-          className="flex min-h-touch flex-1 items-center justify-center gap-2 rounded-pill px-[14px] py-[10px] text-[12.5px] font-semibold text-white transition-opacity duration-150 ease-sd hover:opacity-90 disabled:opacity-70"
+          className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-pill px-[14px] py-[10px] text-[12.5px] font-semibold text-white transition-opacity duration-150 ease-sd hover:opacity-90 disabled:opacity-70"
           style={{ backgroundColor: "#94362A" }}
         >
           {pending && <Spinner className="text-white" />}
@@ -84,7 +84,7 @@ export function DeleteAllDataForm() {
             setOpen(false);
             setError(null);
           }}
-          className="min-h-touch rounded-pill border border-border bg-surface px-[14px] py-[10px] text-[12.5px] font-semibold text-pine"
+          className="min-h-[52px] rounded-pill border border-border bg-surface px-[14px] py-[10px] text-[12.5px] font-semibold text-pine"
         >
           Cancelar
         </button>

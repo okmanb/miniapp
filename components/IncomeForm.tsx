@@ -110,7 +110,7 @@ function Submit({ pending }: { pending: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className="mt-6 flex min-h-touch w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
+      className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
     >
       {pending && <Spinner className="text-white" />}
       Agregar ingreso

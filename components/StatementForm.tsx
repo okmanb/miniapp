@@ -671,7 +671,7 @@ export function StatementForm({
             type="button"
             onClick={pickTodaysRate}
             disabled={rateBusy}
-            className="mt-2 inline-flex min-h-touch items-center gap-2 rounded-pill border border-border-input bg-surface px-3 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:border-pine disabled:opacity-60"
+            className="mt-2 inline-flex min-h-[52px] items-center gap-2 rounded-pill border border-border-input bg-surface px-3 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:border-pine disabled:opacity-60"
           >
             {rateBusy && <Spinner className="text-teal" />}
             Usar la cotización de hoy
@@ -812,7 +812,7 @@ export function StatementForm({
         <button
           type="submit"
           disabled={pending}
-          className="mt-6 flex min-h-touch w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
+          className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover disabled:opacity-70"
         >
           {pending && <Spinner className="text-white" />}
           {needsConfirm

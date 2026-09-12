@@ -831,6 +831,25 @@ es la distancia a la que la pregunta todavia se puede contestar y ya preocupa. L
 separadas terminan divergiendo — una en mayuscula y otra en minuscula, que es justo lo que
 habia pasado.
 
+### Todo boton de accion mide 52, y antes ninguno media lo mismo
+
+Pedido el 12 de septiembre mirando la landing: el boton se veia fino y no parecia de la misma
+altura que el de al lado. **No lo era.** El secundario tiene borde de 1px y el primario no,
+asi que con `box-sizing: border-box` y una altura minima el secundario terminaba en 46 y el
+primario en 44 — **en todo par de la app**, no solo ahi. Dos pixeles no se notan mirando un
+boton; se notan mirando dos, uno encima del otro. Arreglado en `BUTTON_BASE`: el ancho del
+borde va en la base y el color en cada variante.
+
+Y la altura pasa de 44 a **52**. Los 44 de `min-h-touch` son el minimo accesible, no una
+medida comoda: en el telefono un boton de 44 se toca con cuidado. `BUTTON_HEIGHT` en
+`components/ui.tsx` es ahora el unico lugar donde vive ese numero.
+
+Se subieron **38 botones** escritos a mano en 24 archivos. **Lo que se dejo en 44 a
+proposito**: la barra inferior, las celdas del calendario, la tira de meses del flujo, las
+pildoras de filtro del historial, los selectores segmentados (tipo de pago, estrategia,
+anticipacion) y los toasts. No son botones: van en fila, no son la accion de la pantalla, y
+44 ya es suficiente para el dedo.
+
 Tres cosas se arreglaron **mirandolas en el navegador**, no leyendo el codigo: el separador
 `o` de `AuthProbar` se leia como un cero (la O mayuscula en una mono de cifras tabulares), el
 rotulo "ejemplo" de la tarjeta de la respuesta estaba en un gris de borde y no se leia —y un

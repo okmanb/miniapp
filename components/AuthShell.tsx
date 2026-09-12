@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ENTRY_PRIMARY, ENTRY_SECONDARY } from "@/components/ui";
 
 /**
  * Marco de las pantallas de cuenta (12–14).
@@ -103,7 +104,7 @@ export function AuthSubmit({ children }: { children: ReactNode }) {
   return (
     <button
       type="submit"
-      className="mt-6 flex min-h-touch w-full items-center justify-center rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+      className={`mt-6 ${ENTRY_PRIMARY} justify-center`}
     >
       {children}
     </button>
@@ -142,7 +143,7 @@ export function AuthProbar() {
 
       <Link
         href="/?probar"
-        className="mt-4 flex min-h-touch w-full items-center justify-between gap-2 rounded-pill border border-border-input bg-surface px-5 py-[13px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+        className={`mt-4 ${ENTRY_SECONDARY} justify-between`}
       >
         <span>Probar sin cuenta</span>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden className="stroke-current">

@@ -241,7 +241,7 @@ function StepDebt({
       <button
         type="button"
         onClick={onContinue}
-        className="mt-7 flex min-h-touch w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+        className="mt-7 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
       >
         Continuar <span aria-hidden>→</span>
       </button>
@@ -338,7 +338,7 @@ function StepCapacity({
       <button
         type="button"
         onClick={onContinue}
-        className="mt-7 flex min-h-touch w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+        className="mt-7 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
       >
         Ver qué hacer hoy <span aria-hidden>→</span>
       </button>
@@ -346,7 +346,7 @@ function StepCapacity({
       <button
         type="button"
         onClick={onBack}
-        className="mt-3 flex min-h-touch w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+        className="mt-3 flex min-h-[52px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
       >
         Volver
       </button>
@@ -445,14 +445,14 @@ function StepToday({ draft }: { draft: OnboardingDraft }) {
       */}
       <Link
         href="/dashboard"
-        className="mt-7 flex min-h-touch w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+        className="mt-7 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
       >
         Ir a mi tablero <span aria-hidden>→</span>
       </Link>
 
       <Link
         href="/signup?desde=onboarding"
-        className="mt-3 flex min-h-touch w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+        className="mt-3 flex min-h-[52px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
       >
         Guardar esto con una cuenta
       </Link>

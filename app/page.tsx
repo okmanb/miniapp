@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { addMonths } from "@/lib/calc/cashflow";
 import { currentPeriod, formatPeriodMonth, formatPeriodShort } from "@/lib/calc/dates";
+import { ENTRY_PRIMARY, ENTRY_SECONDARY } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -80,14 +81,14 @@ export default async function HomePage({
       <div className="mt-7 space-y-2.5">
         <Link
           href="/?probar"
-          className="flex min-h-touch w-full items-center justify-between gap-2 rounded-pill bg-teal px-5 py-[13px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+          className={`${ENTRY_PRIMARY} justify-between`}
         >
           <span>Probar con una deuda</span>
           <Flecha className="stroke-white" />
         </Link>
         <Link
           href="/login"
-          className="flex min-h-touch w-full items-center justify-center rounded-pill border border-border-input bg-surface px-5 py-[13px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+          className={`${ENTRY_SECONDARY} justify-center`}
         >
           Ya tengo cuenta
         </Link>
@@ -133,7 +134,7 @@ export default async function HomePage({
         </p>
         <Link
           href="/?probar"
-          className="mt-3.5 flex min-h-touch w-full items-center justify-between gap-2 rounded-pill bg-teal px-5 py-[13px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+          className={`mt-3.5 ${ENTRY_PRIMARY} justify-between`}
         >
           <span>Probar con una deuda</span>
           <Flecha className="stroke-white" />
