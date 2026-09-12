@@ -56,6 +56,37 @@ export function formatPeriodLong(period: string): string {
 }
 
 /**
+ * "2026-12" -> "diciembre". El mes solo, sin año.
+ *
+ * Para cuando el año se sobreentiende porque el período está a pocos meses de
+ * hoy: "hasta diciembre" se lee mejor que "hasta diciembre de 2026" cuando
+ * diciembre es dentro de tres meses.
+ */
+export function formatPeriodMonth(period: string): string {
+  const month = Number(period.split("-")[1]);
+  return MONTHS_ES[month - 1] ?? period;
+}
+
+const MONTHS_SHORT = [
+  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+];
+
+/**
+ * "2026-12" -> "Dic". Para ejes y tiras de meses, donde el nombre entero no
+ * entra.
+ *
+ * Vive acá y no adentro del componente que lo usaba porque lo necesitan dos
+ * gráficos distintos —el flujo de caja y el de la puerta de entrada— y dos
+ * tablas de abreviaturas separadas terminan divergiendo: una en mayúscula y
+ * otra en minúscula, que es exactamente lo que pasó.
+ */
+export function formatPeriodShort(period: string): string {
+  const month = Number(period.split("-")[1]);
+  return MONTHS_SHORT[month - 1] ?? period;
+}
+
+/**
  * Cuántos días faltan, contando por día calendario y no por horas: si vence
  * mañana a la mañana, falta 1 día, no 0 porque no pasaron 24 horas.
  */

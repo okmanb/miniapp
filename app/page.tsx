@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { addMonths } from "@/lib/calc/cashflow";
+import { currentPeriod, formatPeriodMonth, formatPeriodShort } from "@/lib/calc/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -147,6 +149,11 @@ export default async function HomePage({
   );
 }
 
+/** Cuántos meses adelante cae el quiebre del ejemplo, contando desde hoy. */
+const MES_DEL_QUIEBRE = 3;
+/** Los que muestra el eje: los mismos seis que proyecta la app de verdad. */
+const MESES_A_LA_VISTA = 6;
+
 /**
  * La respuesta: una curva que cruza el cero y el mes en que lo cruza.
  *
@@ -157,8 +164,23 @@ export default async function HomePage({
  *
  * Es la única tarjeta con sombra de la pantalla, y la única del sistema: esa
  * sombra existe para un elemento y acá se gasta en este.
+ *
+ * ## El mes se cuenta desde hoy, no está escrito
+ *
+ * Decía "hasta diciembre" fijo, y eso envejece mal en las dos direcciones: en
+ * enero, diciembre queda a once meses y la promesa deja de ser "el mes que
+ * viene antes de que llegue"; pasado diciembre, directamente es una fecha que
+ * ya ocurrió. El quiebre cae siempre tres meses adelante del mes corriente,
+ * que es la distancia a la que la pregunta todavía se puede contestar y ya es
+ * lo bastante cerca como para preocupar.
+ *
+ * La página es `force-dynamic`, así que esto se recalcula en cada visita.
  */
 function Respuesta() {
+  const desde = currentPeriod();
+  const meses = Array.from({ length: MESES_A_LA_VISTA }, (_, i) => addMonths(desde, i));
+  const quiebre = meses[MES_DEL_QUIEBRE];
+
   return (
     <div className="mt-7 rounded-surface-lg border border-border bg-surface px-[17px] py-[18px] shadow-card">
       <div className="flex items-baseline justify-between gap-3">
@@ -170,7 +192,9 @@ function Respuesta() {
 
       <p className="mt-3.5 flex items-baseline gap-2.5">
         <span className="text-[36px] font-bold leading-none tracking-[-.03em] text-brick">No.</span>
-        <span className="text-[14px] leading-[1.3] text-muted">Hasta diciembre.</span>
+        <span className="text-[14px] leading-[1.3] text-muted">
+          Hasta {formatPeriodMonth(quiebre)}.
+        </span>
       </p>
 
       <svg viewBox="0 0 316 76" className="mt-3.5 block h-[76px] w-full" fill="none" aria-hidden>
@@ -202,12 +226,17 @@ function Respuesta() {
       {/* 10px mono en muted: el mismo tratamiento que los meses del gráfico de
           flujo de verdad (CashflowBoard), para que los dos ejes se lean igual. */}
       <div className="mt-1 grid grid-cols-6 font-mono text-[10px] text-muted">
-        <span className="text-left">sep</span>
-        <span className="text-center">oct</span>
-        <span className="text-center">nov</span>
-        <span className="text-center font-semibold text-brick-ink">dic</span>
-        <span className="text-center">ene</span>
-        <span className="text-right">feb</span>
+        {meses.map((mes, i) => (
+          <span
+            key={mes}
+            className={[
+              i === 0 ? "text-left" : i === meses.length - 1 ? "text-right" : "text-center",
+              i === MES_DEL_QUIEBRE ? "font-semibold text-brick-ink" : "",
+            ].join(" ")}
+          >
+            {formatPeriodShort(mes)}
+          </span>
+        ))}
       </div>
 
       <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-border-row pt-3">

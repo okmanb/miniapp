@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatMoney } from "@/lib/calc/money";
+import { formatPeriodShort } from "@/lib/calc/dates";
 import type { CashflowMonth, Severity } from "@/lib/calc/cashflow";
 
 /**
@@ -25,12 +26,6 @@ const SEVERITY_BG: Record<Severity, string> = {
 /** El desvanecido del borde derecho de la tira de meses, medido del prototipo. */
 const STRIP_FADE =
   "linear-gradient(90deg,#000 0px,#000 calc(100% - 34px),transparent)";
-
-const MONTHS_SHORT = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-
-function shortMonth(period: string): string {
-  return MONTHS_SHORT[Number(period.split("-")[1]) - 1];
-}
 
 /** "+1.5M" / "−0.5M" — la tira prioriza la magnitud, no el peso exacto. */
 function compact(value: number): string {
@@ -91,7 +86,7 @@ export function CashflowBoard({
                 }}
               >
                 <span className="flex items-center justify-between font-mono text-[10.5px] uppercase text-white opacity-85">
-                  {shortMonth(m.period)}
+                  {formatPeriodShort(m.period)}
                   <span aria-hidden>{m.cumulative < 0 ? "⚠" : "·"}</span>
                 </span>
                 <span className="mt-1 block font-mono text-[18px] font-semibold text-white">
@@ -113,7 +108,7 @@ export function CashflowBoard({
       */}
       <div className="mt-3 rounded-surface-lg bg-mint-wash px-4 py-3">
         <div className="text-label uppercase text-muted">
-          {selected === 0 ? "Este mes te queda" : `En ${shortMonth(month.period).toLowerCase()} te queda`}
+          {selected === 0 ? "Este mes te queda" : `En ${formatPeriodShort(month.period).toLowerCase()} te queda`}
         </div>
         <div
           className="mt-1 font-mono text-[22px] font-semibold"
@@ -141,7 +136,7 @@ export function CashflowBoard({
                 fontWeight: i === selected ? 600 : 400,
               }}
             >
-              {shortMonth(m.period)}
+              {formatPeriodShort(m.period)}
             </button>
           ))}
         </div>
@@ -280,7 +275,7 @@ function NetChart({
             >
               {m.net < 0 ? compact(m.net) : "·"}
             </div>
-            <div className="mt-1 font-mono text-[10px] text-muted">{shortMonth(m.period)}</div>
+            <div className="mt-1 font-mono text-[10px] text-muted">{formatPeriodShort(m.period)}</div>
           </div>
         ))}
       </div>

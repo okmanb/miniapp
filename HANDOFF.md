@@ -819,6 +819,18 @@ aparece. **Los campos no se tocaron**: son los de `AuthShell` y ya estaban bien.
 link, desde el historial— no tenia como llegar a probar que no fuera el boton de atras del
 navegador.
 
+**El mes del ejemplo se cuenta desde hoy, no esta escrito.** Decia "hasta diciembre" fijo, y
+eso envejece mal en las dos direcciones: en enero, diciembre queda a once meses y la promesa
+deja de ser "el mes que viene antes de que llegue"; pasado diciembre es directamente una
+fecha que ya ocurrio. El quiebre cae siempre **tres meses adelante del mes corriente**, que
+es la distancia a la que la pregunta todavia se puede contestar y ya preocupa. La pagina es
+`force-dynamic`, asi que se recalcula en cada visita.
+
+`MONTHS_SHORT` se mudo de adentro de `CashflowBoard` a `lib/calc/dates.ts` como
+`formatPeriodShort`: lo necesitan dos graficos distintos, y dos tablas de abreviaturas
+separadas terminan divergiendo — una en mayuscula y otra en minuscula, que es justo lo que
+habia pasado.
+
 Tres cosas se arreglaron **mirandolas en el navegador**, no leyendo el codigo: el separador
 `o` de `AuthProbar` se leia como un cero (la O mayuscula en una mono de cifras tabulares), el
 rotulo "ejemplo" de la tarjeta de la respuesta estaba en un gris de borde y no se leia —y un
