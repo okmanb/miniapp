@@ -671,7 +671,7 @@ export function StatementForm({
             type="button"
             onClick={pickTodaysRate}
             disabled={rateBusy}
-            className="mt-2 inline-flex min-h-[52px] items-center gap-2 rounded-pill border border-border-input bg-surface px-3 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:border-pine disabled:opacity-60"
+            className="mt-2 inline-flex min-h-[51px] items-center gap-2 rounded-pill border border-border-input bg-surface px-3 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:border-pine disabled:opacity-60"
           >
             {rateBusy && <Spinner className="text-teal" />}
             Usar la cotización de hoy

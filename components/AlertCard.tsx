@@ -62,7 +62,7 @@ export function AlertCard({ alert }: { alert: DerivedAlert }) {
       <div className="mt-3 flex gap-2">
         <Link
           href={alert.href}
-          className="flex min-h-[52px] flex-1 items-center justify-between gap-2 rounded-pill border border-border bg-[#F7FAF7] px-4 py-[10px] text-[12.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface"
+          className="flex min-h-[51px] flex-1 items-center justify-between gap-2 rounded-pill border border-border bg-[#F7FAF7] px-4 py-[10px] text-[12.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface"
         >
           <span>{alert.ctaLabel}</span>
           <span aria-hidden>→</span>
@@ -99,7 +99,7 @@ export function AlertCard({ alert }: { alert: DerivedAlert }) {
               );
             })
           }
-          className="flex min-h-[52px] shrink-0 items-center gap-2 rounded-pill border border-border bg-surface px-[14px] py-[10px] text-[12.5px] font-semibold text-muted transition-colors duration-150 ease-sd hover:text-pine disabled:opacity-70"
+          className="flex min-h-[51px] shrink-0 items-center gap-2 rounded-pill border border-border bg-surface px-[14px] py-[10px] text-[12.5px] font-semibold text-muted transition-colors duration-150 ease-sd hover:text-pine disabled:opacity-70"
         >
           {pending && <Spinner className="text-muted" />}
           Posponer

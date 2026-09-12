@@ -318,7 +318,7 @@ function CalendarSheet({
           <button
             type="button"
             onClick={pickToday}
-            className="min-h-[52px] flex-1 rounded-pill border border-border bg-surface-sunken px-3 text-[12.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface"
+            className="min-h-[51px] flex-1 rounded-pill border border-border bg-surface-sunken px-3 text-[12.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface"
           >
             {isMonthGrid ? "Este mes" : "Hoy"}
           </button>

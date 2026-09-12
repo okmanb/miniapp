@@ -144,7 +144,7 @@ export function DebtActionsSheet({ debtId, debtName }: { debtId: string; debtNam
                       setOpen(false);
                     })
                   }
-                  className="min-h-[52px] w-full rounded-pill border px-[14px] py-[11px] text-[13px] font-semibold transition-colors duration-150 ease-sd disabled:opacity-60"
+                  className="min-h-[51px] w-full rounded-pill border px-[14px] py-[11px] text-[13px] font-semibold transition-colors duration-150 ease-sd disabled:opacity-60"
                   style={{ color: "#B14D3B", borderColor: "#F2C7BE" }}
                 >
                   {archiving ? "Borrando…" : "Borrar esta deuda"}

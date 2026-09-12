@@ -50,6 +50,21 @@ export function Card({
  */
 const BUTTON_HEIGHT = "min-h-[52px]";
 
+/**
+ * El botón de contorno va UN PÍXEL más bajo, y no es un descuido.
+ *
+ * Con la misma altura exacta —52 los dos, medido— el claro se ve más alto que
+ * el relleno. Es irradiación: una figura clara sobre un fondo claro se agranda
+ * a la vista, y una oscura se contrae. Es el mismo motivo por el que un
+ * círculo hay que dibujarlo más grande que un cuadrado para que se vean
+ * iguales.
+ *
+ * Así que la regla del sistema sigue siendo 52, y el contorno lleva una
+ * corrección óptica de −1 para LEERSE igual. Si alguien "arregla" esto
+ * igualando los números, los botones vuelven a verse disparejos.
+ */
+const BUTTON_HEIGHT_OUTLINED = "min-h-[51px]";
+
 /*
  * El borde va en la base aunque el primario no lo muestre, y esa es la parte
  * que importa: el secundario tiene borde de 1px y el primario no, así que con
@@ -64,7 +79,7 @@ const BUTTON_HEIGHT = "min-h-[52px]";
  * de cuál regla de Tailwind gane: las dos escriben `border-color`.
  */
 const BUTTON_BASE =
-  `inline-flex ${BUTTON_HEIGHT} items-center justify-start gap-2 rounded-pill border ` +
+  "inline-flex items-center justify-start gap-2 rounded-pill border " +
   "px-[14px] py-[11px] text-card transition-colors duration-150 ease-sd";
 
 export function PrimaryButton({
@@ -80,7 +95,7 @@ export function PrimaryButton({
   type?: "button" | "submit";
   className?: string;
 }) {
-  const cls = `${BUTTON_BASE} border-transparent bg-teal text-white hover:bg-teal-hover ${className}`;
+  const cls = `${BUTTON_BASE} ${BUTTON_HEIGHT} border-transparent bg-teal text-white hover:bg-teal-hover ${className}`;
   if (href) {
     return (
       <Link href={href} className={cls}>
@@ -106,7 +121,7 @@ export function SecondaryButton({
   onClick?: () => void;
   className?: string;
 }) {
-  const cls = `${BUTTON_BASE} border-border bg-surface text-pine hover:bg-surface-sunken ${className}`;
+  const cls = `${BUTTON_BASE} ${BUTTON_HEIGHT_OUTLINED} border-border bg-surface text-pine hover:bg-surface-sunken ${className}`;
   if (href) {
     return (
       <Link href={href} className={cls}>
@@ -137,14 +152,20 @@ export function SecondaryButton({
  * sale centrado y a veces no, según qué más se compiló ese día.
  */
 const ENTRY_BASE =
-  `flex ${BUTTON_HEIGHT} w-full items-center gap-2 rounded-pill border px-5 py-[13px] ` +
+  "flex w-full items-center gap-2 rounded-pill border px-5 py-[13px] " +
   "text-card transition-colors duration-150 ease-sd";
 
 export const ENTRY_PRIMARY =
-  `${ENTRY_BASE} border-transparent bg-teal text-white hover:bg-teal-hover`;
+  `${ENTRY_BASE} ${BUTTON_HEIGHT} border-transparent bg-teal text-white hover:bg-teal-hover`;
 
+/*
+ * `border-border` y no `border-border-input`: el secundario de la app
+ * (`SecondaryButton`) usa ese, y el tono de input es mas oscuro. Un borde mas
+ * marcado le dibuja al boton claro un contorno mas definido, y eso agranda la
+ * ilusion de que mide mas que el primario — que mide exactamente lo mismo.
+ */
 export const ENTRY_SECONDARY =
-  `${ENTRY_BASE} border-border-input bg-surface text-pine hover:bg-surface-sunken`;
+  `${ENTRY_BASE} ${BUTTON_HEIGHT_OUTLINED} border-border bg-surface text-pine hover:bg-surface-sunken`;
 
 /* -------------------------------------------------------------------------- */
 /* Cifras — toda cifra va en mono, alineada a la derecha en pares              */

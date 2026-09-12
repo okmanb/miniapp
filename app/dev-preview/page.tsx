@@ -121,7 +121,7 @@ export default function PreviewPage() {
           headline="El saldo de Visa Signature sigue creciendo"
           href="#"
           action={
-            <p className="mt-2 flex min-h-[52px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[15px] py-2 text-[11.5px] font-semibold text-pine">
+            <p className="mt-2 flex min-h-[51px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[15px] py-2 text-[11.5px] font-semibold text-pine">
               Pagar el mínimo de Visa Signature · $ 1.300.000
             </p>
           }

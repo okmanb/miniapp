@@ -50,7 +50,7 @@ export function PayoffExport({ text }: { text: string }) {
         <button
           type="button"
           onClick={copy}
-          className="flex min-h-[52px] w-full items-center justify-between gap-2 rounded-pill border border-border bg-surface px-[16px] py-[10px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+          className="flex min-h-[51px] w-full items-center justify-between gap-2 rounded-pill border border-border bg-surface px-[16px] py-[10px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
         >
           <span>{copied ? "Copiado" : "Copiar al portapapeles"}</span>
           <span aria-hidden>{copied ? "✓" : "⧉"}</span>
@@ -59,7 +59,7 @@ export function PayoffExport({ text }: { text: string }) {
         <button
           type="button"
           onClick={download}
-          className="flex min-h-[52px] w-full items-center justify-between gap-2 rounded-pill border border-border bg-surface px-[16px] py-[10px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+          className="flex min-h-[51px] w-full items-center justify-between gap-2 rounded-pill border border-border bg-surface px-[16px] py-[10px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
         >
           <span>Descargar como .txt</span>
           <span aria-hidden>↓</span>

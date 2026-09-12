@@ -346,7 +346,7 @@ function StepCapacity({
       <button
         type="button"
         onClick={onBack}
-        className="mt-3 flex min-h-[52px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+        className="mt-3 flex min-h-[51px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
       >
         Volver
       </button>
@@ -452,7 +452,7 @@ function StepToday({ draft }: { draft: OnboardingDraft }) {
 
       <Link
         href="/signup?desde=onboarding"
-        className="mt-3 flex min-h-[52px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+        className="mt-3 flex min-h-[51px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
       >
         Guardar esto con una cuenta
       </Link>

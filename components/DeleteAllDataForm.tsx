@@ -32,7 +32,7 @@ export function DeleteAllDataForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 flex min-h-[52px] w-full items-center justify-center rounded-pill border border-brick-border bg-surface px-[14px] py-[11px] text-card text-brick-ink transition-colors duration-150 ease-sd hover:bg-brick-bg"
+        className="mt-2 flex min-h-[51px] w-full items-center justify-center rounded-pill border border-brick-border bg-surface px-[14px] py-[11px] text-card text-brick-ink transition-colors duration-150 ease-sd hover:bg-brick-bg"
       >
         Borrar todos mis datos
       </button>
@@ -84,7 +84,7 @@ export function DeleteAllDataForm() {
             setOpen(false);
             setError(null);
           }}
-          className="min-h-[52px] rounded-pill border border-border bg-surface px-[14px] py-[10px] text-[12.5px] font-semibold text-pine"
+          className="min-h-[51px] rounded-pill border border-border bg-surface px-[14px] py-[10px] text-[12.5px] font-semibold text-pine"
         >
           Cancelar
         </button>

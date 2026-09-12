@@ -844,6 +844,14 @@ Y la altura pasa de 44 a **52**. Los 44 de `min-h-touch` son el minimo accesible
 medida comoda: en el telefono un boton de 44 se toca con cuidado. `BUTTON_HEIGHT` en
 `components/ui.tsx` es ahora el unico lugar donde vive ese numero.
 
+**El de contorno va un pixel mas bajo, y no es un descuido.** Con la misma altura exacta —52
+los dos, medido en el navegador— el claro se ve mas alto que el relleno. Es irradiacion: una
+figura clara sobre fondo claro se agranda a la vista y una oscura se contrae, el mismo motivo
+por el que un circulo hay que dibujarlo mas grande que un cuadrado para que se vean iguales.
+Asi que la regla sigue siendo 52 y el contorno lleva **−1 de correccion optica** para LEERSE
+igual. `BUTTON_HEIGHT` y `BUTTON_HEIGHT_OUTLINED` en `components/ui.tsx`. **Si alguien
+"arregla" esto igualando los numeros, los botones vuelven a verse disparejos.**
+
 Se subieron **38 botones** escritos a mano en 24 archivos. **Lo que se dejo en 44 a
 proposito**: la barra inferior, las celdas del calendario, la tira de meses del flujo, las
 pildoras de filtro del historial, los selectores segmentados (tipo de pago, estrategia,

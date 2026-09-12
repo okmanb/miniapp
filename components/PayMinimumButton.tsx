@@ -52,7 +52,7 @@ export function PayMinimumButton({
             else setError(result.message);
           })
         }
-        className="mt-2 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-pill border border-border bg-surface px-[15px] py-2 text-[11.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken disabled:opacity-70"
+        className="mt-2 flex min-h-[51px] w-full items-center justify-center gap-2 rounded-pill border border-border bg-surface px-[15px] py-2 text-[11.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken disabled:opacity-70"
       >
         {pending && <Spinner className="text-pine" />}
         Pagar el mínimo de {debtName} · {formatMoney(amount)}

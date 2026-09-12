@@ -118,7 +118,7 @@ export function BridgeLoanCard({ loan }: { loan: BridgeCardData }) {
             if (!result.ok) setError(result.message);
           })
         }
-        className="mt-3 flex min-h-[52px] w-full items-center justify-between gap-2 rounded-pill border border-border bg-surface px-[16px] py-[10px] text-[12.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken disabled:opacity-70"
+        className="mt-3 flex min-h-[51px] w-full items-center justify-between gap-2 rounded-pill border border-border bg-surface px-[16px] py-[10px] text-[12.5px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken disabled:opacity-70"
       >
         <span className="flex items-center gap-2">
           {pending && <Spinner className="text-pine" />}

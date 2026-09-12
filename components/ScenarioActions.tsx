@@ -54,7 +54,7 @@ export function ScenarioActions({
           type="button"
           onClick={() => setCopying((v) => !v)}
           aria-expanded={copying}
-          className="min-h-[52px] rounded-pill border border-border bg-surface px-[14px] py-2 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+          className="min-h-[51px] rounded-pill border border-border bg-surface px-[14px] py-2 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
         >
           {copying ? "Cancelar" : "Copiar tal cual"}
         </button>

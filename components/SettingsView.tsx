@@ -116,7 +116,7 @@ export function SettingsView({
       <form action={logout} className="mt-2">
         <button
           type="submit"
-          className="flex min-h-[52px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+          className="flex min-h-[51px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
         >
           Cerrar sesión
         </button>

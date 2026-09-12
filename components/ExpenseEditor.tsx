@@ -120,7 +120,7 @@ export function ExpenseEditor({
                 if (!result.ok) setError(result.message);
               })
             }
-            className="flex min-h-[52px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken disabled:opacity-70"
+            className="flex min-h-[51px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken disabled:opacity-70"
           >
             Este gasto ya terminó
           </button>
@@ -137,7 +137,7 @@ export function ExpenseEditor({
                 if (!result.ok) setError(result.message);
               })
             }
-            className="flex min-h-[52px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken disabled:opacity-70"
+            className="flex min-h-[51px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken disabled:opacity-70"
           >
             El resumen no lo incluía — recuperarlo
           </button>
