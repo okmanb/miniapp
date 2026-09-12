@@ -62,7 +62,7 @@ export default async function SignupPage({
         </AuthSubmit>
       </form>
 
-      <p className="mt-5 text-[12px] text-muted">
+      <p className="mt-6 text-center text-[12px] text-muted">
         <Link href="/login" className="text-pine underline underline-offset-2">
           Ya tengo cuenta
         </Link>

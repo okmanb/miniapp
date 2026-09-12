@@ -806,9 +806,24 @@ dentro del sistema (pine, teal, mint, Work Sans + Plex Mono, radios 8/12/14/pill
 Mas la pantalla **Ingresar** en la direccion A, que agrega algo que hoy falta: "Probar sin
 cuenta". Quien cae en `/login` sin tener cuenta hoy tiene que volver atras con el navegador.
 
-**Se eligio la B** el 12 de septiembre. `Ingresar` se rehizo en esa misma lengua: traia la
-cabecera oscura de A, y una pantalla oscura justo despues de una landing clara rompe lo unico
-que sostiene a B. Los campos no se tocaron — son los de `AuthShell` y estan bien.
+**Se eligio la B** el 12 de septiembre y **ya esta implementada**: `app/page.tsx`,
+`components/AuthShell.tsx` (que lo comparten login, signup y recuperar) y `app/login/page.tsx`.
+
+El marco de las pantallas de cuenta pasa a ser el de la landing —el nombre a tamaño de
+display y la barra mint sosteniendo el titulo— para que entrar se vea como el mismo producto.
+Se probo una cabecera oscura y se descarto: la app entera es clara, y una pantalla oscura
+justo despues de una landing clara rompe lo unico que hace que el rojo signifique algo cuando
+aparece. **Los campos no se tocaron**: son los de `AuthShell` y ya estaban bien.
+
+`AuthProbar` es nuevo y cierra un callejon real: quien llegaba a `/login` sin cuenta —desde un
+link, desde el historial— no tenia como llegar a probar que no fuera el boton de atras del
+navegador.
+
+Tres cosas se arreglaron **mirandolas en el navegador**, no leyendo el codigo: el separador
+`o` de `AuthProbar` se leia como un cero (la O mayuscula en una mono de cifras tabulares), el
+rotulo "ejemplo" de la tarjeta de la respuesta estaba en un gris de borde y no se leia —y un
+aviso de honestidad que no se lee no avisa—, y los numeros 01/02/03 eran practicamente
+invisibles sobre el fondo de la app.
 
 ### El icono ya existe, y sale de la fuente de la app
 

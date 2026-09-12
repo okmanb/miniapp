@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { login } from "@/app/auth-actions";
-import { AuthShell, AuthField, AuthSubmit, AuthError } from "@/components/AuthShell";
+import { AuthShell, AuthField, AuthSubmit, AuthError, AuthProbar } from "@/components/AuthShell";
 
 export const dynamic = "force-dynamic";
 
@@ -36,9 +36,17 @@ export default async function LoginPage({
         </AuthSubmit>
       </form>
 
-      <p className="mt-5 text-[12px] text-muted">
+      {/*
+        La salida a probar. Quien llega acá sin cuenta —desde un link, desde el
+        historial— no tenía cómo llegar a probar que no fuera el botón de atrás
+        del navegador.
+      */}
+      <AuthProbar />
+
+      <p className="mt-6 text-center text-[12px] text-muted">
+        ¿Todavía no tenés cuenta?{" "}
         <Link href="/signup" className="text-pine underline underline-offset-2">
-          Todavía no tengo cuenta
+          Crear una
         </Link>
       </p>
     </AuthShell>
