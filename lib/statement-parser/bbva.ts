@@ -90,6 +90,44 @@ export interface ParsedStatement {
    */
   declaredCharges: number | null;
   /**
+   * Los intereses de financiacion que el resumen dice haber cobrado.
+   *
+   * El banco NO los cobra sobre el saldo entero: los cobra sobre la parte
+   * financiada, que ningun resumen declara. Deducirlos con la TEM sobre el
+   * saldo anterior da de mas --en esta Visa, $ 322.139 contra los $ 242.072
+   * que cobro de verdad-- asi que cuando el resumen los dice, mandan ellos.
+   */
+  interesesFinanciacion: number | null;
+  /**
+   * Los impuestos del periodo: IVA sobre los intereses, IVA de cada Plan V,
+   * sellos, IIBB y las percepciones (RG 4240, RG 5617).
+   *
+   * Sale por diferencia contra el propio saldo de cierre del resumen y no de
+   * sumar sus renglones. No es pereza: la extraccion por coordenadas parte
+   * esas lineas --en un resumen, el IVA de un Plan V quedo solo en su propio
+   * renglon, sin la linea que lo nombra-- y sumarlas mal mete un error que
+   * nada detecta. Por diferencia, en cambio, la suma cierra siempre contra el
+   * numero que el banco publica.
+   */
+  impuestos: number | null;
+  /** Lo que se pago durante el periodo, segun el propio resumen. */
+  pagosDelPeriodo: number | null;
+  /**
+   * Los dolares del mes anterior que el banco paso a pesos, con la cotizacion
+   * que uso.
+   *
+   * Es la linea "TRANSFERENCIA DEUDA ... TC1525,000". Importa doble: es plata
+   * que entra al saldo en pesos, y trae la cotizacion que la app venia
+   * pidiendo a mano.
+   */
+  transferenciaDeuda: { pesos: number; tc: number } | null;
+  /**
+   * El saldo sobre el que el banco cobro intereses, deducido de lo que cobro
+   * y la TEM declarada. Es una division nuestra, no un dato del resumen:
+   * ningun banco lo publica.
+   */
+  saldoFinanciado: number | null;
+  /**
    * Suma de las líneas de consumo en dólares que el parser pudo leer, en USD.
    *
    * NO es el total en dólares del resumen: es lo que se pudo reconocer línea
@@ -116,17 +154,106 @@ export interface ParsedStatement {
  * uno por titular, al pie de cada detalle. Sumar todas las apariciones los
  * contaria dos veces.
  */
-export function sumarConsumosDeclarados(lines: string[]): number | null {
+/**
+ * El bloque de resumen de cuenta: entre "SALDO ANTERIOR" y "SALDO ACTUAL".
+ *
+ * Todo lo que este parser lee por renglon se acota a esta ventana, y no es un
+ * detalle: los pagos y los totales por titular se repiten mas abajo, en el
+ * detalle de movimientos. Sumar el documento entero los cuenta dos veces --y
+ * un pago contado dos veces baja el saldo por plata que no existe.
+ */
+export function ventanaResumen(lines: string[]): string[] {
   const desde = lines.findIndex((l) => /^SALDO ANTERIOR/i.test(l.trim()));
-  if (desde < 0) return null;
+  if (desde < 0) return [];
   const hasta = lines.findIndex((l, i) => i > desde && /^SALDO ACTUAL/i.test(l.trim()));
-  const fin = hasta < 0 ? lines.length : hasta;
+  return lines.slice(desde + 1, hasta < 0 ? lines.length : hasta);
+}
 
+/** Todos los numeros con coma decimal de una linea, en orden. */
+function numerosDe(line: string): number[] {
+  return (line.match(/-?[\d.]+,\d{2,3}/g) ?? []).map((n) => parseArgNumber(n));
+}
+
+/**
+ * Lo que se pago durante el periodo. Los dos bancos marcan el signo distinto
+ * --BBVA antepone el menos, Patagonia lo posterga-- asi que se toma el valor
+ * absoluto: que es un pago ya lo dice el renglon.
+ */
+export function sumarPagos(lines: string[]): number | null {
   let total: number | null = null;
-  for (let i = desde + 1; i < fin; i++) {
-    if (!/total consumos/i.test(lines[i])) continue;
+  for (const line of ventanaResumen(lines)) {
+    if (!/SU PAGO/i.test(line)) continue;
+    if (/U\$S|USD/i.test(line)) continue; // los pagos en dolares van por su propia columna
+    const nums = numerosDe(line);
+    if (nums.length === 0) continue;
+    total = (total ?? 0) + Math.abs(nums[nums.length - 1]);
+  }
+  return total == null ? null : Math.round(total * 100) / 100;
+}
+
+/**
+ * La linea donde el banco pasa a pesos los dolares que no se pagaron, con su
+ * cotizacion: "TRANSFERENCIA DEUDA 66,21 TC1520,000 100.639,20 66,21-".
+ * El monto en pesos es el primer numero despues del TC.
+ */
+export function leerTransferenciaDeuda(lines: string[]): { pesos: number; tc: number } | null {
+  for (const line of ventanaResumen(lines)) {
+    if (!/TRANSFERENCIA DEUDA/i.test(line)) continue;
+    const tcMatch = line.match(/TC\s*([\d.]+,\d+)/i);
+    if (!tcMatch) continue;
+    const despues = line.slice(line.indexOf(tcMatch[0]) + tcMatch[0].length);
+    const nums = numerosDe(despues);
+    if (nums.length === 0) continue;
+    return { pesos: Math.abs(nums[0]), tc: parseArgNumber(tcMatch[1]) };
+  }
+  return null;
+}
+
+/** "INTERESES FINANCIACION $ 190.581,32" — el ultimo numero del renglon. */
+export function leerIntereses(lines: string[]): number | null {
+  for (const line of ventanaResumen(lines)) {
+    if (!/INTERESES\s+FINANCIACION/i.test(line)) continue;
+    if (/U\$S|USD/i.test(line)) continue;
+    const nums = numerosDe(line);
+    if (nums.length > 0) return Math.abs(nums[nums.length - 1]);
+  }
+  return null;
+}
+
+/**
+ * Los impuestos del periodo, por diferencia contra el saldo de cierre.
+ *
+ *   impuestos = saldo actual + pagos - saldo anterior - intereses
+ *               - consumos - transferencia de dolares
+ *
+ * Devuelve null si falta cualquiera de los terminos: un residuo calculado con
+ * un agujero adentro no es un impuesto, es el agujero.
+ */
+export function impuestosPorDiferencia(params: {
+  saldoActual: number | null;
+  saldoAnterior: number | null;
+  pagos: number | null;
+  intereses: number | null;
+  consumos: number | null;
+  transferencia: number | null;
+}): number | null {
+  const { saldoActual, saldoAnterior, intereses, consumos } = params;
+  if (saldoActual == null || saldoAnterior == null || intereses == null || consumos == null) {
+    return null;
+  }
+  const resto =
+    saldoActual + (params.pagos ?? 0) - saldoAnterior - intereses - consumos - (params.transferencia ?? 0);
+  // Un residuo negativo quiere decir que algun termino se leyo mal. Mejor no
+  // devolver nada que devolver un impuesto que descuenta plata.
+  return resto < 0 ? null : Math.round(resto * 100) / 100;
+}
+
+export function sumarConsumosDeclarados(lines: string[]): number | null {
+  let total: number | null = null;
+  for (const line of ventanaResumen(lines)) {
+    if (!/total consumos/i.test(line)) continue;
     // El primero de la linea es el de pesos; el segundo, si esta, los dolares.
-    const m = lines[i].match(/-?[\d.]+,\d{2}/);
+    const m = line.match(/-?[\d.]+,\d{2}/);
     if (!m) continue;
     total = (total ?? 0) + parseArgNumber(m[0]);
   }
@@ -366,6 +493,28 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
     );
   }
 
+  /*
+   * Lo que el resumen declara y hasta ahora se deducia o se pedia a mano: los
+   * intereses que cobro de verdad, la cotizacion a la que paso los dolares a
+   * pesos, lo que se pago en el periodo, y los impuestos por diferencia.
+   */
+  const interesesFinanciacion = leerIntereses(lines);
+  const pagosDelPeriodo = sumarPagos(lines);
+  const transferenciaDeuda = leerTransferenciaDeuda(lines);
+  const impuestos = impuestosPorDiferencia({
+    saldoActual,
+    saldoAnterior,
+    pagos: pagosDelPeriodo,
+    intereses: interesesFinanciacion,
+    consumos: declaredCharges,
+    transferencia: transferenciaDeuda?.pesos ?? null,
+  });
+  // El saldo sobre el que cobro: division nuestra, no dato del resumen.
+  const saldoFinanciado =
+    interesesFinanciacion != null && temDeclarada != null && temDeclarada > 0
+      ? Math.round((interesesFinanciacion / (temDeclarada / 100)) * 100) / 100
+      : null;
+
   const usdRounded = Math.round(usdChargesExcluded * 100) / 100;
   if (saldoActualUsd != null && saldoActualUsd > 0 && usdRounded < saldoActualUsd - 0.01) {
     warnings.push(
@@ -388,6 +537,11 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
     saldoAnterior,
     planVEntries,
     declaredCharges,
+    interesesFinanciacion,
+    impuestos,
+    pagosDelPeriodo,
+    transferenciaDeuda,
+    saldoFinanciado,
     newChargesArs: Math.round(newChargesArs * 100) / 100,
     usdChargesExcluded: Math.round(usdChargesExcluded * 100) / 100,
     chargeLines,

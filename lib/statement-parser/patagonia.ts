@@ -9,7 +9,13 @@
  * interés del comercio), así que quedan con tna: 0.
  */
 
-import { sumarConsumosDeclarados } from "./bbva";
+import {
+  impuestosPorDiferencia,
+  leerIntereses,
+  leerTransferenciaDeuda,
+  sumarConsumosDeclarados,
+  sumarPagos,
+} from "./bbva";
 import type { ParsedChargeLine, ParsedPlanVEntry, ParsedStatement } from "./bbva";
 
 const MONTHS: Record<string, string> = {
@@ -175,6 +181,25 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     warnings.push("No se pudo delimitar la tabla de consumos.");
   }
 
+  /* Lo mismo que en BBVA, con los mismos lectores: los dos resumenes traen
+   * estos renglones con el mismo formato. */
+  const declaredCharges = sumarConsumosDeclarados(lines);
+  const interesesFinanciacion = leerIntereses(lines);
+  const pagosDelPeriodo = sumarPagos(lines);
+  const transferenciaDeuda = leerTransferenciaDeuda(lines);
+  const impuestos = impuestosPorDiferencia({
+    saldoActual,
+    saldoAnterior,
+    pagos: pagosDelPeriodo,
+    intereses: interesesFinanciacion,
+    consumos: declaredCharges,
+    transferencia: transferenciaDeuda?.pesos ?? null,
+  });
+  const saldoFinanciado =
+    interesesFinanciacion != null && temDeclarada != null && temDeclarada > 0
+      ? Math.round((interesesFinanciacion / (temDeclarada / 100)) * 100) / 100
+      : null;
+
   return {
     cardName,
     accountLast4,
@@ -189,7 +214,12 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     planVEntries,
     // El total que declara el resumen manda sobre la suma de las lineas que
     // pudimos leer. Mismo criterio que en BBVA, y la misma razon.
-    declaredCharges: sumarConsumosDeclarados(lines),
+    declaredCharges,
+    interesesFinanciacion,
+    impuestos,
+    pagosDelPeriodo,
+    transferenciaDeuda,
+    saldoFinanciado,
     newChargesArs: Math.round(newChargesArs * 100) / 100,
     usdChargesExcluded: Math.round(usdChargesExcluded * 100) / 100,
     chargeLines,
