@@ -516,8 +516,8 @@ export function StatementForm({
 
         <MoneyField
           id="new_charges"
-          label="Consumos nuevos (sin contar cuotas)"
-          help="No incluyas las cuotas — esas ya las tiene cargadas el sistema."
+          label="Consumos nuevos del mes"
+          help="Todo lo que el banco te cargó este mes, CUOTAS INCLUIDAS. El resumen lo trae sumado en su línea de “Total Consumos”. Antes acá decía que no incluyeras las cuotas porque el sistema ya las tenía: no es cierto — se guardan aparte, para la lista y la proyección, y nunca entraban al saldo."
           value={newCharges}
           onChange={setNewCharges}
         />
@@ -667,7 +667,12 @@ export function StatementForm({
         </fieldset>
 
         {card && preview && previousBalance > 0 && (
-          <StatementPreview card={card} previousBalance={previousBalance} close={preview} />
+          <StatementPreview
+            card={card}
+            previousBalance={previousBalance}
+            close={preview}
+            bankBalance={parsed?.ok ? (parsed.statementBalance ?? null) : null}
+          />
         )}
 
         {state.message && (
@@ -759,6 +764,7 @@ function StatementPreview({
   card,
   previousBalance,
   close,
+  bankBalance,
 }: {
   card: StatementCard;
   /**
@@ -768,6 +774,16 @@ function StatementPreview({
    */
   previousBalance: number;
   close: ReturnType<typeof closeStatement>;
+  /**
+   * El saldo con el que el resumen dice que cierra, cuando se subio el PDF.
+   *
+   * Es el dato del banco y hasta ahora se mostraba arriba, en la ficha de lo
+   * que se leyo, sin compararlo nunca con el nuestro. Teniendolo al lado, una
+   * diferencia se ve sola; sin comparar, hay que darse cuenta de memoria. Asi
+   * se descubrio que el cierre no contaba las cuotas del mes: a ojo, mirando
+   * los dos numeros en pantallas distintas.
+   */
+  bankBalance: number | null;
 }) {
   return (
     <div className="mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3">
@@ -803,6 +819,26 @@ function StatementPreview({
           </span>
         </span>
       </div>
+
+      {/*
+        El saldo del banco al lado del nuestro, cuando el PDF lo trajo.
+        Coincidir no esta garantizado —el banco cobra impuestos que este
+        modelo no tiene, y calcula el interes sobre el saldo financiado y no
+        sobre el total— asi que la diferencia se nombra en vez de esconderla.
+        Es el numero que hay que mirar antes de guardar.
+      */}
+      {bankBalance != null && bankBalance > 0 && (
+        <div className="mt-2 border-t border-border-row pt-2">
+          <PreviewRow label="El resumen dice que cierra en" value={formatMoney(bankBalance)} />
+          {Math.abs(bankBalance - close.newBalance) >= 1 && (
+            <p className="help mt-1.5" style={{ color: "#823123" }}>
+              Nuestra cuenta da {formatMoney(Math.abs(bankBalance - close.newBalance))}{" "}
+              {close.newBalance < bankBalance ? "menos" : "más"} que el resumen. Revisá los
+              consumos y cuánto pagaste antes de guardar: lo que se guarda es nuestra cuenta.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

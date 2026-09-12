@@ -112,6 +112,8 @@ export function parseGenericStatement(layoutText: string): ParsedStatement {
     pagoMinimo,
     saldoAnterior: null,
     planVEntries: [],
+    // Un banco que no reconocemos no tiene una linea de totales conocida.
+    declaredCharges: null,
     newChargesArs: 0,
     usdChargesExcluded: 0,
     chargeLines: [],

@@ -36,7 +36,7 @@ FECHA   DETALLE   NRO. CUPON   IMPORTE
 26-Nov-25   VISA PLAN V 9-18 (TNA 98,03)   288032   482.069,57
 26-Nov-25   FINANC DE SALDO 10-18 (TNA 89,00)   755158   367.418,69
 17-Abr-26   MERPAGO*CARONEGM   C.04/09   282179   36.726,66
-TOTAL CONSUMOS   1.563.176,61
+TOTAL CONSUMOS   1.918.095,30
 
 Impuestos, cargos e intereses
 20-Jul-26   IVA SOBRE INTERESES   999001   58.000,00
@@ -54,6 +54,12 @@ function check(label: string, actual: unknown, expected: unknown) {
   console.log(`  ${ok ? "=" : "FALLA"}  ${label}: ${JSON.stringify(actual)}${ok ? "" : ` (esperado ${JSON.stringify(expected)})`}`);
 }
 
+/*
+ * El total que declara el resumen tiene que coincidir con la suma de sus
+ * lineas, cuotas incluidas. El numero de este fixture estaba inventado y no
+ * cerraba con sus propios renglones: se corrigio cuando el parser empezo a
+ * compararlos, que es exactamente para lo que sirve la comparacion.
+ */
 console.log("=== Cabecera ===\n");
 check("tarjeta", parsed.cardName, "Visa Signature");
 check("últimos 4", parsed.accountLast4, "2166");

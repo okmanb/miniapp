@@ -9,6 +9,7 @@
  * interés del comercio), así que quedan con tna: 0.
  */
 
+import { sumarConsumosDeclarados } from "./bbva";
 import type { ParsedChargeLine, ParsedPlanVEntry, ParsedStatement } from "./bbva";
 
 const MONTHS: Record<string, string> = {
@@ -186,6 +187,9 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     pagoMinimo,
     saldoAnterior,
     planVEntries,
+    // El total que declara el resumen manda sobre la suma de las lineas que
+    // pudimos leer. Mismo criterio que en BBVA, y la misma razon.
+    declaredCharges: sumarConsumosDeclarados(lines),
     newChargesArs: Math.round(newChargesArs * 100) / 100,
     usdChargesExcluded: Math.round(usdChargesExcluded * 100) / 100,
     chargeLines,

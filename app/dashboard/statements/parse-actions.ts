@@ -136,7 +136,13 @@ export async function parseStatementPdf(formData: FormData): Promise<ParseResult
     // El período del resumen es el del cierre, no el de hoy.
     period: parsed.cierreActual ? parsed.cierreActual.slice(0, 7) : null,
     dueDate: parsed.vencimientoActual,
-    newCharges: parsed.newChargesArs,
+    /*
+     * El total que declara el resumen, con las cuotas del mes adentro, y solo
+     * si no lo trae la suma de lo que pudimos leer. La linea por linea deja
+     * afuera las que la extraccion por coordenadas no alcanza a armar, y el
+     * saldo cerraba por debajo del real sin que nada lo dijera.
+     */
+    newCharges: parsed.declaredCharges ?? parsed.newChargesArs,
     minimumPayment: parsed.pagoMinimo,
     previousBalance: parsed.saldoAnterior,
     statementBalance: parsed.saldoActual,

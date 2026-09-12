@@ -43,6 +43,16 @@ mensajes de commit, que explican el porqué.
   efectivamente pidió. La fórmula literal NO se implementó, y la razón está medida.
 - **Tres notas de este mismo documento resultaron falsas** al ir a usarlas. Están corregidas,
   pero la lección es del documento: **si vas a apoyarte en algo de acá, verificalo.**
+- **El cierre no contaba las cuotas del mes, y nadie lo veía.** El campo decía "consumos
+  nuevos (sin contar cuotas) — esas ya las tiene cargadas el sistema", y era falso: las
+  cuotas se guardan en `card_installment_plans`, que alimenta la lista y la proyección y
+  **nunca toca el saldo**. En la Visa de septiembre eran $ 2.593.755 afuera de un cierre de
+  ocho millones.
+- **El parser sumaba líneas en vez de leer el total que declara el banco.** Se le escapaban
+  dos renglones ($ 17.666,66) y nada lo decía. Ahora manda la línea "Total Consumos" del
+  resumen, igual que `saldoActualUsd` manda sobre lo que se lee línea por línea.
+- **La pantalla ahora muestra el saldo con el que el resumen dice que cierra**, al lado del
+  nuestro, y nombra la diferencia. El dato estaba y no se comparaba con nada.
 - **La TEM solo se podía guardar al crear la tarjeta.** El formulario de editar deuda no la
   tiene, así que cualquier tarjeta anterior se quedaba con `tem` en null para siempre. Ahora
   la declara el resumen de cada mes, para cualquier tarjeta, y se guarda al cargarlo.
@@ -781,6 +791,38 @@ token de https://supabase.com/dashboard/account/tokens:
 curl -X PATCH "https://api.supabase.com/v1/projects/udhqdbpjhifeotgoqaoa/config/auth"   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"   -H "Content-Type: application/json"   -d '{"mailer_subjects_recovery":"Tu código para volver a entrar",
        "mailer_templates_recovery_content":"<h2>Tu código</h2><p>Escribí este código en ¿Llegás? para poner una clave nueva:</p><p style=\"font-size:28px;letter-spacing:6px\"><b>{{ .Token }}</b></p><p>Vence en unos minutos. Si no lo pediste, ignorá este mail.</p>"}'
 ```
+
+## Lo que un resumen real tiene y el modelo no
+
+Se reconstruyó la Visa BBVA de septiembre línea por línea y **cierra exacto en
+$ 8.089.852,43**. La cuenta completa:
+
+| | |
+|---|---|
+| Saldo anterior | 5.710.670,92 |
+| Dos pagos | −1.798.839,63 |
+| Transferencia de la deuda en dólares (US$ 158,14 × 1525) | +241.163,50 |
+| Consumos, los tres totales por titular, **cuotas incluidas** | +3.350.089,59 |
+| IVA de los Plan V | +224.781,13 |
+| Intereses de financiación | +242.071,81 |
+| IVA 21%, IIBB CABA, IVA RG 4240, DB RG 5617 | +120.915,11 |
+| **Saldo actual** | **8.089.852,43** |
+
+De ahí salen tres diferencias con el modelo, y **solo la primera está arreglada**:
+
+1. ~~Las cuotas del mes no entraban al saldo.~~ Arreglado: el campo de consumos ahora se
+   llena con el total que declara el resumen, que las incluye.
+2. **El interés se calcula sobre el saldo entero** y el banco lo cobra sobre el saldo
+   financiado: $ 322.139 contra $ 242.072 en este resumen. El resumen ni siquiera declara
+   cuál es el saldo financiado; la Patagonia sí ("saldo financiable").
+3. **Los impuestos no se modelan.** Acá son $ 345.696 entre IVA sobre intereses, IVA sobre
+   los Plan V, IIBB y las percepciones. No es un redondeo: es el 4% del saldo.
+
+Los dos últimos son decisiones de producto, no bugs: el prototipo tampoco los tiene. Lo que
+sí se hizo es **dejar de esconder la diferencia** — la pantalla muestra el cierre del banco
+al lado del nuestro y nombra cuánto se apartan.
+
+---
 
 ## Diferencias de cálculo que hay que conocer
 

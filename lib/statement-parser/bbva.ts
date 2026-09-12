@@ -77,6 +77,19 @@ export interface ParsedStatement {
   planVEntries: ParsedPlanVEntry[];
   newChargesArs: number; // suma de consumos nuevos en pesos, sin contar Plan V
   /**
+   * Lo que el resumen dice que consumiste este mes, sumado por el banco.
+   *
+   * Es su propia linea de "Total Consumos", e incluye las cuotas del mes. Vale
+   * mas que `newChargesArs`, que es la suma de las lineas que pudimos leer:
+   * la extraccion por coordenadas deja algunas afuera y ahi el saldo cierra
+   * por debajo del real. Paso: en un resumen de Visa se perdieron dos lineas
+   * --una cuota y un consumo-- por $ 17.666,66.
+   *
+   * Mismo criterio que `saldoActualUsd` frente a `usdChargesExcluded`: cuando
+   * el banco declara un total, el total del banco manda.
+   */
+  declaredCharges: number | null;
+  /**
    * Suma de las líneas de consumo en dólares que el parser pudo leer, en USD.
    *
    * NO es el total en dólares del resumen: es lo que se pudo reconocer línea
@@ -93,6 +106,31 @@ export interface ParsedStatement {
   // §2.4). Vacío si el parser no distingue líneas individuales.
   chargeLines: ParsedChargeLine[];
   warnings: string[];
+}
+
+/**
+ * El total de consumos que declara el resumen en su bloque de resumen de
+ * cuenta, entre "SALDO ANTERIOR" y "SALDO ACTUAL".
+ *
+ * Se acota a esa ventana a proposito: los mismos totales se repiten mas abajo,
+ * uno por titular, al pie de cada detalle. Sumar todas las apariciones los
+ * contaria dos veces.
+ */
+export function sumarConsumosDeclarados(lines: string[]): number | null {
+  const desde = lines.findIndex((l) => /^SALDO ANTERIOR/i.test(l.trim()));
+  if (desde < 0) return null;
+  const hasta = lines.findIndex((l, i) => i > desde && /^SALDO ACTUAL/i.test(l.trim()));
+  const fin = hasta < 0 ? lines.length : hasta;
+
+  let total: number | null = null;
+  for (let i = desde + 1; i < fin; i++) {
+    if (!/total consumos/i.test(lines[i])) continue;
+    // El primero de la linea es el de pesos; el segundo, si esta, los dolares.
+    const m = lines[i].match(/-?[\d.]+,\d{2}/);
+    if (!m) continue;
+    total = (total ?? 0) + parseArgNumber(m[0]);
+  }
+  return total == null ? null : Math.round(total * 100) / 100;
 }
 
 export function parseBbvaStatement(layoutText: string): ParsedStatement {
@@ -313,6 +351,21 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
   // llegan a ese total, faltaron líneas. Avisarlo importa: sin el aviso, el
   // faltante se ve como "gastaste menos en dólares", que es una conclusión
   // falsa sacada de una limitación nuestra.
+  /*
+   * El total que declara el banco, y el aviso cuando no coincide con lo que
+   * pudimos leer: si difieren, faltaron lineas, y es mejor decirlo que dejar
+   * que el saldo cierre bajo sin explicacion.
+   */
+  const declaredCharges = sumarConsumosDeclarados(lines);
+  const leidoConCuotas =
+    Math.round((newChargesArs + planVEntries.reduce((s, e) => s + e.installmentAmount, 0)) * 100) / 100;
+  if (declaredCharges != null && Math.abs(declaredCharges - leidoConCuotas) > 0.01) {
+    warnings.push(
+      `El resumen declara $ ${declaredCharges} de consumos y linea por linea pudimos leer ` +
+        `$ ${leidoConCuotas}. Vale el del resumen, y es el que va al campo de consumos.`
+    );
+  }
+
   const usdRounded = Math.round(usdChargesExcluded * 100) / 100;
   if (saldoActualUsd != null && saldoActualUsd > 0 && usdRounded < saldoActualUsd - 0.01) {
     warnings.push(
@@ -334,6 +387,7 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
     pagoMinimo,
     saldoAnterior,
     planVEntries,
+    declaredCharges,
     newChargesArs: Math.round(newChargesArs * 100) / 100,
     usdChargesExcluded: Math.round(usdChargesExcluded * 100) / 100,
     chargeLines,
