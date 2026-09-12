@@ -10,3 +10,8 @@ tsconfig.tsbuildinfo
 .env*
 .prototipo-src.js
 /.next/
+
+# El lienzo de diseno empaquetado: dos megas de editor que se regeneran solos
+# desde los .dc.html de al lado. Los que se versionan son los artboards.
+design/*.html
+!design/*.dc.html
