@@ -99,19 +99,31 @@ export interface ParsedStatement {
    */
   interesesFinanciacion: number | null;
   /**
-   * Los impuestos del periodo: IVA sobre los intereses, IVA de cada Plan V,
-   * sellos, IIBB y las percepciones (RG 4240, RG 5617).
+   * Todo lo que el resumen sumo al saldo y no son consumos, intereses ni
+   * dolares: IVA sobre los intereses, IVA de cada Plan V o cuotificacion,
+   * sellos, IIBB, las percepciones (RG 4240, RG 5617) y los adelantos.
    *
-   * Sale por diferencia contra el propio saldo de cierre del resumen y no de
+   * Se llama "otros cargos" y no "impuestos" a proposito: la mayoria lo son,
+   * pero no todos. En la Mastercard de agosto esta bolsa se lleva ademas un
+   * adelanto por transferencia de $ 500.000 y su interes.
+   *
+   * Sale por diferencia contra el propio saldo de cierre del resumen, no de
    * sumar sus renglones. No es pereza: la extraccion por coordenadas parte
-   * esas lineas --en un resumen, el IVA de un Plan V quedo solo en su propio
-   * renglon, sin la linea que lo nombra-- y sumarlas mal mete un error que
-   * nada detecta. Por diferencia, en cambio, la suma cierra siempre contra el
-   * numero que el banco publica.
+   * esas lineas --el IVA de un Plan V quedo huerfano en su renglon, y en otro
+   * resumen el importe de los intereses quedo una linea antes que su texto--
+   * y sumarlas mal mete un error que nada detecta. Por diferencia el total
+   * cierra siempre contra el numero que el banco publica; lo que puede quedar
+   * desdibujado es el desglose, nunca la cifra.
    */
-  impuestos: number | null;
+  otrosCargos: number | null;
   /** Lo que se pago durante el periodo, segun el propio resumen. */
   pagosDelPeriodo: number | null;
+  /**
+   * Lo que salio del saldo sin ser un pago. Hoy es la cuotificacion: el banco
+   * acredita el saldo financiado y lo pasa a cuotas fijas. Son millones, y sin
+   * leerlo el cierre queda muy por encima del real.
+   */
+  creditosDelPeriodo: number | null;
   /**
    * Los dolares del mes anterior que el banco paso a pesos, con la cotizacion
    * que uso.
@@ -209,40 +221,84 @@ export function leerTransferenciaDeuda(lines: string[]): { pesos: number; tc: nu
   return null;
 }
 
+/**
+ * Los creditos del periodo que no son un pago: hoy, la cuotificacion.
+ *
+ * "CR.$ CUOTIFICACION -2.952.659,25" es el banco sacando del saldo la plata
+ * que paso a cuotas fijas. Sin leerla, el cierre da casi tres millones de mas
+ * y no hay nada que lo delate, porque el resumen tampoco cobra intereses ese
+ * mes: en su lugar aparece el IVA de cada cuotificacion.
+ */
+export function sumarCreditos(lines: string[]): number | null {
+  let total: number | null = null;
+  for (const line of ventanaResumen(lines)) {
+    if (!/^CR[.$\s]/i.test(line.trim())) continue;
+    const nums = numerosDe(line);
+    if (nums.length === 0) continue;
+    total = (total ?? 0) + Math.abs(nums[nums.length - 1]);
+  }
+  return total == null ? null : Math.round(total * 100) / 100;
+}
+
 /** "INTERESES FINANCIACION $ 190.581,32" — el ultimo numero del renglon. */
 export function leerIntereses(lines: string[]): number | null {
-  for (const line of ventanaResumen(lines)) {
+  const ventana = ventanaResumen(lines);
+  for (let i = 0; i < ventana.length; i++) {
+    const line = ventana[i];
     if (!/INTERESES\s+FINANCIACION/i.test(line)) continue;
     if (/U\$S|USD/i.test(line)) continue;
     const nums = numerosDe(line);
     if (nums.length > 0) return Math.abs(nums[nums.length - 1]);
+    /*
+     * El renglon quedo partido: el importe en una linea y el texto en la
+     * siguiente. Pasa de verdad --la Mastercard de agosto trae "85.713,81" y
+     * abajo "INTERESES FINANCIACION $" sin numero-- y cuando pasa, esos pesos
+     * terminaban contados como impuesto. Si la linea anterior es un numero
+     * suelto, es este importe.
+     */
+    const anterior = i > 0 ? ventana[i - 1].trim() : "";
+    if (/^-?[\d.]+,\d{2}$/.test(anterior)) return Math.abs(parseArgNumber(anterior));
   }
   return null;
 }
 
 /**
- * Los impuestos del periodo, por diferencia contra el saldo de cierre.
+ * Los cargos del periodo que no son consumos ni intereses, por diferencia
+ * contra el saldo de cierre.
  *
- *   impuestos = saldo actual + pagos - saldo anterior - intereses
- *               - consumos - transferencia de dolares
+ *   otros cargos = saldo actual + pagos + creditos - saldo anterior
+ *                  - intereses - consumos - transferencia de dolares
  *
  * Devuelve null si falta cualquiera de los terminos: un residuo calculado con
  * un agujero adentro no es un impuesto, es el agujero.
  */
-export function impuestosPorDiferencia(params: {
+export function otrosCargosPorDiferencia(params: {
   saldoActual: number | null;
   saldoAnterior: number | null;
   pagos: number | null;
+  creditos: number | null;
   intereses: number | null;
   consumos: number | null;
   transferencia: number | null;
 }): number | null {
-  const { saldoActual, saldoAnterior, intereses, consumos } = params;
-  if (saldoActual == null || saldoAnterior == null || intereses == null || consumos == null) {
-    return null;
-  }
+  const { saldoActual, saldoAnterior, consumos } = params;
+  if (saldoActual == null || saldoAnterior == null || consumos == null) return null;
+  /*
+   * Sin linea de intereses se toma cero, porque hay resumenes que no cobran
+   * ninguno: el de la Mastercard que cuotifico el saldo no tiene una sola. El
+   * riesgo es que, si existiera y no la pudieramos leer, sus pesos terminarian
+   * contados como impuesto. El total sigue cerrando igual contra el saldo del
+   * banco; lo que se desdibuja es el desglose, no la cifra.
+   */
+  const intereses = params.intereses ?? 0;
   const resto =
-    saldoActual + (params.pagos ?? 0) - saldoAnterior - intereses - consumos - (params.transferencia ?? 0);
+    saldoActual +
+    (params.pagos ?? 0) +
+    (params.creditos ?? 0) -
+    saldoAnterior -
+    intereses -
+    consumos -
+    (params.transferencia ?? 0);
   // Un residuo negativo quiere decir que algun termino se leyo mal. Mejor no
   // devolver nada que devolver un impuesto que descuenta plata.
   return resto < 0 ? null : Math.round(resto * 100) / 100;
@@ -496,15 +552,18 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
   /*
    * Lo que el resumen declara y hasta ahora se deducia o se pedia a mano: los
    * intereses que cobro de verdad, la cotizacion a la que paso los dolares a
-   * pesos, lo que se pago en el periodo, y los impuestos por diferencia.
+   * pesos, lo que se pago y lo que se acredito en el periodo, y el resto de
+   * los cargos por diferencia.
    */
   const interesesFinanciacion = leerIntereses(lines);
   const pagosDelPeriodo = sumarPagos(lines);
+  const creditosDelPeriodo = sumarCreditos(lines);
   const transferenciaDeuda = leerTransferenciaDeuda(lines);
-  const impuestos = impuestosPorDiferencia({
+  const otrosCargos = otrosCargosPorDiferencia({
     saldoActual,
     saldoAnterior,
     pagos: pagosDelPeriodo,
+    creditos: creditosDelPeriodo,
     intereses: interesesFinanciacion,
     consumos: declaredCharges,
     transferencia: transferenciaDeuda?.pesos ?? null,
@@ -538,8 +597,9 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
     planVEntries,
     declaredCharges,
     interesesFinanciacion,
-    impuestos,
+    otrosCargos,
     pagosDelPeriodo,
+    creditosDelPeriodo,
     transferenciaDeuda,
     saldoFinanciado,
     newChargesArs: Math.round(newChargesArs * 100) / 100,

@@ -42,6 +42,10 @@ export interface StatementClose {
   grossBalance: number;
   /** Lo que entró por consumos en dólares, en pesos. 0 si no hay o no hay cotización. */
   usdCharges: number;
+  /** Impuestos y demás cargos del resumen. 0 si no se declararon. */
+  otherCharges: number;
+  /** Lo que salió del saldo sin ser un pago, como una cuotificación. */
+  credits: number;
   /** Cuánto se movió el saldo. Positivo = creció. */
   delta: number;
 }
@@ -76,26 +80,94 @@ export function closeStatement(params: {
    * cotización no sale del PDF — la pone la persona.
    */
   usdCharges?: number;
+  /**
+   * Los intereses que el resumen dice haber cobrado. Mandan sobre la cuenta
+   * nuestra cuando estan.
+   *
+   * El banco NO cobra sobre el saldo entero: cobra sobre la parte financiada,
+   * que ningun resumen publica. Deducirlos con la TEM sobre el saldo anterior
+   * da de mas --en una Visa real, $ 322.139 contra los $ 242.072 que cobro--
+   * y ese error se escribe en el saldo y viaja al mes siguiente. Cuando el
+   * PDF los declara no hay nada que estimar.
+   */
+  declaredInterest?: number | null;
+  /**
+   * Impuestos y demas cargos del resumen: IVA sobre los intereses, IVA de los
+   * planes en cuotas, sellos, IIBB, percepciones, adelantos.
+   *
+   * En seis resumenes reales van de $ 59.180 a $ 663.227 — en uno son el 4%
+   * del saldo. No modelarlos no los hacia desaparecer: hacia que el cierre
+   * diera siempre por debajo del real.
+   */
+  otherCharges?: number;
+  /**
+   * Lo que el banco saco del saldo sin que sea un pago: hoy, la
+   * cuotificacion. Va adentro del saldo base y no afuera como el pago, porque
+   * no es plata que la persona puso: es saldo que dejo de estar en la tarjeta.
+   */
+  credits?: number;
 }): StatementClose {
   const previous = params.previousBalance || 0;
   const rate =
     params.monthlyRate != null && params.monthlyRate > 0
       ? params.monthlyRate
       : monthlyRateFromAnnual(params.annualRate);
-  const interest = Math.round(previous * rate);
+  const interestRaw =
+    params.declaredInterest != null && params.declaredInterest >= 0
+      ? params.declaredInterest
+      : previous * rate;
+  const interest = Math.round(interestRaw);
 
-  // No pagar nada no genera punitorio en este modelo: genera interés sobre
-  // todo el saldo, que es peor. El punitorio castiga el pago insuficiente.
+  /*
+   * El punitorio es una ESTIMACION, y solo vale cuando no hay resumen.
+   *
+   * El prototipo lo inventa: 3% sobre lo que falto para el minimo. Cuando el
+   * resumen declara lo que cobro, ese 3% se suma encima de la cifra real y la
+   * infla — en la Visa de septiembre eran $ 84.478 de mas sobre un cierre que
+   * de otro modo daba exacto, y en la Patagonia $ 10.965. Lo que el banco
+   * cobre por pagar de menos ya esta adentro de sus intereses y sus cargos.
+   *
+   * Por eso: si hay intereses declarados, no se estima nada.
+   */
   const lateFee =
-    params.amountPaid > 0 && params.amountPaid < params.minimumPayment
+    params.declaredInterest == null &&
+    params.amountPaid > 0 &&
+    params.amountPaid < params.minimumPayment
       ? Math.round((params.minimumPayment - params.amountPaid) * LATE_FEE_RATE)
       : 0;
 
-  const usdCharges = Math.round(params.usdCharges ?? 0);
-  const grossBalance = Math.round(previous + interest + lateFee + params.newCharges) + usdCharges;
+  const usdRaw = params.usdCharges ?? 0;
+  const otherRaw = params.otherCharges ?? 0;
+  const creditsRaw = params.credits ?? 0;
+
+  /*
+   * Se suma con los centavos y se redondea UNA vez.
+   *
+   * Redondear termino por termino y sumar despues desplazaba el cierre: con
+   * los seis terminos de un resumen real la Visa daba un peso por encima de lo
+   * que dice el banco. Un peso no rompe nada, pero el cierre es el saldo
+   * anterior del mes que viene, y una comparacion que casi coincide no sirve
+   * para detectar que algo se movio.
+   */
+  const usdCharges = Math.round(usdRaw);
+  const otherCharges = Math.round(otherRaw);
+  const credits = Math.round(creditsRaw);
+  const grossBalance = Math.max(
+    0,
+    Math.round(previous + interestRaw + lateFee + params.newCharges + usdRaw + otherRaw - creditsRaw)
+  );
   const newBalance = Math.max(0, grossBalance - Math.round(params.amountPaid));
 
-  return { interest, lateFee, usdCharges, grossBalance, newBalance, delta: newBalance - previous };
+  return {
+    interest,
+    lateFee,
+    usdCharges,
+    otherCharges,
+    credits,
+    grossBalance,
+    newBalance,
+    delta: newBalance - previous,
+  };
 }
 
 /**

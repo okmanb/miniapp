@@ -115,8 +115,9 @@ export function parseGenericStatement(layoutText: string): ParsedStatement {
     // Un banco que no reconocemos no tiene una linea de totales conocida.
     declaredCharges: null,
     interesesFinanciacion: null,
-    impuestos: null,
+    otrosCargos: null,
     pagosDelPeriodo: null,
+    creditosDelPeriodo: null,
     transferenciaDeuda: null,
     saldoFinanciado: null,
     newChargesArs: 0,

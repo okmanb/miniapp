@@ -10,10 +10,11 @@
  */
 
 import {
-  impuestosPorDiferencia,
+  otrosCargosPorDiferencia,
   leerIntereses,
   leerTransferenciaDeuda,
   sumarConsumosDeclarados,
+  sumarCreditos,
   sumarPagos,
 } from "./bbva";
 import type { ParsedChargeLine, ParsedPlanVEntry, ParsedStatement } from "./bbva";
@@ -186,11 +187,13 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
   const declaredCharges = sumarConsumosDeclarados(lines);
   const interesesFinanciacion = leerIntereses(lines);
   const pagosDelPeriodo = sumarPagos(lines);
+  const creditosDelPeriodo = sumarCreditos(lines);
   const transferenciaDeuda = leerTransferenciaDeuda(lines);
-  const impuestos = impuestosPorDiferencia({
+  const otrosCargos = otrosCargosPorDiferencia({
     saldoActual,
     saldoAnterior,
     pagos: pagosDelPeriodo,
+    creditos: creditosDelPeriodo,
     intereses: interesesFinanciacion,
     consumos: declaredCharges,
     transferencia: transferenciaDeuda?.pesos ?? null,
@@ -216,8 +219,9 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     // pudimos leer. Mismo criterio que en BBVA, y la misma razon.
     declaredCharges,
     interesesFinanciacion,
-    impuestos,
+    otrosCargos,
     pagosDelPeriodo,
+    creditosDelPeriodo,
     transferenciaDeuda,
     saldoFinanciado,
     newChargesArs: Math.round(newChargesArs * 100) / 100,

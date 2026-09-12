@@ -53,6 +53,8 @@ mensajes de commit, que explican el porqué.
   resumen, igual que `saldoActualUsd` manda sobre lo que se lee línea por línea.
 - **La pantalla ahora muestra el saldo con el que el resumen dice que cierra**, al lado del
   nuestro, y nombra la diferencia. El dato estaba y no se comparaba con nada.
+- **Los impuestos, la cuotificacion y el saldo financiado ya se modelan** (migracion 011).
+  Los seis resumenes reales cierran exacto.
 - **La TEM solo se podía guardar al crear la tarjeta.** El formulario de editar deuda no la
   tiene, así que cualquier tarjeta anterior se quedaba con `tem` en null para siempre. Ahora
   la declara el resumen de cada mes, para cualquier tarjeta, y se guarda al cargarlo.
@@ -751,6 +753,19 @@ El linter de seguridad de Supabase quedó con **un solo warning**, el 4: los dos
 
 ---
 
+## La alerta de la deuda mas cara muestra el minimo aunque ya lo hayas pagado
+
+Reportado el 12 de septiembre y **NO es un bug**: es lo que hace el prototipo, verificado en
+su codigo. Su alerta 5 es `label: 'Minimo', value: hi.min`, sin mirar si se pago. El
+prototipo tiene `minPaidThisMonth` y lo usa solo en la lista de deudas, para el boton de
+pagar el minimo.
+
+Como el prototipo manda, se dejo igual. **La mejora esta propuesta y no aplicada**: cuando el
+minimo ya se pago, ese renglon podria decir el interes del mes —que es de lo que la alerta
+habla— en vez de un minimo que ya no se debe.
+
+---
+
 ## Migraciones aplicadas en la base
 
 Las de estas sesiones ya corrieron sobre el proyecto `udhqdbpjhifeotgoqaoa` y están en el
@@ -792,7 +807,7 @@ curl -X PATCH "https://api.supabase.com/v1/projects/udhqdbpjhifeotgoqaoa/config/
        "mailer_templates_recovery_content":"<h2>Tu código</h2><p>Escribí este código en ¿Llegás? para poner una clave nueva:</p><p style=\"font-size:28px;letter-spacing:6px\"><b>{{ .Token }}</b></p><p>Vence en unos minutos. Si no lo pediste, ignorá este mail.</p>"}'
 ```
 
-## Lo que un resumen real tiene y el modelo no
+## Los seis resumenes reales, reconstruidos, y el modelo que los reproduce
 
 Se reconstruyó la Visa BBVA de septiembre línea por línea y **cierra exacto en
 $ 8.089.852,43**. La cuenta completa:
@@ -808,19 +823,48 @@ $ 8.089.852,43**. La cuenta completa:
 | IVA 21%, IIBB CABA, IVA RG 4240, DB RG 5617 | +120.915,11 |
 | **Saldo actual** | **8.089.852,43** |
 
-De ahí salen tres diferencias con el modelo, y **solo la primera está arreglada**:
+**Los tres se arreglaron** (12 de septiembre). Los seis PDF que hay, de dos bancos, cierran
+**exacto** con una sola estructura:
 
-1. ~~Las cuotas del mes no entraban al saldo.~~ Arreglado: el campo de consumos ahora se
-   llena con el total que declara el resumen, que las incluye.
-2. **El interés se calcula sobre el saldo entero** y el banco lo cobra sobre el saldo
-   financiado: $ 322.139 contra $ 242.072 en este resumen. El resumen ni siquiera declara
-   cuál es el saldo financiado; la Patagonia sí ("saldo financiable").
-3. **Los impuestos no se modelan.** Acá son $ 345.696 entre IVA sobre intereses, IVA sobre
-   los Plan V, IIBB y las percepciones. No es un redondeo: es el 4% del saldo.
+```
+cierre = anterior - pagos - creditos + transferencia de dolares
+         + consumos + intereses + impuestos y otros cargos
+```
 
-Los dos últimos son decisiones de producto, no bugs: el prototipo tampoco los tiene. Lo que
-sí se hizo es **dejar de esconder la diferencia** — la pantalla muestra el cierre del banco
-al lado del nuestro y nombra cuánto se apartan.
+1. ~~Las cuotas del mes no entraban al saldo.~~ El campo de consumos se llena con el total
+   que declara el resumen, que ya las incluye.
+2. ~~El interes se calculaba sobre el saldo entero.~~ **Manda el que declara el PDF.** El
+   banco cobra sobre la parte financiada, que ningun resumen publica: deducirlo con la TEM
+   daba $ 322.139 contra los $ 242.072 que cobro. La proyeccion usa la **tasa efectiva
+   medida** —intereses cobrados sobre saldo anterior— en vez de la TEM nominal.
+3. ~~Los impuestos no se modelaban.~~ Entran como "impuestos y otros cargos", **por
+   diferencia contra el propio saldo de cierre del resumen**, no sumando renglones: la
+   extraccion por coordenadas parte esas lineas y sumarlas mal mete un error que nada
+   detecta. Por diferencia, el total cierra siempre contra el numero que el banco publica.
+
+Y aparecieron dos cosas que nadie habia visto:
+
+- **La cuotificacion.** La Mastercard de septiembre trae `CR.$ CUOTIFICACION -2.952.659,25`:
+  el banco saca el saldo de la tarjeta y lo pasa a cuotas fijas. Sin leerla el cierre daba
+  tres millones de mas. Ese resumen ademas **no cobra un peso de interes**, asi que un
+  interes declarado en cero es un dato, no la ausencia de uno: dejarlo vacio hacia que la
+  app estimara $ 234.210 que nadie cobro.
+- **El punitorio del prototipo se sumaba encima de lo que el banco ya habia cobrado.** Es una
+  estimacion —3% sobre lo que falto para el minimo— y con un resumen delante sobra: eran
+  $ 84.478 de mas en la Visa y $ 10.965 en la Patagonia. Ahora solo se estima cuando no hay
+  intereses declarados.
+
+**La seccion 10 del `cross-check` reproduce los tres resumenes de septiembre** con las cifras
+de esos PDF, asi que no hace falta el PDF para notar que el motor se movio.
+
+### Lo que sigue sin ser exacto, y esta a la vista
+
+El desglose puede quedar desdibujado aunque el total cierre: si el PDF trae una linea de
+intereses que no pudimos leer, esos pesos caen en "otros cargos". Paso de verdad —en la
+Mastercard de agosto el importe quedo un renglon antes que su texto— y se arreglo mirando la
+linea anterior. **El total siempre cierra; lo que puede moverse es el reparto.**
+
+La pantalla muestra el cierre del banco al lado del nuestro y nombra la diferencia.
 
 ---
 

@@ -92,7 +92,11 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
         .from("card_statements")
         // total_due va porque el minimo se calcula SOBRE el saldo de cierre: es el
         // denominador de la proporcion que despues se proyecta.
-        .select("debt_id, period, minimum_payment, total_due")
+        //
+        // interest_charged y previous_balance van para la tasa efectiva: el
+        // banco no cobra sobre el saldo entero sino sobre la parte financiada,
+        // y esa proporcion no se deduce de ninguna tasa publicada.
+        .select("debt_id, period, minimum_payment, total_due, interest_charged, previous_balance, financed_balance")
         .eq("scenario_id", scenario.id)
         .order("period", { ascending: false }),
       supabase
@@ -117,6 +121,27 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
   const bridges = toBridgeFlows((bridgesRes.data ?? []) as BridgeLoanRow[]);
 
   const period = currentPeriod();
+
+  /**
+   * La tasa que de verdad le costo el mes a una tarjeta, sobre su saldo entero.
+   *
+   *   intereses que cobro el banco / saldo sobre el que los cobro
+   *
+   * No es la TEM. El banco cobra sobre la parte financiada --lo que no se pago
+   * al vencimiento-- y ningun resumen publica cuanto es, asi que aplicar la
+   * TEM al saldo entero cobra de mas: en una Visa real, $ 322.139 proyectados
+   * contra $ 242.072 cobrados. La proporcion no se puede deducir, pero el
+   * cociente si se puede medir, y es lo que se usa mientras haya un resumen
+   * que lo diga.
+   */
+  function tasaEfectivaDe(debtId: string): number | null {
+    const st = statements.find((s) => s.debt_id === debtId);
+    if (!st || st.interest_charged == null) return null;
+    const base = Number(st.previous_balance);
+    const interes = Number(st.interest_charged);
+    if (!(base > 0) || !(interes > 0)) return null;
+    return interes / base;
+  }
 
   const debts: CashflowDebt[] = rawDebts.map((d) => {
     const balance = deriveBalance(
@@ -146,7 +171,10 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
           ? Number(d.monthly_payment)
           : 0;
 
-    const rate = d.tem != null ? Number(d.tem) : monthlyRateFromAnnual(d.annual_interest_rate);
+    // La medida manda sobre la declarada, y la declarada sobre la deducida.
+    const rate =
+      tasaEfectivaDe(d.id) ??
+      (d.tem != null ? Number(d.tem) : monthlyRateFromAnnual(d.annual_interest_rate));
     const projectedBalance = Math.max(0, balance + balance * rate - dueThisMonth);
 
     const installments: CashflowInstallment[] = plans
@@ -206,7 +234,9 @@ export const getCashflowScreen = cache(async function getCashflowScreen(): Promi
 
     return {
       balance: balanceHoy,
-      monthlyRate: d.tem != null ? Number(d.tem) : monthlyRateFromAnnual(d.annual_interest_rate),
+      monthlyRate:
+        tasaEfectivaDe(d.id) ??
+        (d.tem != null ? Number(d.tem) : monthlyRateFromAnnual(d.annual_interest_rate)),
       // Una tarjeta no tiene cuota fija; un préstamo no tiene resumen.
       fixedPayment:
         d.kind === "tarjeta" ? null : d.monthly_payment != null ? Number(d.monthly_payment) : null,

@@ -439,6 +439,92 @@ console.log("=== 9. La TEM declarada manda sobre la anual ===\n");
 }
 
 console.log("");
+/*
+ * Los seis resumenes reales, reconstruidos.
+ *
+ * Se leyeron linea por linea los seis PDF que hay (Visa BBVA y Mastercard BBVA
+ * de agosto y septiembre, Patagonia de agosto y septiembre) y los seis cierran
+ * EXACTO con la misma estructura:
+ *
+ *   cierre = anterior - pagos - creditos + transferencia de dolares
+ *            + consumos + intereses + impuestos y otros cargos
+ *
+ * Aca van los tres casos que rompian el modelo viejo, con las cifras de esos
+ * PDF. No hace falta el PDF para correr esto: si `closeStatement` deja de
+ * reproducirlos, cambio algo que ya estaba medido contra un banco de verdad.
+ */
+console.log("");
+console.log("=== 10. Los resumenes reales cierran exacto ===\n");
+
+{
+  // Visa Signature ...2166, septiembre. El caso completo: cuotas adentro de
+  // los consumos, dolares pasados a pesos por el banco, e impuestos.
+  const visa = closeStatement({
+    previousBalance: 5_710_670.92,
+    annualRate: 68.63,
+    monthlyRate: 0.05641,
+    declaredInterest: 242_071.81,
+    newCharges: 3_350_089.59,
+    usdCharges: 241_163.5,
+    otherCharges: 344_696.24,
+    minimumPayment: 4_614_770,
+    amountPaid: 1_798_839.63,
+  });
+  check("Visa de septiembre cierra donde dice el banco", visa.newBalance, 8_089_852);
+
+  // Mastercard Black ...3311, septiembre. Sin una sola linea de intereses: le
+  // cuotificaron el saldo, y esos 2,9 millones SALEN de la tarjeta.
+  const master = closeStatement({
+    previousBalance: 4_152_659.25,
+    annualRate: 68.63,
+    monthlyRate: 0.0564,
+    // Ese resumen no tiene una sola linea de intereses: le cuotificaron el
+    // saldo. Cero declarado, no "no sabemos".
+    declaredInterest: 0,
+    newCharges: 1_309_399.39,
+    otherCharges: 59_180.22,
+    credits: 2_952_659.25,
+    minimumPayment: 0,
+    amountPaid: 1_200_000,
+  });
+  check("la Mastercard cuotificada cierra donde dice el banco", master.newBalance, 1_368_580);
+
+  // Patagonia ...4139, septiembre.
+  const pata = closeStatement({
+    previousBalance: 3_295_526.81,
+    annualRate: 80.5,
+    monthlyRate: 0.06616,
+    declaredInterest: 190_581.32,
+    newCharges: 1_286_643.82,
+    usdCharges: 100_639.2,
+    otherCharges: 81_044.53,
+    minimumPayment: 675_505,
+    amountPaid: 310_000,
+  });
+  check("la Patagonia de septiembre cierra donde dice el banco", pata.newBalance, 4_644_436);
+
+  /*
+   * Y lo que costaba no tenerlos: el mismo resumen de la Visa con el modelo
+   * viejo --interes deducido de la TEM sobre el saldo entero, sin impuestos y
+   * con los consumos sin las cuotas-- daba casi millon y medio menos.
+   */
+  const viejo = closeStatement({
+    previousBalance: 5_710_670.92,
+    annualRate: 68.63,
+    monthlyRate: 0.05641,
+    newCharges: 738_668.04,
+    minimumPayment: 4_614_770,
+    amountPaid: 0,
+  });
+  const falta = 8_089_852 - (viejo.newBalance - 1_798_839);
+  console.log(
+    "  " + (falta > 1_000_000 ? "= " : "!=") +
+      " lo que el modelo viejo dejaba afuera en un solo resumen: " + formatMoney(falta)
+  );
+  if (falta <= 1_000_000) note("El modelo viejo dejo de diferir: revisar el caso.");
+}
+
+console.log("");
 console.log("=== Diferencias encontradas ===\n");
 if (differences.length === 0) {
   console.log("Ninguna: los dos motores dan lo mismo en este caso.");

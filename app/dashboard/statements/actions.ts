@@ -171,6 +171,23 @@ export async function saveStatement(
 
   const usdCharges = usdRate !== null && usdRate > 0 ? Math.round(usdBalance * usdRate) : 0;
 
+  /*
+   * Lo que el resumen cobra encima de los consumos, y lo que acredita.
+   *
+   * Los seis resumenes reales que se reconstruyeron cierran exacto con estos
+   * terminos y no cerraban sin ellos. Los intereses declarados mandan sobre
+   * nuestra cuenta: el banco cobra sobre la parte financiada y nosotros
+   * estimabamos sobre el saldo entero, $ 80.000 de mas en un mes.
+   */
+  const declaredInterestRaw = parseArgNumber(String(formData.get("declared_interest") ?? ""));
+  const declaredInterest =
+    declaredInterestRaw !== null && declaredInterestRaw >= 0 ? declaredInterestRaw : null;
+  const otherCharges = parseArgNumber(String(formData.get("other_charges_total") ?? "")) ?? 0;
+  const credits = parseArgNumber(String(formData.get("credits_total") ?? "")) ?? 0;
+
+  if (otherCharges < 0) return { message: "Los impuestos no pueden ser negativos." };
+  if (credits < 0) return { message: "La cuotificación no puede ser negativa." };
+
   const { data: debt } = await supabase
     .from("debts")
     .select("id, scenario_id, base_balance, annual_interest_rate, tem")
@@ -252,6 +269,9 @@ export async function saveStatement(
     previousBalance,
     annualRate: debt.annual_interest_rate,
     monthlyRate,
+    declaredInterest,
+    otherCharges,
+    credits,
     newCharges,
     minimumPayment: minimumPayment ?? 0,
     amountPaid,
@@ -279,6 +299,18 @@ export async function saveStatement(
         // de explicar de donde salio.
         usd_balance: usdBalance,
         usd_rate: usdRate,
+        taxes_charged: close.otherCharges,
+        credits: close.credits,
+        /*
+         * El saldo sobre el que el banco cobro intereses. Division nuestra y
+         * no dato del resumen: ningun banco lo publica. Se guarda porque es la
+         * diferencia entre estimar el mes que viene sobre el saldo entero o
+         * sobre la parte que de verdad devenga.
+         */
+        financed_balance:
+          declaredInterest !== null && monthlyRate != null && monthlyRate > 0
+            ? Math.round(declaredInterest / monthlyRate)
+            : null,
         source: "manual",
       },
       { onConflict: "debt_id,period" }

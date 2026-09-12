@@ -125,6 +125,25 @@ export function StatementForm({
   const [newCharges, setNewCharges] = useState("");
   const [minimum, setMinimum] = useState("");
   const [paid, setPaid] = useState("");
+  /*
+   * Lo que el resumen cobra y hasta ahora no tenia donde entrar.
+   *
+   * Los intereses se pedian antes: se deducian del saldo por la TEM. El banco
+   * no cobra asi --cobra sobre la parte financiada-- y la diferencia, medida
+   * sobre una Visa real, fue de $ 80.000 en un mes. Cuando el PDF los declara,
+   * mandan ellos.
+   *
+   * Los impuestos no se modelaban en absoluto. En seis resumenes reales van de
+   * $ 59.180 a $ 663.227: no es un redondeo, en uno son el 4% del saldo.
+   */
+  const [interest, setInterest] = useState("");
+  const [otherCharges, setOtherCharges] = useState("");
+  /*
+   * La cuotificacion: el banco acredita el saldo financiado y lo pasa a cuotas
+   * fijas. En la Mastercard de septiembre son $ 2.952.659 que salieron de la
+   * tarjeta. Sin esto el cierre daba tres millones de mas.
+   */
+  const [credits, setCredits] = useState("");
 
   /*
    * Los dolares. El total sale del PDF; la cotizacion no, porque el resumen no
@@ -133,6 +152,7 @@ export function StatementForm({
    */
   const [usdBalance, setUsdBalance] = useState("");
   const [usdRate, setUsdRate] = useState("");
+  const [chargesOpen, setChargesOpen] = useState(false);
   // El bloque arranca cerrado —el prototipo no tiene dolares en esta pantalla—
   // y se abre solo cuando el PDF declara un saldo en dolares, que es cuando la
   // pregunta deja de ser hipotetica.
@@ -200,6 +220,18 @@ export function StatementForm({
 
     if (result.period) setPeriod(result.period);
     if (result.newCharges != null) setNewCharges(String(Math.round(result.newCharges)));
+    if (result.interest != null) setInterest(String(Math.round(result.interest)));
+    if (result.otherCharges != null) setOtherCharges(String(Math.round(result.otherCharges)));
+    if (result.credits != null) setCredits(String(Math.round(result.credits)));
+    // Lo que el resumen dice que se pago en el periodo. Es el dato del banco:
+    // antes habia que buscarlo en el PDF y escribirlo.
+    if (result.paidInPeriod != null && result.paidInPeriod > 0) {
+      setPaid(String(Math.round(result.paidInPeriod)));
+      setPayKind("variable");
+    }
+    // Y la cotizacion a la que el banco paso los dolares a pesos, que viene en
+    // su linea de transferencia de deuda.
+    if (result.usdRateFromStatement != null) setUsdRate(formatArgNumber(result.usdRateFromStatement));
     if (result.minimumPayment != null) setMinimum(String(Math.round(result.minimumPayment)));
 
     // Los de la tarjeta se llenan siempre, aunque todavía no se haya elegido
@@ -288,8 +320,11 @@ export function StatementForm({
       minimumPayment: parseMoney(minimum),
       amountPaid: parseMoney(paid),
       usdCharges: usdInPesos,
+      declaredInterest: interest ? parseMoney(interest) : null,
+      otherCharges: parseMoney(otherCharges),
+      credits: parseMoney(credits),
     });
-  }, [card, previousBalance, newCharges, minimum, paid, usdInPesos]);
+  }, [card, previousBalance, newCharges, minimum, paid, usdInPesos, interest, otherCharges, credits]);
 
   /**
    * El tipo de pago no es un dato aparte: es un atajo que escribe "cuánto
@@ -363,6 +398,9 @@ export function StatementForm({
         </p>
 
         {needsConfirm && <input type="hidden" name="confirmed" value="1" />}
+        <input type="hidden" name="declared_interest" value={interest} />
+        <input type="hidden" name="other_charges_total" value={otherCharges} />
+        <input type="hidden" name="credits_total" value={credits} />
         {paidOn && <input type="hidden" name="paid_on" value={paidOn} />}
         {/*
           La TEM que declaro el PDF, para cualquier tarjeta y no solo la que se
@@ -521,6 +559,57 @@ export function StatementForm({
           value={newCharges}
           onChange={setNewCharges}
         />
+        {/*
+          Lo que el resumen cobra encima de los consumos. Se reconstruyeron
+          seis resumenes reales de dos bancos y los seis cierran EXACTO con
+          estos terminos; antes de tenerlos, el cierre daba siempre por debajo
+          del real y no habia forma de ver por que.
+
+          Van adentro de un <details> y no sueltos porque salen del PDF ya
+          cargados: quien sube el resumen no tiene que tocarlos. El que carga a
+          mano los abre.
+        */}
+        <details
+          className="group mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3"
+          open={chargesOpen}
+          onToggle={(e) => setChargesOpen((e.currentTarget as HTMLDetailsElement).open)}
+        >
+          <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 text-card text-pine hover:text-leaf">
+            Intereses, impuestos y cuotificación
+            <Chevron className="group-open:rotate-180" />
+          </summary>
+
+          <p className="help mt-1">
+            Los trae el PDF. Si cargás a mano, están en el resumen: los intereses como
+            “INTERESES FINANCIACIÓN”, y los impuestos repartidos en varios renglones (IVA,
+            sellos, IIBB, percepciones).
+          </p>
+
+          <MoneyField
+            id="interest"
+            label="Intereses del período"
+            help="Lo que el banco dice haber cobrado. Vacío: lo estimamos con la tasa sobre el saldo, que da de más — el banco cobra sobre la parte financiada, no sobre el total."
+            value={interest}
+            onChange={setInterest}
+          />
+
+          <MoneyField
+            id="other_charges"
+            label="Impuestos y otros cargos"
+            help="IVA sobre los intereses, IVA de los planes en cuotas, sellos, IIBB, percepciones y adelantos. En los resúmenes reales van de $ 59.000 a $ 663.000."
+            value={otherCharges}
+            onChange={setOtherCharges}
+          />
+
+          <MoneyField
+            id="credits"
+            label="Cuotificación y otros créditos"
+            help="Lo que el banco sacó del saldo sin que sea un pago tuyo. Si te cuotificaron el saldo, acá va lo que salió de la tarjeta y pasó a cuotas fijas."
+            value={credits}
+            onChange={setCredits}
+          />
+        </details>
+
         {/*
           Los dolares, que antes quedaban afuera del saldo con un aviso que
           decia "cargalos a mano" y no decia donde. Se pagan a la cotizacion del
@@ -794,6 +883,15 @@ function StatementPreview({
         <PreviewRow label="Interés del mes" value={formatMoney(close.interest)} />
         {close.usdCharges > 0 && (
           <PreviewRow label="Consumos en dólares" value={formatMoney(close.usdCharges)} />
+        )}
+        {close.otherCharges > 0 && (
+          <PreviewRow label="Impuestos y otros cargos" value={formatMoney(close.otherCharges)} />
+        )}
+        {close.credits > 0 && (
+          <PreviewRow
+            label="Cuotificación (sale del saldo)"
+            value={`−${formatMoney(close.credits)}`}
+          />
         )}
         {close.lateFee > 0 && (
           <PreviewRow

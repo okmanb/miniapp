@@ -49,6 +49,16 @@ export interface ParseResult {
   minimumPayment?: number | null;
   previousBalance?: number | null;
   statementBalance?: number | null;
+  /** Los intereses que el resumen dice haber cobrado. */
+  interest?: number | null;
+  /** Impuestos y demás cargos del resumen. */
+  otherCharges?: number | null;
+  /** Lo que salió del saldo sin ser un pago (una cuotificación). */
+  credits?: number | null;
+  /** Lo que se pagó durante el período, según el propio resumen. */
+  paidInPeriod?: number | null;
+  /** La cotización a la que el banco pasó los dólares a pesos. */
+  usdRateFromStatement?: number | null;
   /** Total en dólares que declara el resumen. Dato del banco. */
   usdBalance?: number | null;
   /** Lo que se pudo sumar línea por línea. Sirve para comparar, no para mostrar. */
@@ -146,6 +156,23 @@ export async function parseStatementPdf(formData: FormData): Promise<ParseResult
     minimumPayment: parsed.pagoMinimo,
     previousBalance: parsed.saldoAnterior,
     statementBalance: parsed.saldoActual,
+    /*
+     * Cero, no null, cuando el resumen se pudo reconciliar: hay resumenes que
+     * no cobran un peso de interes --el de la Mastercard cuotificada no tiene
+     * una sola linea-- y dejarlo vacio hacia que la app lo estimara con la
+     * tasa y le sumara $ 234.210 que nadie cobro. Con el saldo de cierre
+     * reconciliado, lo que el resumen no dice es que no existe.
+     */
+    interest:
+      parsed.otrosCargos != null
+        ? (parsed.interesesFinanciacion ?? 0)
+        : parsed.interesesFinanciacion,
+    otherCharges: parsed.otrosCargos,
+    credits: parsed.creditosDelPeriodo,
+    paidInPeriod: parsed.pagosDelPeriodo,
+    // La cotizacion la trae el resumen en su linea de transferencia de deuda.
+    // La app la venia pidiendo a mano y no hacia falta.
+    usdRateFromStatement: parsed.transferenciaDeuda?.tc ?? null,
     usdBalance: parsed.saldoActualUsd,
     usdExcluded: parsed.usdChargesExcluded,
     installments: parsed.planVEntries.map((entry) => ({
