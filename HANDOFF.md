@@ -774,12 +774,40 @@ anual dividida por doce, ignorando la TEM declarada y la efectiva. Ahora usan la
 prioridad que el resto de la app —medida, declarada, deducida— y el interes que muestran es
 el que el banco cobra.
 
-### Lo que quedo propuesto y no aplicado
+### Los vencimientos apilados: la otra mitad, tambien arreglada
 
-La alerta de vencimientos apilados suma los minimos de las tarjetas que vencen dentro de la
-ventana y lo llama "Total a cubrir". **Tampoco mira si alguno ya se pago**, asi que puede
-pedir que cubras plata que ya pusiste. Es el mismo razonamiento que el de arriba y esta sin
-tocar: el prototipo lo hace asi y nadie lo reporto todavia.
+Misma sesion, mismo motivo. La alerta de vencimientos apilados contaba TODOS los
+vencimientos de la ventana y sumaba todos los minimos, pagados o no, bajo el rotulo "Total a
+cubrir" — o sea que podia pedir que cubrieras plata que ya habias puesto.
+
+Ahora una deuda con el minimo del mes ya pagado **queda afuera de la pila entera**, no solo
+del total: si de tres vencimientos ya pagaste uno, el titulo dice dos. Y si queda uno solo,
+la alerta no sale — un vencimiento suelto no es una pila, y esa es la respuesta correcta, no
+un agujero.
+
+Lo fija la **seccion 12 del `cross-check`**, con los tres casos: ninguna pagada, una pagada,
+y dos pagadas.
+
+---
+
+## El diseño de la puerta de entrada
+
+`app/page.tsx` (la landing donde se prueba o se entra) **no sale del prototipo**: el
+prototipo solo tiene `login`, `signup` y `recover`, asi que esa pantalla es invencion de la
+app y hay margen para moverla sin romper la regla del prototipo.
+
+El 12 de septiembre se dibujaron tres direcciones en un lienzo de Claude Design, todas
+dentro del sistema (pine, teal, mint, Work Sans + Plex Mono, radios 8/12/14/pill):
+
+- **A · El mes que no llega** — hero pine a sangre completa con la curva cruzando el cero.
+- **B · La pregunta** — el nombre a 62px y la respuesta ("No. Hasta diciembre.").
+- **C · El resumen** — la primera pantalla ES un resumen de cuenta.
+
+Mas la pantalla **Ingresar** en la direccion A, que agrega algo que hoy falta: "Probar sin
+cuenta". Quien cae en `/login` sin tener cuenta hoy tiene que volver atras con el navegador.
+
+**Esta esperando que se elija una dirección**, y despues va el icono acorde. **La app no
+tiene ningun icono**: no hay `app/icon.*`, ni favicon, ni `public/`.
 
 ---
 

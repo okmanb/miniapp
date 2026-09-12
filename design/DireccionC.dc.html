@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #F1F3EF; font-family: "Work Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #0E3A31; text-decoration: none; }
+    a:hover { color: #175F42; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<!--
+  DIRECCION C — "El resumen"
+
+  El punch viene de hablar el idioma del producto: la primera pantalla ES un
+  resumen de cuenta, con sus renglones en mono y su total en rojo. Quien debe
+  plata reconoce ese objeto al instante, y la promesa se entiende sin leer una
+  sola linea de marketing.
+
+  Contra: es la mas fria de las tres, y usa el mismo lenguaje visual que la
+  cosa que a la persona le da ansiedad. Puede leerse como el problema en vez
+  de como la solucion.
+-->
+<div style="width: 390px; background: #F1F3EF; color: #12211D; overflow: hidden">
+
+  <div style="display: flex; flex-direction: column; gap: 20px; padding: 40px 18px 30px 18px">
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+      <span class="mono" style="font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #175F42">¿Llegás?</span>
+      <a href="#" style="font-size: 12px; font-weight: 600; color: #0E3A31; text-decoration: underline; text-underline-offset: 2px">Ingresar</a>
+    </div>
+
+    <h1 style="margin: 0; font-size: 27px; line-height: 1.14; letter-spacing: -.022em; font-weight: 600; color: #12211D; text-wrap: pretty">
+      Tus resúmenes ya dicen todo esto. Nadie los suma.
+    </h1>
+
+    <!-- El objeto: un resumen de cuenta, con la misma anatomia que el de
+         verdad. Los renglones salen de lo que la app efectivamente lee de un
+         PDF: consumos, intereses, impuestos, cuotas. -->
+    <div style="border: 1px solid #DEE3DD; border-radius: 14px; background: #FFFFFF; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #E2E7E1; background: #F7FAF7; padding: 13px 15px">
+        <span class="mono" style="font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #5C6B65">Resumen de septiembre</span>
+        <span class="mono" style="font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #A6B0AA">ejemplo</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0; padding: 6px 15px 14px 15px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 9px 0">
+          <span style="font-size: 12.5px; color: #5C6B65">Saldo anterior</span>
+          <span class="mono" style="font-size: 12.5px; color: #12211D">$ 5.710.671</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 9px 0">
+          <span style="font-size: 12.5px; color: #5C6B65">Consumos y cuotas</span>
+          <span class="mono" style="font-size: 12.5px; color: #12211D">$ 3.350.090</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 9px 0">
+          <span style="font-size: 12.5px; color: #823123">Intereses</span>
+          <span class="mono" style="font-size: 12.5px; color: #823123">$ 242.072</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 9px 0">
+          <span style="font-size: 12.5px; color: #823123">Impuestos y otros cargos</span>
+          <span class="mono" style="font-size: 12.5px; color: #823123">$ 344.696</span>
+        </div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 14px; border-top: 1px solid #E2E7E1; margin-top: 6px; padding: 13px 0 2px 0">
+          <span style="font-size: 13.5px; font-weight: 600; color: #12211D">Cierra en</span>
+          <span class="mono" style="font-size: 17px; font-weight: 600; color: #12211D">$ 8.089.852</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: flex-start; border-top: 1px solid #F2C7BE; background: #FFF6F3; padding: 13px 15px">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #B14D3B; flex-shrink: 0; margin-top: 5px"></span>
+        <p style="margin: 0; font-size: 12px; line-height: 1.45; color: #823123; text-wrap: pretty">
+          Pagando el mínimo, ese saldo tarda <strong style="font-weight: 600">26 meses</strong> y suma
+          <strong style="font-weight: 600">$ 2.402.561</strong> de interés.
+        </p>
+      </div>
+    </div>
+
+    <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #5C6B65; text-wrap: pretty">
+      Cargás el PDF y la app hace la cuenta: el interés que te cobraron, los impuestos, las
+      cuotas del mes, y en qué mes el flujo se te da vuelta.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <a href="#" style="display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 999px; background: #0E3A31; padding: 13px 20px; font-size: 13.5px; font-weight: 600; color: #FFFFFF">
+        <span>Probar con un resumen</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <p style="margin: 0; text-align: center; font-size: 11.5px; line-height: 1.5; color: #5C6B65">
+        Sin cuenta. Sin conectar el banco. Sin claves.
+      </p>
+    </div>
+
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px 18px 40px 18px">
+    <div style="display: flex; flex-direction: column; gap: 5px; border: 1px solid #DEE3DD; border-radius: 12px; background: #FFFFFF; padding: 13px 12px">
+      <span class="mono" style="font-size: 17px; font-weight: 600; color: #0E3A31">6</span>
+      <span style="font-size: 11px; line-height: 1.35; color: #5C6B65">meses de proyección</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 5px; border: 1px solid #DEE3DD; border-radius: 12px; background: #FFFFFF; padding: 13px 12px">
+      <span class="mono" style="font-size: 17px; font-weight: 600; color: #0E3A31">PDF</span>
+      <span style="font-size: 11px; line-height: 1.35; color: #5C6B65">del resumen, y listo</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 5px; border: 1px solid #DEE3DD; border-radius: 12px; background: #FFFFFF; padding: 13px 12px">
+      <span class="mono" style="font-size: 17px; font-weight: 600; color: #0E3A31">0</span>
+      <span style="font-size: 11px; line-height: 1.35; color: #5C6B65">datos del banco</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

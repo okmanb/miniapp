@@ -595,6 +595,76 @@ console.log("=== 11. La alerta de la deuda mas cara ===\n");
   check("la cuota fija de un prestamo no cambia", prestamo.metricValue, 4_614_770);
 }
 
+/*
+ * Los vencimientos apilados no cuentan lo que ya se pago.
+ *
+ * La otra diferencia deliberada con el prototipo, del mismo dia y por el mismo
+ * motivo: el prototipo suma todos los minimos de la ventana, pagados o no, y
+ * llama a eso "Total a cubrir". Pedir que cubras plata que ya pusiste es el
+ * aviso que enseña a ignorar los avisos.
+ */
+console.log("");
+console.log("=== 12. Los vencimientos apilados ===\n");
+
+{
+  // Tres tarjetas que vencen el 7, el 8 y el 10; la ventana de aviso es de 5
+  // dias y hoy es el 6, asi que las tres entran.
+  const tarjeta = (id: string, dueDay: number, minimo: number): AlertDebt => ({
+    id,
+    name: "Tarjeta " + id,
+    kind: "tarjeta",
+    balance: 1_000_000,
+    annualRate: 80,
+    monthlyRate: 0.066,
+    monthlyInterest: 66_000,
+    dueDay,
+    minimumPayment: minimo,
+    minimumPaidThisMonth: false,
+  });
+
+  const hoy = {
+    cashflow: { months: [], runwayIndex: -1, firstGapIndex: -1, remainingAtRunway: 0 },
+    canProject: false,
+    scenarioName: "Plan base",
+    monthlyIncome: 0,
+    monthlyFixed: 0,
+    leadDays: 5,
+    today: new Date("2026-09-06T12:00:00"),
+  } as Omit<Parameters<typeof deriveAlerts>[0], "debts">;
+
+  const tres = [tarjeta("a", 7, 100_000), tarjeta("b", 8, 200_000), tarjeta("c", 10, 300_000)];
+
+  const sinPagar = deriveAlerts({ ...hoy, debts: tres }).find((a) => a.kind === "vencimiento_hoy")!;
+  check("las tres sin pagar suman las tres", sinPagar.metricValue, 600_000);
+  checkTexto("...y el titulo las cuenta", sinPagar.title, "3 vencimientos en 5 días");
+
+  // Pagada la del 8, quedan dos: el total baja y el titulo lo dice.
+  const unaPaga = deriveAlerts({
+    ...hoy,
+    debts: [tres[0], { ...tres[1], minimumPaidThisMonth: true }, tres[2]],
+  }).find((a) => a.kind === "vencimiento_hoy")!;
+  check("pagada una, el total no la cuenta", unaPaga.metricValue, 400_000);
+  checkTexto("...y el titulo tampoco", unaPaga.title, "2 vencimientos en 5 días");
+
+  /*
+   * Pagadas dos, queda un vencimiento suelto: deja de haber pila y la alerta
+   * no sale. Es la respuesta correcta, no un agujero.
+   */
+  const dosPagas = deriveAlerts({
+    ...hoy,
+    debts: [
+      tres[0],
+      { ...tres[1], minimumPaidThisMonth: true },
+      { ...tres[2], minimumPaidThisMonth: true },
+    ],
+  }).find((a) => a.kind === "vencimiento_hoy");
+  checkTexto(
+    "con uno solo sin pagar no hay pila",
+    dosPagas ? "sale igual" : "no sale",
+    "no sale"
+  );
+}
+
 console.log("");
 console.log("=== Diferencias encontradas ===\n");
 if (differences.length === 0) {

@@ -131,10 +131,25 @@ export function deriveAlerts(params: {
     });
   }
 
-  // 2 · vencimientos apilados dentro de la ventana de aviso. Se agrupan porque
-  //     el problema no es que venza una: es que vencen tres juntas.
+  /*
+   * 2 · vencimientos apilados dentro de la ventana de aviso. Se agrupan porque
+   *     el problema no es que venza una: es que vencen tres juntas.
+   *
+   * SEGUNDA DIFERENCIA DELIBERADA CON EL PROTOTIPO, del 12 de septiembre, por
+   * el mismo motivo que la de la alerta 5: lo que ya se pago no es algo que
+   * venga. El prototipo cuenta todos los vencimientos de la ventana y suma
+   * todos los minimos, pagados o no, asi que podia pedir que cubrieras plata
+   * que ya habias puesto —y ese es exactamente el aviso que enseña a ignorar
+   * los avisos.
+   *
+   * Se excluye la deuda entera, no solo su monto del total: si de tres
+   * vencimientos ya pagaste uno, quedan dos, y el titulo tiene que decir dos.
+   * Si queda uno solo deja de haber apilamiento y la alerta no sale, que es
+   * la respuesta correcta: un vencimiento suelto no es una pila.
+   */
   const DAY = 86_400_000;
   const dues = params.debts
+    .filter((d) => !d.minimumPaidThisMonth)
     .map((d) => {
       const date = nextDueDate(d, today);
       return date ? { debt: d, time: date.getTime(), date } : null;

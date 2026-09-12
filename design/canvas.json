@@ -1,0 +1,46 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 1290, "title": "A · El mes que no llega" },
+    { "file": "DireccionB.dc.html", "x": 510, "y": 0, "w": 390, "h": 1030, "title": "B · La pregunta" },
+    { "file": "DireccionC.dc.html", "x": 1020, "y": 0, "w": 390, "h": 1080, "title": "C · El resumen" },
+    { "file": "Ingresar.dc.html", "x": 1530, "y": 0, "w": 390, "h": 800, "title": "Ingresar (en la dirección A)" }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -190,
+      "w": 900,
+      "text": "La puerta de entrada, con punch.\n\nEl prototipo NO tiene pantalla de landing — solo login, signup y recuperar — así que esta pantalla es invención de la app y hay margen real para moverla. Todo lo que se ve acá sale del sistema tal cual: pine #0E3A31, teal #0D6B5C, mint #97DCBA, fondo #F1F3EF, Work Sans + IBM Plex Mono, radios 8/12/14/pill, la única sombra del sistema.\n\nTres direcciones distintas, no tres tonos de la misma. Elegí una y con esa hago el ícono."
+    },
+    {
+      "id": "nota-a",
+      "x": 0,
+      "y": 1330,
+      "w": 390,
+      "text": "A · El mes que no llega\n\nEl punch es de contraste: un pine a sangre completa en la primera pantalla, que es lo más fuerte que el sistema permite sin inventar un color. Adentro va la curva cruzando el cero, que es literalmente el producto.\n\nA favor: sobrevive a una captura chica y a la vista previa de un link.\nEn contra: es la que más se aleja de la calma clara del resto de la app."
+    },
+    {
+      "id": "nota-b",
+      "x": 510,
+      "y": 1070,
+      "w": 390,
+      "text": "B · La pregunta\n\nEl punch es tipográfico: el nombre es la pregunta que la app contesta, puesto a 62px. Sin bloque oscuro, la app entera sigue clara.\n\nA favor: la más fiel al sistema, y la respuesta («No. Hasta diciembre.») es la frase más dura de las tres.\nEn contra: es silenciosa. Si el problema era que la pantalla no frena a nadie, esta lo resuelve con escala y no con color."
+    },
+    {
+      "id": "nota-c",
+      "x": 1020,
+      "y": 1120,
+      "w": 390,
+      "text": "C · El resumen\n\nEl punch es de reconocimiento: la primera pantalla ES un resumen de cuenta. Quien debe plata reconoce ese objeto al instante. Las cifras son las de tu Visa de septiembre.\n\nA favor: la promesa se entiende sin leer marketing.\nEn contra: la más fría, y usa el mismo lenguaje visual que la cosa que da ansiedad."
+    },
+    {
+      "id": "nota-ingresar",
+      "x": 1530,
+      "y": 840,
+      "w": 390,
+      "text": "Ingresar\n\nHoy es el AuthShell pelado: el nombre en mono, un título, dos campos y un botón. Lo único que cambia es el marco — la misma cabecera oscura de la landing — para que entrar se vea como el mismo producto.\n\nLos campos no se tocan: mismo alto 44, radio 12, borde #D3DAD2, etiqueta 10.5 en mayúsculas.\n\nLo que sí agrega: «Probar sin cuenta». Hoy quien cae acá sin cuenta tiene que volver atrás."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
