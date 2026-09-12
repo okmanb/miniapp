@@ -8,7 +8,7 @@
 <x-dc>
 <helmet>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
   <style>
     body { margin: 0; background: #F1F3EF; font-family: "Work Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
     a { color: #0E3A31; text-decoration: none; }
@@ -17,150 +17,132 @@
   </style>
 </helmet>
 
+<!--
+  LA PUERTA DE ENTRADA — direccion B, elegida.
+
+  El punch es tipografico: el nombre de la app ES la pregunta que contesta, y
+  puesto a tamano de display se sostiene solo. Todo lo demas queda muy por
+  debajo en jerarquia. Sin bloque oscuro: la app entera es clara y esta
+  pantalla no rompe esa calma.
+
+  Una sola accion primaria, repetida al final. Nunca dos que compitan.
+-->
 <div style="width: 390px; background: #F1F3EF; color: #12211D; overflow: hidden">
 
-  <!-- HERO: el bloque oscuro es el punch. El resto del sistema es claro, asi
-       que un pine a sangre completa en la primera pantalla es el contraste mas
-       fuerte que el sistema permite sin inventar un color. -->
-  <div style="display: flex; flex-direction: column; gap: 22px; background: #0E3A31; padding: 40px 18px 30px 18px">
+  <!-- HERO -->
+  <div style="display: flex; flex-direction: column; gap: 26px; padding: 54px 18px 32px 18px">
 
-    <div style="display: flex; align-items: center; gap: 9px">
-      <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <rect width="32" height="32" rx="9" fill="#97DCBA"/>
-        <path d="M8 11.5c3.4 0 3.4 6 6.8 6s3.4-6 6.8-6c1.7 0 2.6 1.5 3.4 3" stroke="#0E3A31" stroke-width="2.6" stroke-linecap="round"/>
-        <circle cx="23.5" cy="22" r="2.1" fill="#0E3A31"/>
-      </svg>
-      <span class="mono" style="font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #97DCBA">¿Llegás?</span>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span class="mono" style="font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #5C6B65">Tus deudas, mes a mes</span>
+      <h1 style="margin: 0; font-size: 62px; line-height: .94; letter-spacing: -.045em; font-weight: 800; color: #0E3A31">¿Llegás?</h1>
     </div>
 
-    <h1 style="margin: 0; font-size: 30px; line-height: 1.1; letter-spacing: -.022em; font-weight: 600; color: #FFFFFF; text-wrap: pretty">
-      Mirá el mes que viene<br>antes de que llegue.
-    </h1>
+    <!-- La bajada cuelga de una barra mint: el unico acento de color del
+         bloque, y lo que sostiene la jerarquia debajo del titulo. -->
+    <div style="display: flex; flex-direction: column; gap: 13px; border-left: 2px solid #97DCBA; padding-left: 15px">
+      <p style="margin: 0; font-size: 19px; line-height: 1.28; font-weight: 600; letter-spacing: -.015em; color: #12211D; text-wrap: pretty">
+        Mirá el mes que viene antes de que llegue.
+      </p>
+      <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #5C6B65; text-wrap: pretty">
+        En qué mes te quedás sin plata, por qué crece cada saldo y qué cambia si pagás
+        distinto. No promete sacarte de la deuda: te muestra con qué te vas a encontrar.
+      </p>
+    </div>
 
-    <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #A8C7BB; text-wrap: pretty">
-      En qué mes te quedás sin plata, por qué crece cada saldo y qué cambia si pagás distinto.
-      No promete sacarte de la deuda: te muestra con qué te vas a encontrar.
-    </p>
-
-    <!-- La curva. Es el producto, no un adorno: la app existe porque esa linea
-         cruza el cero en algun mes y nadie lo sabe hasta que pasa. -->
-    <div style="display: flex; flex-direction: column; gap: 10px; border: 1px solid #1D4C41; border-radius: 14px; background: #0B322A; padding: 16px 14px 12px 14px">
+    <!-- LA RESPUESTA. Es la unica tarjeta con sombra de toda la pantalla, y
+         la unica de todo el sistema: esa sombra existe para un elemento y
+         aca se gasta en este. -->
+    <div style="display: flex; flex-direction: column; gap: 14px; border: 1px solid #DEE3DD; border-radius: 14px; background: #FFFFFF; padding: 18px 17px; box-shadow: 0 14px 26px -18px rgba(14,58,49,.28)">
       <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
-        <span class="mono" style="font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: #7FA598">Saldo proyectado</span>
-        <span class="mono" style="font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: #7FA598">ejemplo</span>
+        <span class="mono" style="font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: #5C6B65">La respuesta</span>
+        <span class="mono" style="font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: #A6B0AA">ejemplo</span>
       </div>
 
-      <svg viewBox="0 0 326 118" width="100%" height="118" fill="none" aria-hidden="true" style="display: block">
+      <div style="display: flex; align-items: baseline; gap: 10px">
+        <span style="font-size: 36px; line-height: 1; font-weight: 700; letter-spacing: -.03em; color: #B14D3B">No.</span>
+        <span style="font-size: 14px; line-height: 1.3; color: #5C6B65">Hasta diciembre.</span>
+      </div>
+
+      <svg viewBox="0 0 316 76" width="100%" height="76" fill="none" aria-hidden="true" style="display: block">
         <defs>
-          <linearGradient id="verde" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#97DCBA" stop-opacity=".26"/>
-            <stop offset="100%" stop-color="#97DCBA" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="rojo" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#C9735B" stop-opacity="0"/>
-            <stop offset="100%" stop-color="#C9735B" stop-opacity=".38"/>
+          <linearGradient id="bajo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#B14D3B" stop-opacity=".16"/>
+            <stop offset="100%" stop-color="#B14D3B" stop-opacity="0"/>
           </linearGradient>
         </defs>
-
-        <path d="M0 24 L65 34 L130 47 L186 66 L186 66 L186 66 L130 66 L65 66 L0 66 Z" fill="url(#verde)"/>
-        <path d="M186 66 L195 69 L260 89 L326 106 L326 66 Z" fill="url(#rojo)"/>
-
-        <line x1="0" y1="66" x2="326" y2="66" stroke="#2A5B4F" stroke-width="1" stroke-dasharray="3 4"/>
-
-        <polyline points="0,24 65,34 130,47 186,66" stroke="#97DCBA" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-        <polyline points="186,66 195,69 260,89 326,106" stroke="#C9735B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-
-        <circle cx="186" cy="66" r="5.5" fill="#0B322A" stroke="#FFFFFF" stroke-width="2.2"/>
+        <path d="M180 44 L190 47 L253 58 L316 68 L316 44 Z" fill="url(#bajo)"/>
+        <line x1="0" y1="44" x2="316" y2="44" stroke="#DEE3DD" stroke-width="1" stroke-dasharray="3 4"/>
+        <polyline points="0,16 63,22 126,31 180,44" stroke="#25835D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="180,44 190,47 253,58 316,68" stroke="#B14D3B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="180" cy="44" r="5" fill="#FFFFFF" stroke="#B14D3B" stroke-width="2.2"/>
       </svg>
 
-      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0">
-        <span class="mono" style="font-size: 9px; color: #6E9689; text-align: left">sep</span>
-        <span class="mono" style="font-size: 9px; color: #6E9689; text-align: center">oct</span>
-        <span class="mono" style="font-size: 9px; color: #6E9689; text-align: center">nov</span>
-        <span class="mono" style="font-size: 9px; color: #FFFFFF; text-align: center">dic</span>
-        <span class="mono" style="font-size: 9px; color: #6E9689; text-align: center">ene</span>
-        <span class="mono" style="font-size: 9px; color: #6E9689; text-align: right">feb</span>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; margin-top: -4px">
+        <span class="mono" style="font-size: 9px; color: #A6B0AA; text-align: left">sep</span>
+        <span class="mono" style="font-size: 9px; color: #A6B0AA; text-align: center">oct</span>
+        <span class="mono" style="font-size: 9px; color: #A6B0AA; text-align: center">nov</span>
+        <span class="mono" style="font-size: 9px; color: #823123; text-align: center">dic</span>
+        <span class="mono" style="font-size: 9px; color: #A6B0AA; text-align: center">ene</span>
+        <span class="mono" style="font-size: 9px; color: #A6B0AA; text-align: right">feb</span>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 8px; border-top: 1px solid #1D4C41; padding-top: 11px; margin-top: 2px">
-        <span style="width: 7px; height: 7px; border-radius: 999px; background: #C9735B; flex-shrink: 0"></span>
-        <span style="font-size: 12px; line-height: 1.35; color: #DCEAE3">En <strong style="font-weight: 600; color: #FFFFFF">diciembre</strong> no llega. Faltan <span class="mono" style="color: #FFFFFF">$ 412.000</span>.</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #E2E7E1; padding-top: 12px">
+        <span style="font-size: 12px; color: #5C6B65">Te faltan</span>
+        <span class="mono" style="font-size: 15px; font-weight: 600; color: #823123">$ 412.000</span>
       </div>
     </div>
 
-    <!-- Una sola accion primaria, repetida mas abajo. -->
-    <div style="display: flex; flex-direction: column; gap: 9px; margin-top: 2px">
-      <a href="#" style="display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 999px; background: #97DCBA; padding: 13px 20px; font-size: 13.5px; font-weight: 600; color: #0E3A31">
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <a href="#" style="display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; border-radius: 999px; background: #0D6B5C; padding: 13px 20px; font-size: 13.5px; font-weight: 600; color: #FFFFFF">
         <span>Probar con una deuda</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" stroke="#0E3A31" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
-      <a href="#" style="display: flex; min-height: 44px; align-items: center; justify-content: center; border-radius: 999px; border: 1px solid #2A5B4F; padding: 13px 20px; font-size: 13.5px; font-weight: 600; color: #DCEAE3">
+      <a href="#" style="display: flex; min-height: 44px; align-items: center; justify-content: center; border-radius: 999px; border: 1px solid #D3DAD2; background: #FFFFFF; padding: 13px 20px; font-size: 13.5px; font-weight: 600; color: #0E3A31">
         Ya tengo cuenta
       </a>
     </div>
 
-    <p style="margin: 0; font-size: 11.5px; line-height: 1.5; color: #7FA598; text-wrap: pretty">
-      Probar no pide cuenta ni datos del banco. Si después querés guardarlo, creás la cuenta y lo que cargaste se conserva.
+    <!-- La objecion real de alguien que debe plata no es la app: es contarle a
+         un desconocido cuanto debe. Va pegada al boton, que es donde aparece. -->
+    <p style="margin: 0; font-size: 11.5px; line-height: 1.5; color: #5C6B65; text-wrap: pretty">
+      Probar no pide cuenta ni datos del banco. No se conecta a ningún banco ni te pide claves.
+      Si después querés guardarlo, creás la cuenta y lo que cargaste se conserva.
     </p>
+
   </div>
 
-  <!-- Las tres cosas que hace. Salen de lo que la app hace de verdad, no de
-       una lista de features inventada. -->
-  <div style="display: flex; flex-direction: column; gap: 12px; padding: 30px 18px 0 18px">
-    <span class="mono" style="font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #5C6B65">Qué vas a ver</span>
+  <!-- QUE VAS A VER. Renglones, no tarjetas: la tarjeta ya se gasto arriba y
+       repetir ese contenedor le saca peso a la respuesta. -->
+  <div style="border-top: 1px solid #DEE3DD; margin: 8px 18px 0 18px; padding-top: 4px">
 
-    <div style="display: flex; flex-direction: column; gap: 8px">
-
-      <div style="display: flex; gap: 13px; align-items: flex-start; border: 1px solid #DEE3DD; border-radius: 12px; background: #FFFFFF; padding: 15px 15px">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px">
-          <path d="M3 7.5 8.5 12 14 8l7 8.5" stroke="#0D6B5C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-          <line x1="3" y1="20" x2="21" y2="20" stroke="#CBD2C9" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-        <div style="display: flex; flex-direction: column; gap: 3px">
-          <span style="font-size: 13.5px; font-weight: 600; line-height: 1.3; color: #12211D">En qué mes no llegás</span>
-          <span style="font-size: 11.5px; line-height: 1.5; color: #5C6B65; text-wrap: pretty">La proyección a seis meses con tus ingresos, tus gastos fijos y lo que vence cada mes.</span>
-        </div>
+    <div style="display: flex; gap: 14px; align-items: flex-start; border-bottom: 1px solid #E2E7E1; padding: 18px 0">
+      <span class="mono" style="font-size: 10px; color: #A6B0AA; padding-top: 3px; flex-shrink: 0">01</span>
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <span style="font-size: 14px; font-weight: 600; line-height: 1.3; color: #12211D">En qué mes no llegás</span>
+        <span style="font-size: 11.5px; line-height: 1.5; color: #5C6B65; text-wrap: pretty">La proyección a seis meses con tus ingresos, tus gastos fijos y lo que vence cada mes.</span>
       </div>
-
-      <div style="display: flex; gap: 13px; align-items: flex-start; border: 1px solid #DEE3DD; border-radius: 12px; background: #FFFFFF; padding: 15px 15px">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px">
-          <circle cx="12" cy="12" r="8.5" stroke="#0D6B5C" stroke-width="1.9"/>
-          <path d="M12 7.5v5l3 2" stroke="#0D6B5C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div style="display: flex; flex-direction: column; gap: 3px">
-          <span style="font-size: 13.5px; font-weight: 600; line-height: 1.3; color: #12211D">Por qué crece cada saldo</span>
-          <span style="font-size: 11.5px; line-height: 1.5; color: #5C6B65; text-wrap: pretty">Cargás el PDF del resumen y sale el interés que te cobraron, los impuestos y las cuotas del mes.</span>
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 13px; align-items: flex-start; border: 1px solid #DEE3DD; border-radius: 12px; background: #FFFFFF; padding: 15px 15px">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px">
-          <path d="M5 16.5c0-5 3.5-9 7.5-9M20 12l-3.5 4.5L13 12" stroke="#0D6B5C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M16.5 16.5V7.5" stroke="#0D6B5C" stroke-width="1.9" stroke-linecap="round"/>
-        </svg>
-        <div style="display: flex; flex-direction: column; gap: 3px">
-          <span style="font-size: 13.5px; font-weight: 600; line-height: 1.3; color: #12211D">Qué cambia si pagás distinto</span>
-          <span style="font-size: 11.5px; line-height: 1.5; color: #5C6B65; text-wrap: pretty">Cuántos meses y cuánto interés te ahorrás pagando más que el mínimo, deuda por deuda.</span>
-        </div>
-      </div>
-
     </div>
+
+    <div style="display: flex; gap: 14px; align-items: flex-start; border-bottom: 1px solid #E2E7E1; padding: 18px 0">
+      <span class="mono" style="font-size: 10px; color: #A6B0AA; padding-top: 3px; flex-shrink: 0">02</span>
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <span style="font-size: 14px; font-weight: 600; line-height: 1.3; color: #12211D">Por qué crece cada saldo</span>
+        <span style="font-size: 11.5px; line-height: 1.5; color: #5C6B65; text-wrap: pretty">Cargás el PDF del resumen y sale el interés que te cobraron, los impuestos y las cuotas del mes.</span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 14px; align-items: flex-start; padding: 18px 0">
+      <span class="mono" style="font-size: 10px; color: #A6B0AA; padding-top: 3px; flex-shrink: 0">03</span>
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <span style="font-size: 14px; font-weight: 600; line-height: 1.3; color: #12211D">Qué cambia si pagás distinto</span>
+        <span style="font-size: 11.5px; line-height: 1.5; color: #5C6B65; text-wrap: pretty">Cuántos meses y cuánto interés te ahorrás pagando más que el mínimo, deuda por deuda.</span>
+      </div>
+    </div>
+
   </div>
 
-  <!-- La objecion real de alguien que debe plata no es la app: es contarle a
-       un desconocido cuanto debe. Va sola, en su propio bloque. -->
-  <div style="display: flex; gap: 11px; align-items: flex-start; margin: 22px 18px 0 18px; border: 1px solid #BEE1CE; border-radius: 12px; background: #E0F4E9; padding: 14px 15px">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px">
-      <path d="M12 3.5 19 6.5v5c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9v-5L12 3.5Z" stroke="#175F42" stroke-width="1.8" stroke-linejoin="round"/>
-      <path d="M9 12l2.2 2.2L15.5 10" stroke="#175F42" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #175F42; text-wrap: pretty">
-      No se conecta a ningún banco ni te pide claves. Cargás vos lo que querés mirar, y lo borrás cuando quieras.
-    </p>
-  </div>
-
-  <!-- El cierre repite la accion primaria. Nunca una segunda que compita. -->
-  <div style="display: flex; flex-direction: column; gap: 14px; padding: 30px 18px 40px 18px">
+  <!-- CIERRE: la misma accion primaria, nunca una segunda que compita. -->
+  <div style="display: flex; flex-direction: column; gap: 14px; border-top: 1px solid #DEE3DD; margin: 10px 18px 0 18px; padding: 28px 0 44px 0">
     <p style="margin: 0; font-size: 17px; line-height: 1.3; font-weight: 600; letter-spacing: -.012em; color: #12211D; text-wrap: pretty">
       Cargá una deuda y mirá cómo queda el mes que viene.
     </p>

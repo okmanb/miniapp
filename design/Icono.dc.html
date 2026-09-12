@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; background: #F1F3EF; font-family: "Work Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #0E3A31; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    .rot { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #5C6B65; }
+  </style>
+</helmet>
+
+<!--
+  EL ICONO — acorde a la direccion B.
+
+  B decide el icono: si la pantalla de entrada apuesta a que el NOMBRE es la
+  pregunta que la app contesta, el icono es esa pregunta. El signo invertido
+  ademas hace un trabajo que ningun grafico hace: dice que la app esta en
+  castellano y es de acá, antes de leer una letra.
+
+  Dibujado como TRAZO SVG y no como texto en Work Sans, a proposito: un icono
+  que depende de que cargue una fuente web no es un icono. Asi se exporta, se
+  escala y se recolorea sin arrastrar nada.
+
+  Geometria: caja de 100, trazo de 11 con extremos redondos, mismo radio de
+  esquina proporcional en todos los tamanos (22% del lado, que es el de iOS).
+  El punto arriba y el gancho abriendo hacia la derecha abajo.
+-->
+<div style="width: 900px; background: #F1F3EF; color: #12211D; padding: 34px 34px 40px 34px; box-sizing: border-box">
+
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <span class="mono" style="font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #5C6B65">Ícono de la aplicación</span>
+    <h1 style="margin: 0; font-size: 26px; line-height: 1.15; letter-spacing: -.025em; font-weight: 700; color: #0E3A31">El signo, no un gráfico</h1>
+    <p style="margin: 4px 0 0 0; max-width: 560px; font-size: 13px; line-height: 1.55; color: #5C6B65; text-wrap: pretty">
+      La dirección elegida apuesta a que el nombre es la pregunta que la app contesta. El ícono
+      es esa pregunta. El signo invertido además dice que la app está en castellano y es de acá
+      antes de que se lea una letra.
+    </p>
+  </div>
+
+  <!-- PRINCIPAL + VARIANTES -->
+  <div style="display: flex; gap: 30px; align-items: flex-start; margin-top: 32px">
+
+    <div style="display: flex; flex-direction: column; gap: 11px">
+      <span class="rot">Principal</span>
+      <svg width="180" height="180" viewBox="0 0 100 100" fill="none" style="display: block">
+        <rect width="100" height="100" rx="22" fill="#0E3A31"/>
+        <circle cx="42" cy="23" r="6.2" fill="#97DCBA"/>
+        <path d="M42 37 V45 C42 53 24 56 24 68 C24 78 32 86 44 86 C53 86 65 80 65 68"
+              stroke="#97DCBA" stroke-width="11" stroke-linecap="round" fill="none"/>
+      </svg>
+      <span style="font-size: 11.5px; line-height: 1.45; color: #5C6B65; max-width: 180px">Mint sobre pine. Es el que va a la pestaña y a la pantalla de inicio.</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px">
+      <span class="rot">Sobre claro</span>
+      <svg width="180" height="180" viewBox="0 0 100 100" fill="none" style="display: block">
+        <rect width="100" height="100" rx="22" fill="#E0F4E9"/>
+        <circle cx="42" cy="23" r="6.2" fill="#0E3A31"/>
+        <path d="M42 37 V45 C42 53 24 56 24 68 C24 78 32 86 44 86 C53 86 65 80 65 68"
+              stroke="#0E3A31" stroke-width="11" stroke-linecap="round" fill="none"/>
+      </svg>
+      <span style="font-size: 11.5px; line-height: 1.45; color: #5C6B65; max-width: 180px">Para fondos oscuros del sistema operativo, y para imprimir.</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px">
+      <span class="rot">Una tinta</span>
+      <svg width="180" height="180" viewBox="0 0 100 100" fill="none" style="display: block">
+        <rect width="100" height="100" rx="22" fill="#FFFFFF" stroke="#DEE3DD" stroke-width="1"/>
+        <circle cx="42" cy="23" r="6.2" fill="#12211D"/>
+        <path d="M42 37 V45 C42 53 24 56 24 68 C24 78 32 86 44 86 C53 86 65 80 65 68"
+              stroke="#12211D" stroke-width="11" stroke-linecap="round" fill="none"/>
+      </svg>
+      <span style="font-size: 11.5px; line-height: 1.45; color: #5C6B65; max-width: 180px">Cuando no hay color: sellos, fax del banco, blanco y negro.</span>
+    </div>
+
+  </div>
+
+  <!-- TAMANOS REALES -->
+  <div style="display: flex; flex-direction: column; gap: 14px; border-top: 1px solid #DEE3DD; margin-top: 36px; padding-top: 26px">
+    <div style="display: flex; flex-direction: column; gap: 3px">
+      <span class="rot">A tamaño real</span>
+      <span style="font-size: 11.5px; line-height: 1.5; color: #5C6B65">La prueba es la de 16: si a ese tamaño no se reconoce, no sirve. El punto se mantiene separado del gancho hasta abajo.</span>
+    </div>
+
+    <div style="display: flex; align-items: flex-end; gap: 26px">
+
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="96" height="96" viewBox="0 0 100 100" fill="none" style="display: block">
+          <rect width="100" height="100" rx="22" fill="#0E3A31"/>
+          <circle cx="42" cy="23" r="6.2" fill="#97DCBA"/>
+          <path d="M42 37 V45 C42 53 24 56 24 68 C24 78 32 86 44 86 C53 86 65 80 65 68" stroke="#97DCBA" stroke-width="11" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span class="mono" style="font-size: 10px; color: #A6B0AA">96</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="48" height="48" viewBox="0 0 100 100" fill="none" style="display: block">
+          <rect width="100" height="100" rx="22" fill="#0E3A31"/>
+          <circle cx="42" cy="23" r="6.2" fill="#97DCBA"/>
+          <path d="M42 37 V45 C42 53 24 56 24 68 C24 78 32 86 44 86 C53 86 65 80 65 68" stroke="#97DCBA" stroke-width="11" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span class="mono" style="font-size: 10px; color: #A6B0AA">48</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="32" height="32" viewBox="0 0 100 100" fill="none" style="display: block">
+          <rect width="100" height="100" rx="22" fill="#0E3A31"/>
+          <circle cx="42" cy="23" r="6.2" fill="#97DCBA"/>
+          <path d="M42 37 V45 C42 53 24 56 24 68 C24 78 32 86 44 86 C53 86 65 80 65 68" stroke="#97DCBA" stroke-width="11" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span class="mono" style="font-size: 10px; color: #A6B0AA">32</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+        <svg width="16" height="16" viewBox="0 0 100 100" fill="none" style="display: block">
+          <rect width="100" height="100" rx="22" fill="#0E3A31"/>
+          <circle cx="42" cy="23" r="6.2" fill="#97DCBA"/>
+          <path d="M42 37 V45 C42 53 24 56 24 68 C24 78 32 86 44 86 C53 86 65 80 65 68" stroke="#97DCBA" stroke-width="11" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span class="mono" style="font-size: 10px; color: #A6B0AA">16</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EN CONTEXTO -->
+  <div style="display: flex; flex-direction: column; gap: 14px; border-top: 1px solid #DEE3DD; margin-top: 34px; padding-top: 26px">
+    <span class="rot">En contexto</span>
+
+    <div style="display: flex; gap: 24px; align-items: flex-start">
+
+      <!-- Pestana del navegador -->
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <div style="width: 300px; border: 1px solid #DEE3DD; border-radius: 12px; background: #FFFFFF; overflow: hidden">
+          <div style="display: flex; gap: 6px; align-items: center; background: #EFF2EE; padding: 9px 11px">
+            <span style="width: 9px; height: 9px; border-radius: 999px; background: #D3DAD2"></span>
+            <span style="width: 9px; height: 9px; border-radius: 999px; background: #D3DAD2"></span>
+            <span style="width: 9px; height: 9px; border-radius: 999px; background: #D3DAD2"></span>
+            <div style="display: flex; align-items: center; gap: 7px; border-radius: 8px; background: #FFFFFF; padding: 6px 11px; margin-left: 8px">
+              <svg width="14" height="14" viewBox="0 0 100 100" fill="none" style="display: block; flex-shrink: 0">
+                <rect width="100" height="100" rx="22" fill="#0E3A31"/>
+                <circle cx="42" cy="23" r="6.2" fill="#97DCBA"/>
+                <path d="M42 37 V45 C42 53 24 56 24 68 C24 78 32 86 44 86 C53 86 65 80 65 68" stroke="#97DCBA" stroke-width="11" stroke-linecap="round" fill="none"/>
+              </svg>
+              <span style="font-size: 11px; color: #12211D; white-space: nowrap">¿Llegás?</span>
+            </div>
+          </div>
+          <div style="height: 34px; background: #F1F3EF"></div>
+        </div>
+        <span style="font-size: 11.5px; color: #5C6B65">Pestaña del navegador</span>
+      </div>
+
+      <!-- Pantalla de inicio -->
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <div style="display: flex; gap: 16px; align-items: flex-start; border: 1px solid #DEE3DD; border-radius: 12px; background: #E4EAE3; padding: 16px 18px">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+            <svg width="52" height="52" viewBox="0 0 100 100" fill="none" style="display: block">
+              <rect width="100" height="100" rx="22" fill="#0E3A31"/>
+              <circle cx="42" cy="23" r="6.2" fill="#97DCBA"/>
+              <path d="M42 37 V45 C42 53 24 56 24 68 C24 78 32 86 44 86 C53 86 65 80 65 68" stroke="#97DCBA" stroke-width="11" stroke-linecap="round" fill="none"/>
+            </svg>
+            <span style="font-size: 10.5px; color: #12211D">¿Llegás?</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+            <div style="width: 52px; height: 52px; border-radius: 12px; background: #D3DAD2"></div>
+            <span style="font-size: 10.5px; color: #A6B0AA">·····</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+            <div style="width: 52px; height: 52px; border-radius: 12px; background: #D3DAD2"></div>
+            <span style="font-size: 10.5px; color: #A6B0AA">·····</span>
+          </div>
+        </div>
+        <span style="font-size: 11.5px; color: #5C6B65">Pantalla de inicio del teléfono</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LO QUE FALTA HACER -->
+  <div style="display: flex; gap: 11px; align-items: flex-start; border: 1px dashed #CBD2C9; border-radius: 12px; margin-top: 30px; padding: 15px 16px">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px">
+      <circle cx="12" cy="12" r="8.5" stroke="#5C6B65" stroke-width="1.8"/>
+      <path d="M12 8v5" stroke="#5C6B65" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="12" cy="16.2" r="1.1" fill="#5C6B65"/>
+    </svg>
+    <p style="margin: 0; font-size: 12px; line-height: 1.55; color: #5C6B65; max-width: 640px; text-wrap: pretty">
+      Hoy la app no tiene ningún ícono: no hay <span class="mono" style="font-size: 11.5px">app/icon.*</span>,
+      ni favicon, ni carpeta <span class="mono" style="font-size: 11.5px">public/</span>. Con esta forma aprobada,
+      lo que falta en el código es un <span class="mono" style="font-size: 11.5px">app/icon.svg</span> y un
+      <span class="mono" style="font-size: 11.5px">app/apple-icon.png</span> de 180, más el
+      <span class="mono" style="font-size: 11.5px">themeColor</span> que ya está en
+      <span class="mono" style="font-size: 11.5px">layout.tsx</span>.
+    </p>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

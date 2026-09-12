@@ -8,7 +8,7 @@
 <x-dc>
 <helmet>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
   <style>
     body { margin: 0; background: #F1F3EF; font-family: "Work Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
     a { color: #0E3A31; }
@@ -18,40 +18,39 @@
 </helmet>
 
 <!--
-  INGRESAR, en la direccion A.
+  INGRESAR, en la lengua de B.
 
-  Hoy esta pantalla es el AuthShell pelado: el nombre de la app en mono, un
-  titulo, dos campos y un boton sobre el fondo de la app. Funciona y no dice
-  nada. Lo unico que cambia aca es el marco: la misma cabecera oscura de la
-  landing, para que entrar por esta puerta se vea como el mismo producto.
+  La primera version de esta pantalla traia la cabecera oscura de la direccion
+  A. Elegida B, eso deja de tener sentido: el argumento entero de B es que la
+  app se queda clara, y una pantalla oscura justo despues de la landing rompe
+  lo unico que la sostiene. Asi que el marco es el mismo de B — el nombre a
+  tamano de display, mas chico que en la landing porque aca no es el titular
+  sino la marca de donde estas.
 
-  Los campos NO cambian: mismo alto de 44, mismo radio de 12, mismo borde
-  #D3DAD2, misma etiqueta en 10.5 mayusculas. Eso ya esta bien y no se toca.
+  Los campos NO cambian respecto de lo que ya existe en components/AuthShell:
+  alto 44, radio 12, borde #D3DAD2, etiqueta 10.5 en mayusculas con .06em.
+  Eso ya esta bien y no hay motivo para tocarlo.
 -->
-<div style="width: 390px; background: #F1F3EF; color: #12211D; min-height: 780px; overflow: hidden">
+<div style="width: 390px; min-height: 790px; background: #F1F3EF; color: #12211D; overflow: hidden">
 
-  <div style="display: flex; flex-direction: column; gap: 16px; background: #0E3A31; padding: 30px 18px 26px 18px">
-    <div style="display: flex; align-items: center; gap: 9px">
-      <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <rect width="32" height="32" rx="9" fill="#97DCBA"/>
-        <path d="M8 11.5c3.4 0 3.4 6 6.8 6s3.4-6 6.8-6c1.7 0 2.6 1.5 3.4 3" stroke="#0E3A31" stroke-width="2.6" stroke-linecap="round"/>
-        <circle cx="23.5" cy="22" r="2.1" fill="#0E3A31"/>
-      </svg>
-      <span class="mono" style="font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #97DCBA">¿Llegás?</span>
-    </div>
+  <div style="display: flex; flex-direction: column; padding: 46px 18px 0 18px">
 
-    <div style="display: flex; flex-direction: column; gap: 6px">
-      <h1 style="margin: 0; font-size: 22px; line-height: 1.2; letter-spacing: -.015em; font-weight: 600; color: #FFFFFF">Ingresar</h1>
-      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #A8C7BB; text-wrap: pretty">
+    <a href="#" style="display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: #5C6B65; text-decoration: none; min-height: 44px; margin-top: -12px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 8h-11M7 3.5 2.5 8 7 12.5" stroke="#5C6B65" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Volver</span>
+    </a>
+
+    <h1 style="margin: 10px 0 0 0; font-size: 40px; line-height: .96; letter-spacing: -.04em; font-weight: 800; color: #0E3A31">¿Llegás?</h1>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; border-left: 2px solid #97DCBA; padding-left: 14px; margin-top: 20px">
+      <span style="font-size: 19px; line-height: 1.25; font-weight: 600; letter-spacing: -.015em; color: #12211D">Ingresar</span>
+      <span style="font-size: 12px; line-height: 1.5; color: #5C6B65; text-wrap: pretty">
         Entrás y recuperás tus deudas, tu flujo y tu plan tal como los dejaste.
-      </p>
+      </span>
     </div>
-  </div>
 
-  <div style="display: flex; flex-direction: column; padding: 24px 18px 0 18px">
-
-    <div style="display: flex; flex-direction: column; gap: 8px">
-      <label for="email" class="" style="font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #5C6B65">Email</label>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 28px">
+      <label for="email" style="font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #5C6B65">Email</label>
       <input id="email" type="email" placeholder="vos@ejemplo.com" style="min-height: 44px; width: 100%; box-sizing: border-box; border: 1px solid #D3DAD2; border-radius: 12px; background: #FFFFFF; padding: 0 13px; font-family: inherit; font-size: 15px; color: #12211D; outline: none">
     </div>
 
@@ -60,18 +59,18 @@
       <input id="clave" type="password" value="••••••••••" style="min-height: 44px; width: 100%; box-sizing: border-box; border: 1px solid #D3DAD2; border-radius: 12px; background: #FFFFFF; padding: 0 13px; font-family: inherit; font-size: 15px; color: #12211D; outline: none">
     </div>
 
-    <div style="display: flex; justify-content: flex-end; margin-top: 10px">
+    <div style="display: flex; justify-content: flex-end; margin-top: 4px">
       <a href="#" style="min-height: 44px; display: flex; align-items: center; font-size: 12px; color: #0E3A31; text-decoration: underline; text-underline-offset: 2px">Olvidé mi clave</a>
     </div>
 
-    <a href="#" style="display: flex; min-height: 44px; align-items: center; justify-content: center; gap: 7px; border-radius: 999px; background: #0D6B5C; padding: 13px 20px; font-size: 13.5px; font-weight: 600; color: #FFFFFF; margin-top: 6px">
+    <a href="#" style="display: flex; min-height: 44px; align-items: center; justify-content: center; gap: 7px; border-radius: 999px; background: #0D6B5C; padding: 13px 20px; font-size: 13.5px; font-weight: 600; color: #FFFFFF; margin-top: 4px">
       <span>Ingresar</span>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
 
-    <!-- La salida de emergencia que hoy no existe en esta pantalla: quien
-         llego aca sin cuenta tiene que poder probar sin volver atras. -->
-    <div style="display: flex; align-items: center; gap: 12px; margin-top: 26px">
+    <!-- La salida que hoy no existe: quien llega a /login sin cuenta tiene que
+         volver atras con el boton del navegador para poder probar. -->
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 28px">
       <span style="height: 1px; flex-grow: 1; background: #DEE3DD"></span>
       <span class="mono" style="font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: #A6B0AA">o</span>
       <span style="height: 1px; flex-grow: 1; background: #DEE3DD"></span>
@@ -82,7 +81,11 @@
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" stroke="#0E3A31" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>
 
-    <div style="display: flex; justify-content: center; gap: 5px; font-size: 12px; color: #5C6B65; margin-top: 22px">
+    <p style="margin: 10px 0 0 0; font-size: 11.5px; line-height: 1.5; color: #5C6B65; text-wrap: pretty">
+      Probar no pide cuenta ni datos del banco. Lo que cargues se conserva si después creás una.
+    </p>
+
+    <div style="display: flex; justify-content: center; gap: 5px; font-size: 12px; color: #5C6B65; margin-top: 26px">
       <span>¿Todavía no tenés cuenta?</span>
       <a href="#" style="color: #0E3A31; text-decoration: underline; text-underline-offset: 2px">Crear una</a>
     </div>

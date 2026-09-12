@@ -1,46 +1,47 @@
 {
+  "pages": [
+    { "id": "page-1", "name": "Elegido" },
+    { "id": "page-2", "name": "Descartadas" }
+  ],
   "artboards": [
-    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 1290, "title": "A · El mes que no llega" },
-    { "file": "DireccionB.dc.html", "x": 510, "y": 0, "w": 390, "h": 1030, "title": "B · La pregunta" },
-    { "file": "DireccionC.dc.html", "x": 1020, "y": 0, "w": 390, "h": 1080, "title": "C · El resumen" },
-    { "file": "Ingresar.dc.html", "x": 1530, "y": 0, "w": 390, "h": 800, "title": "Ingresar (en la dirección A)" }
+    { "file": "Main.dc.html", "page": "page-1", "x": 0, "y": 0, "w": 390, "h": 1220, "title": "Landing · B" },
+    { "file": "Ingresar.dc.html", "page": "page-1", "x": 510, "y": 0, "w": 390, "h": 800, "title": "Ingresar" },
+    { "file": "Icono.dc.html", "page": "page-1", "x": 1020, "y": 0, "w": 900, "h": 1000, "title": "Ícono" },
+
+    { "file": "DireccionA.dc.html", "page": "page-2", "x": 0, "y": 0, "w": 390, "h": 1290, "title": "A · El mes que no llega" },
+    { "file": "DireccionB.dc.html", "page": "page-2", "x": 510, "y": 0, "w": 390, "h": 1030, "title": "B · el boceto" },
+    { "file": "DireccionC.dc.html", "page": "page-2", "x": 1020, "y": 0, "w": 390, "h": 1080, "title": "C · El resumen" }
   ],
   "annotations": [
     {
-      "id": "brief",
+      "id": "elegido",
       "x": 0,
-      "y": -190,
+      "y": -210,
       "w": 900,
-      "text": "La puerta de entrada, con punch.\n\nEl prototipo NO tiene pantalla de landing — solo login, signup y recuperar — así que esta pantalla es invención de la app y hay margen real para moverla. Todo lo que se ve acá sale del sistema tal cual: pine #0E3A31, teal #0D6B5C, mint #97DCBA, fondo #F1F3EF, Work Sans + IBM Plex Mono, radios 8/12/14/pill, la única sombra del sistema.\n\nTres direcciones distintas, no tres tonos de la misma. Elegí una y con esa hago el ícono."
-    },
-    {
-      "id": "nota-a",
-      "x": 0,
-      "y": 1330,
-      "w": 390,
-      "text": "A · El mes que no llega\n\nEl punch es de contraste: un pine a sangre completa en la primera pantalla, que es lo más fuerte que el sistema permite sin inventar un color. Adentro va la curva cruzando el cero, que es literalmente el producto.\n\nA favor: sobrevive a una captura chica y a la vista previa de un link.\nEn contra: es la que más se aleja de la calma clara del resto de la app."
-    },
-    {
-      "id": "nota-b",
-      "x": 510,
-      "y": 1070,
-      "w": 390,
-      "text": "B · La pregunta\n\nEl punch es tipográfico: el nombre es la pregunta que la app contesta, puesto a 62px. Sin bloque oscuro, la app entera sigue clara.\n\nA favor: la más fiel al sistema, y la respuesta («No. Hasta diciembre.») es la frase más dura de las tres.\nEn contra: es silenciosa. Si el problema era que la pantalla no frena a nadie, esta lo resuelve con escala y no con color."
-    },
-    {
-      "id": "nota-c",
-      "x": 1020,
-      "y": 1120,
-      "w": 390,
-      "text": "C · El resumen\n\nEl punch es de reconocimiento: la primera pantalla ES un resumen de cuenta. Quien debe plata reconoce ese objeto al instante. Las cifras son las de tu Visa de septiembre.\n\nA favor: la promesa se entiende sin leer marketing.\nEn contra: la más fría, y usa el mismo lenguaje visual que la cosa que da ansiedad."
+      "text": "Dirección B, elegida.\n\nEl punch es tipográfico: el nombre de la app es la pregunta que contesta, puesto a 62px. Sin bloque oscuro — la app entera queda clara, que es lo único que sostiene esta dirección.\n\nTodo sale del sistema tal cual: pine #0E3A31, teal #0D6B5C, mint #97DCBA, fondo #F1F3EF, Work Sans + IBM Plex Mono, radios 8/12/14/pill, y la única sombra del sistema, gastada una sola vez en la tarjeta de la respuesta."
     },
     {
       "id": "nota-ingresar",
-      "x": 1530,
+      "x": 510,
       "y": 840,
       "w": 390,
-      "text": "Ingresar\n\nHoy es el AuthShell pelado: el nombre en mono, un título, dos campos y un botón. Lo único que cambia es el marco — la misma cabecera oscura de la landing — para que entrar se vea como el mismo producto.\n\nLos campos no se tocan: mismo alto 44, radio 12, borde #D3DAD2, etiqueta 10.5 en mayúsculas.\n\nLo que sí agrega: «Probar sin cuenta». Hoy quien cae acá sin cuenta tiene que volver atrás."
+      "text": "Ingresar\n\nLa primera versión traía la cabecera oscura de la dirección A. Elegida B, eso deja de tener sentido: una pantalla oscura justo después de una landing clara rompe lo único que sostiene B. Ahora usa el mismo marco — el nombre a 40px, la barra mint, el mismo fondo.\n\nLos campos no se tocan: alto 44, radio 12, borde #D3DAD2, etiqueta 10.5 en mayúsculas. Son los de components/AuthShell y están bien.\n\nLo que agrega: «Probar sin cuenta». Hoy quien llega a /login sin tener cuenta tiene que volver atrás con el botón del navegador."
+    },
+    {
+      "id": "nota-icono",
+      "x": 1020,
+      "y": 1040,
+      "w": 900,
+      "text": "El ícono sale de la dirección elegida, no al revés.\n\nSi la puerta de entrada apuesta a que el nombre es la pregunta, el ícono es esa pregunta. El signo invertido hace además algo que ningún gráfico hace: dice que la app está en castellano y es de acá antes de que se lea una letra.\n\nDibujado como trazo SVG y no como texto en Work Sans, a propósito: un ícono que depende de que cargue una fuente web no es un ícono.\n\nLa prueba es el de 16px. Si ahí no se reconoce, no sirve."
+    },
+    {
+      "id": "descartadas",
+      "x": 0,
+      "y": -210,
+      "w": 900,
+      "page": "page-2",
+      "text": "Las dos que no se eligieron, y el boceto de B.\n\nSe guardan porque las notas explican qué resolvía cada una — sirven si más adelante hay que mover esta pantalla otra vez. No son parte del entregable.\n\nA resolvía el punch con contraste (pine a sangre completa); C con reconocimiento (la pantalla es un resumen de cuenta)."
     }
   ],
-  "launch": { "view": "canvas" }
+  "launch": { "view": "canvas", "page": "page-1" }
 }
