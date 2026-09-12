@@ -40,6 +40,17 @@ export interface DashboardDebt {
   recurringCharge: number;
   growth: GrowthCause | null;
   minimumPayment: number | null;
+  /**
+   * La tasa mensual que de verdad le cuesta el mes a esta deuda.
+   *
+   * No se deriva de la anual: la medida --lo que el ultimo resumen cobro sobre
+   * el saldo que tenia-- manda sobre la TEM declarada, y esa sobre la anual
+   * dividida por doce. Las tres pueden diferir bastante, y esta es la que usan
+   * las alertas para decir cuanto interes corre.
+   */
+  monthlyRate: number;
+  /** Lo que corre de interés este mes sobre el saldo de hoy. */
+  monthlyInterest: number;
   /** Obligación mensual comprometida: la entry del plan, o el mínimo. */
   monthlyDue: number;
   /** Si el atajo del mínimo ya se aplicó este mes. */
@@ -125,7 +136,9 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
         .eq("scenario_id", scenario.id),
       supabase
         .from("card_statements")
-        .select("debt_id, period, minimum_payment, total_due")
+        // interest_charged y previous_balance van para la tasa efectiva: el
+        // banco cobra sobre la parte financiada, no sobre el saldo entero.
+        .select("debt_id, period, minimum_payment, total_due, interest_charged, previous_balance")
         .eq("scenario_id", scenario.id)
         .order("period", { ascending: false }),
       supabase
@@ -177,6 +190,23 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
       .reduce((sum, p) => sum + Number(p.amount), 0);
   }
 
+  /**
+   * La tasa que de verdad le costo el mes a una tarjeta, sobre su saldo entero.
+   *
+   * Mismo criterio que en la pantalla de flujo: el banco cobra sobre la parte
+   * financiada y ningun resumen publica cuanto es, asi que aplicar la TEM al
+   * saldo entero cobra de mas. La proporcion no se deduce, pero el cociente se
+   * mide, y es el que vale mientras haya un resumen que lo diga.
+   */
+  function tasaEfectivaDe(debtId: string): number | null {
+    const st = statements.find((s) => s.debt_id === debtId);
+    if (!st || st.interest_charged == null) return null;
+    const base = Number(st.previous_balance);
+    const interes = Number(st.interest_charged);
+    if (!(base > 0) || !(interes > 0)) return null;
+    return interes / base;
+  }
+
   const debts: DashboardDebt[] = rawDebts.map((d) => {
     const balance = deriveBalance(
       {
@@ -191,6 +221,10 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
 
     const recurringCharge = recurringChargeFor(d.id, expenses, period);
     const latest = statements.find((s) => s.debt_id === d.id);
+    // La medida manda sobre la declarada, y la declarada sobre la deducida.
+    const monthlyRate =
+      tasaEfectivaDe(d.id) ??
+      (d.tem != null ? Number(d.tem) : monthlyRateFromAnnual(d.annual_interest_rate));
 
     // El mínimo del último resumen es el dato preferido: lo dice el banco. Una
     // deuda sin resumen —un préstamo— no tiene ninguno, y ahí manda la cuota
@@ -246,6 +280,8 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
       dueDay: d.due_day,
       recurringCharge,
       minimumPayment,
+      monthlyRate,
+      monthlyInterest: Math.round(balance * monthlyRate),
       monthlyDue: minimumPayment ?? 0,
       /*
        * La pregunta es "lo que le pusiste a esta deuda este mes, ¿cubre el
@@ -339,9 +375,11 @@ export const getDashboard = cache(async function getDashboard(): Promise<Dashboa
     kind: d.kind,
     balance: d.balance,
     annualRate: d.annualRate,
-    monthlyRate: monthlyRateFromAnnual(d.annualRate),
+    monthlyRate: d.monthlyRate,
+    monthlyInterest: d.monthlyInterest,
     dueDay: d.dueDay,
     minimumPayment: d.minimumPayment,
+    minimumPaidThisMonth: d.minimumPaidThisMonth,
   }));
 
   const alerts = deriveAlerts({

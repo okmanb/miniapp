@@ -61,6 +61,11 @@ export async function snoozeAlert(
           balance: 0,
           annualRate: null,
           monthlyRate: 0,
+          // `nextDueDate` solo mira el vencimiento y el tipo. El resto va en
+          // cero porque aca no hay nada que decidir con plata: se esta
+          // calculando hasta cuando se pospone un aviso.
+          monthlyInterest: 0,
+          minimumPaidThisMonth: false,
           dueDay: debt.due_day,
           minimumPayment: null,
         },

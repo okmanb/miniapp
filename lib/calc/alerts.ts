@@ -52,6 +52,10 @@ export interface AlertDebt {
   monthlyRate: number;
   dueDay: number | null;
   minimumPayment: number | null;
+  /** Lo que corre de interés este mes sobre el saldo de hoy. */
+  monthlyInterest: number;
+  /** Si a esta deuda ya se le pagó el mínimo del mes. */
+  minimumPaidThisMonth: boolean;
 }
 
 /** Las que vencen sí o sí: la cuota no se puede pagar a medias como un mínimo. */
@@ -107,7 +111,7 @@ export function deriveAlerts(params: {
   //     mismo aviso y ninguna decisión distinta.
   const growing = params.debts
     .filter((d) => !isLoanLike(d.kind) && d.balance > 0 && d.minimumPayment != null)
-    .map((d) => ({ debt: d, interest: Math.round(d.balance * d.monthlyRate) }))
+    .map((d) => ({ debt: d, interest: d.monthlyInterest }))
     .filter((x) => (x.debt.minimumPayment ?? 0) < x.interest)
     .sort((a, b) => b.interest - (b.debt.minimumPayment ?? 0) - (a.interest - (a.debt.minimumPayment ?? 0)))[0];
 
@@ -215,8 +219,29 @@ export function deriveAlerts(params: {
       icon: "%",
       title: `Tu deuda más cara está al ${worst.annualRate!.toLocaleString("es-AR")}% TNA`,
       body: `${shortName(worst.name)} es la primera que conviene atacar si te sobra algo este mes.`,
-      metricLabel: isLoanLike(worst.kind) ? "Cuota fija" : "Mínimo",
-      metricValue: worst.minimumPayment ?? 0,
+      /*
+       * DIFERENCIA A PROPOSITO CON EL PROTOTIPO, pedida el 12 de septiembre.
+       *
+       * El prototipo pone siempre el minimo aca (`label: 'Minimo', value:
+       * hi.min`) sin mirar si ya se pago, aunque tiene `minPaidThisMonth` y lo
+       * usa en la lista de deudas. Leido en la pantalla de alertas, un minimo
+       * que ya se pago se lee como una cuenta pendiente: "ya pague diez mil
+       * mas que el minimo y me lo sigue pidiendo".
+       *
+       * Esta alerta no reclama un pago —dice cual deuda conviene atacar si
+       * sobra plata—, asi que cuando el minimo ya esta hecho el numero que
+       * corresponde es lo que la deuda cuesta por mes, que es de lo que la
+       * alerta habla.
+       */
+      metricLabel: isLoanLike(worst.kind)
+        ? "Cuota fija"
+        : worst.minimumPaidThisMonth
+          ? "Interés del mes"
+          : "Mínimo",
+      metricValue:
+        !isLoanLike(worst.kind) && worst.minimumPaidThisMonth
+          ? worst.monthlyInterest
+          : (worst.minimumPayment ?? 0),
       ctaLabel: "Ver la deuda",
       href: `/dashboard/debts/${worst.id}`,
       debtId: worst.id,

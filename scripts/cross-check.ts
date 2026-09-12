@@ -16,6 +16,7 @@ import { amortize } from "../lib/calc/amortize";
 // motor cambia, este control tiene que moverse con él.
 import { closeStatement } from "../lib/calc/statement";
 import { deriveBalance } from "../lib/calc/balance";
+import { deriveAlerts, type AlertDebt } from "../lib/calc/alerts";
 import { projectCashflow, projectDebtDueByPeriod } from "../lib/calc/cashflow";
 import { toBridgeFlows } from "../lib/data/bridges";
 import { parseMoney, formatMoney, monthlyRateFromAnnual } from "../lib/calc/money";
@@ -137,6 +138,13 @@ const SCREEN_03 = {
   mesesAlDoble: 8,
   ahorro: 2757627,
 };
+
+/** Igual que `check`, para lo que no es un numero: un rotulo, un nombre. */
+function checkTexto(label: string, mine: string, theirs: string) {
+  const ok = mine === theirs;
+  console.log(`  ${ok ? "=" : "DIFIERE"}  ${label}: nuestro ${mine} · prototipo ${theirs}`);
+  if (!ok) note(`Pantalla 03 — ${label}: nuestro ${mine}, prototipo ${theirs}.`);
+}
 
 function check(label: string, mine: number | null, theirs: number) {
   const ok = mine === theirs;
@@ -522,6 +530,69 @@ console.log("=== 10. Los resumenes reales cierran exacto ===\n");
       " lo que el modelo viejo dejaba afuera en un solo resumen: " + formatMoney(falta)
   );
   if (falta <= 1_000_000) note("El modelo viejo dejo de diferir: revisar el caso.");
+}
+
+console.log("");
+/*
+ * La alerta de la deuda mas cara, cuando el minimo ya se pago.
+ *
+ * Es la UNICA diferencia deliberada con el prototipo en el motor de alertas, y
+ * esta aca para que quede fijada. El prototipo pone siempre el minimo en ese
+ * renglon --`label: 'Minimo', value: hi.min`-- sin mirar si ya se pago, aunque
+ * tiene `minPaidThisMonth` y lo usa en la lista de deudas.
+ *
+ * Se cambio a pedido, el 12 de septiembre, despues de que un minimo ya pagado
+ * se leyera como una cuenta pendiente. La alerta no reclama un pago: dice cual
+ * deuda conviene atacar si sobra plata, asi que con el minimo hecho el numero
+ * que corresponde es lo que esa deuda cuesta por mes.
+ */
+console.log("");
+console.log("=== 11. La alerta de la deuda mas cara ===\n");
+
+{
+  const base: AlertDebt = {
+    id: "visa",
+    name: "Visa Signature ...2166",
+    kind: "tarjeta",
+    balance: 8_089_852,
+    annualRate: 68.63,
+    monthlyRate: 0.02995,
+    monthlyInterest: 242_272,
+    dueDay: 7,
+    minimumPayment: 4_614_770,
+    minimumPaidThisMonth: false,
+  };
+
+  // Todo lo que la alerta 5 no mira, en cero: lo unico que se esta midiendo
+  // aca es que renglon muestra cuando el minimo ya se pago.
+  const entrada: Omit<Parameters<typeof deriveAlerts>[0], "debts"> = {
+    cashflow: { months: [], runwayIndex: -1, firstGapIndex: -1, remainingAtRunway: 0 },
+    canProject: false,
+    scenarioName: "Plan base",
+    monthlyIncome: 0,
+    monthlyFixed: 0,
+    leadDays: 3,
+    today: new Date("2026-09-12T12:00:00"),
+  };
+
+  const sinPagar = deriveAlerts({ ...entrada, debts: [base] })
+    .find((a) => a.kind === "tasa_mas_cara")!;
+  check("sin pagar el minimo, el renglon es el minimo", sinPagar.metricValue, 4_614_770);
+  checkTexto("...y se llama asi", sinPagar.metricLabel, "Mínimo");
+
+  const pagada = deriveAlerts({
+    ...entrada,
+    debts: [{ ...base, minimumPaidThisMonth: true }],
+  }).find((a) => a.kind === "tasa_mas_cara")!;
+  check("con el minimo pagado, pasa a ser el interes del mes", pagada.metricValue, 242_272);
+  checkTexto("...y lo dice", pagada.metricLabel, "Interés del mes");
+
+  // Un prestamo no tiene minimo que pagar a medias: su renglon no cambia.
+  const prestamo = deriveAlerts({
+    ...entrada,
+    debts: [{ ...base, kind: "prestamo_personal", minimumPaidThisMonth: true }],
+  }).find((a) => a.kind === "tasa_mas_cara")!;
+  check("la cuota fija de un prestamo no cambia", prestamo.metricValue, 4_614_770);
 }
 
 console.log("");

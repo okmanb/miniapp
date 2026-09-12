@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { monthlyRateFromAnnual } from "@/lib/calc/money";
 import Link from "next/link";
 import { TotalDebtHero } from "@/components/TotalDebtHero";
 import { RunwayCard } from "@/components/RunwayCard";
@@ -49,6 +50,10 @@ export default function PreviewPage() {
       minimumPayment: d.min,
       monthlyDue: d.min,
       recurringCharge: 0,
+      // Sin resumen que declare intereses, la tasa sale de la anual: es la
+      // ultima prioridad de la app y la unica que este banco de pruebas tiene.
+      monthlyRate: monthlyRateFromAnnual(d.tna),
+      monthlyInterest: Math.round(balance * monthlyRateFromAnnual(d.tna)),
       minimumPaidThisMonth: false,
       overdue: d.dueDay != null && d.dueDay < new Date().getDate(),
       paidFraction: d.paid + balance > 0 ? d.paid / (d.paid + balance) : 0,

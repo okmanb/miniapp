@@ -753,16 +753,33 @@ El linter de seguridad de Supabase quedó con **un solo warning**, el 4: los dos
 
 ---
 
-## La alerta de la deuda mas cara muestra el minimo aunque ya lo hayas pagado
+## La alerta de la deuda mas cara: la segunda diferencia deliberada con el prototipo
 
-Reportado el 12 de septiembre y **NO es un bug**: es lo que hace el prototipo, verificado en
-su codigo. Su alerta 5 es `label: 'Minimo', value: hi.min`, sin mirar si se pago. El
-prototipo tiene `minPaidThisMonth` y lo usa solo en la lista de deudas, para el boton de
-pagar el minimo.
+Reportado el 12 de septiembre: la alerta mostraba el minimo de una tarjeta a la que ya se le
+habia pagado mas que el minimo. **No era un bug** —el prototipo hace exactamente eso, su
+alerta 5 es `label: 'Minimo', value: hi.min` sin mirar si se pago, aunque tiene
+`minPaidThisMonth` y lo usa en la lista de deudas— asi que se propuso en vez de aplicarse, y
+**se cambio a pedido**.
 
-Como el prototipo manda, se dejo igual. **La mejora esta propuesta y no aplicada**: cuando el
-minimo ya se pago, ese renglon podria decir el interes del mes —que es de lo que la alerta
-habla— en vez de un minimo que ya no se debe.
+Ahora, cuando el minimo del mes ya esta pagado, ese renglon dice **el interes del mes** en
+lugar del minimo. El razonamiento: esta alerta no reclama un pago, dice cual deuda conviene
+atacar si sobra plata, asi que el numero que corresponde es lo que esa deuda cuesta por mes.
+Un prestamo no cambia: su cuota fija no se paga a medias.
+
+Lo fija la **seccion 11 del `cross-check`**, que ademas deja escrito que es una diferencia a
+proposito y no un descuido.
+
+De paso se corrigio algo que estaba al lado: las alertas derivaban la tasa mensual de la
+anual dividida por doce, ignorando la TEM declarada y la efectiva. Ahora usan la misma
+prioridad que el resto de la app —medida, declarada, deducida— y el interes que muestran es
+el que el banco cobra.
+
+### Lo que quedo propuesto y no aplicado
+
+La alerta de vencimientos apilados suma los minimos de las tarjetas que vencen dentro de la
+ventana y lo llama "Total a cubrir". **Tampoco mira si alguno ya se pago**, asi que puede
+pedir que cubras plata que ya pusiste. Es el mismo razonamiento que el de arriba y esta sin
+tocar: el prototipo lo hace asi y nadie lo reporto todavia.
 
 ---
 
