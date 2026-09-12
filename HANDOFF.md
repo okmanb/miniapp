@@ -1,12 +1,13 @@
 # Dónde quedó esto — para retomar
 
-Última actualización: 11 de septiembre de 2026.
+Última actualización: 12 de septiembre de 2026.
 
-Seis sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
+Siete sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
 pantallas contra el prototipo y la desplegó; la tercera la usó en producción y arregló lo
 que aparece solo cuando la abrís; la cuarta arregló los cuatro controles que la tercera dejó
 rotos al mirarlos en un teléfono de verdad. Las dos últimas la usaron con resúmenes reales
-del banco, y ahí apareció casi todo lo que sigue.
+del banco, y ahí apareció casi todo lo que sigue. La séptima encontró que la TEM se
+guardaba y no se usaba.
 
 ---
 
@@ -42,6 +43,13 @@ mensajes de commit, que explican el porqué.
   efectivamente pidió. La fórmula literal NO se implementó, y la razón está medida.
 - **Tres notas de este mismo documento resultaron falsas** al ir a usarlas. Están corregidas,
   pero la lección es del documento: **si vas a apoyarte en algo de acá, verificalo.**
+- **El cierre ignoraba la TEM** (12 de septiembre). Se guardaba en `debts.tem`, se leía en la
+  acción, y no se pasaba: el saldo se escribía con la anual sobre doce. $ 3.043 por mes de
+  más en la Patagonia, arrastrándose al mes siguiente. Lo fija la sección 9 del cross-check.
+- **La pantalla y el servidor no partían del mismo saldo anterior.** La cuenta que se veía
+  antes de guardar no era la que quedaba guardada.
+- **Los errores de Postgres ya no se esconden.** La acción del resumen decía "No pudimos
+  crear la tarjeta." sin el motivo, ni en pantalla ni en los logs.
 
 ---
 
@@ -209,6 +217,16 @@ septiembre, a la tarde). Lo que sigue sin mirarse:
 - **El parseo de PDF por el camino nuevo.** Importar desde el alta de la tarjeta y que lo
   leído llegue al resumen sin volver a pedir el archivo está verificado en estructura, no
   con un PDF de verdad.
+
+**Una columna que se lee de la base y no se usa no la agarra nada.** `saveStatement` traía
+`tem` en su `select` y nunca se la pasaba a `closeStatement`: TypeScript no se queja —el
+campo existe y es válido no usarlo—, el build compila, y los tres controles pasaban porque
+ninguno miraba ese camino. Se descubrió leyendo el código para otra cosa. **Si una consulta
+pide una columna, algo tiene que usarla; si no, o sobra en el `select` o falta en la cuenta.**
+La otra mitad del mismo bug: el formulario sí usaba la TEM, pero multiplicándola por doce
+para que `closeStatement` volviera a dividirla. **Un ida y vuelta así esconde que del otro
+lado no se hace lo mismo** — si la función hubiera pedido la mensual desde el principio, la
+diferencia se veía en la firma.
 
 **Una función exportada de un archivo `"use client"` no se puede llamar desde un componente
 de servidor, y el build NO lo agarra.** Todos los exports de un módulo `"use client"` se
