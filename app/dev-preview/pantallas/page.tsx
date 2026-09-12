@@ -213,6 +213,10 @@ export default function ScreensPreview() {
               name: "Mastercard Banco Patagonia …4139",
               balance: 3_386_911,
               monthlyRate: monthlyRateFromAnnual(83.8),
+              // Con el resumen de julio ya cargado, para poder mirar el caso de
+              // corregir uno: la pantalla tiene que usar ESE saldo anterior y no
+              // el saldo base, que a esa altura ya es el cierre que dejo el.
+              previousByPeriod: { "2026-07": 2_136_573 },
               // Con dólares convertidos el mes anterior, para que el aviso del
               // doble conteo se pueda mirar acá. Sin esto no lo vería nadie:
               // solo aparece con un resumen previo que los haya convertido.

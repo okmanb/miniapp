@@ -112,7 +112,23 @@ export async function saveStatement(
       .select("id")
       .single();
 
-    if (debtError || !created) return { message: "No pudimos crear la tarjeta." };
+    if (debtError || !created) {
+      /*
+       * El motivo, no un texto fijo.
+       *
+       * Esta linea decia "No pudimos crear la tarjeta." y nada mas: ni al
+       * usarla ni en los logs quedaba rastro de que habia dicho Postgres, asi
+       * que cuando fallo de verdad hubo que salir a adivinar contra el esquema.
+       * En una app de una sola persona esconder el motivo no protege a nadie —
+       * solo deja el error sin diagnosticar.
+       */
+      console.error("saveStatement: no se pudo crear la tarjeta", debtError);
+      return {
+        message: debtError
+          ? `No pudimos crear la tarjeta: ${debtError.message}`
+          : "No pudimos crear la tarjeta.",
+      };
+    }
 
     debtId = created.id;
   }
@@ -215,6 +231,11 @@ export async function saveStatement(
   const close = closeStatement({
     previousBalance,
     annualRate: debt.annual_interest_rate,
+    // La TEM que declaro el resumen manda sobre la anual, como en el resto de
+    // la app. Se leia de la base y no se usaba: el cierre se guardaba con la
+    // anual sobre doce, o sea con la tasa que este proyecto ya midio que esta
+    // mal, justo en el unico lugar donde se escribe un saldo.
+    monthlyRate: debt.tem != null ? Number(debt.tem) : null,
     newCharges,
     minimumPayment: minimumPayment ?? 0,
     amountPaid,
@@ -249,7 +270,10 @@ export async function saveStatement(
     .select("id")
     .single();
 
-  if (error) return { message: "No pudimos guardar el resumen." };
+  if (error) {
+    console.error("saveStatement: no se pudo guardar el resumen", error);
+    return { message: `No pudimos guardar el resumen: ${error.message}` };
+  }
 
   /*
    * El saldo base pasa a ser el cierre ANTES de restar lo pagado. Es el único
@@ -269,7 +293,12 @@ export async function saveStatement(
     })
     .eq("id", debtId);
 
-  if (balanceError) return { message: "Guardamos el resumen pero no pudimos actualizar el saldo." };
+  if (balanceError) {
+    console.error("saveStatement: no se pudo actualizar el saldo", balanceError);
+    return {
+      message: `Guardamos el resumen pero no pudimos actualizar el saldo: ${balanceError.message}`,
+    };
+  }
 
   /*
    * Regla 3, aplicada a los pagos: el resumen ABSORBE lo que ya trae adentro.
@@ -317,7 +346,10 @@ export async function saveStatement(
     });
 
     if (paymentError) {
-      return { message: "Guardamos el resumen pero no pudimos registrar el pago." };
+      console.error("saveStatement: no se pudo registrar el pago", paymentError);
+      return {
+        message: `Guardamos el resumen pero no pudimos registrar el pago: ${paymentError.message}`,
+      };
     }
   }
 

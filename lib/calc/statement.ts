@@ -49,6 +49,18 @@ export interface StatementClose {
 export function closeStatement(params: {
   previousBalance: number;
   annualRate: number | string | null;
+  /**
+   * La tasa mensual declarada por el resumen, en decimal. Manda sobre la
+   * anual cuando está, igual que en el resto de la app.
+   *
+   * No es lo mismo que la anual sobre doce, y la diferencia se escribe en el
+   * saldo: el banco convierte con treinta días sobre trescientos sesenta y
+   * cinco, así que 80,5% anual le da 6,616% mensual y a nosotros 6,708%.
+   * Sobre un saldo de tres millones eso son tres mil pesos de interés de más
+   * por mes, y como el cierre pasa a ser el saldo anterior del mes que viene,
+   * no se queda quieto.
+   */
+  monthlyRate?: number | null;
   /** Consumos nuevos del período. */
   newCharges: number;
   /** Pago mínimo exigido por el banco. */
@@ -66,7 +78,11 @@ export function closeStatement(params: {
   usdCharges?: number;
 }): StatementClose {
   const previous = params.previousBalance || 0;
-  const interest = Math.round(previous * monthlyRateFromAnnual(params.annualRate));
+  const rate =
+    params.monthlyRate != null && params.monthlyRate > 0
+      ? params.monthlyRate
+      : monthlyRateFromAnnual(params.annualRate);
+  const interest = Math.round(previous * rate);
 
   // No pagar nada no genera punitorio en este modelo: genera interés sobre
   // todo el saldo, que es peor. El punitorio castiga el pago insuficiente.

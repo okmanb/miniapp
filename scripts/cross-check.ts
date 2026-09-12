@@ -379,6 +379,65 @@ console.log("=== 8. El minimo proyectado sigue al saldo ===\n");
   check("la cuota de un prestamo no se mueve", fijos.get("2026-10")!, 262_695);
 }
 
+/*
+ * La TEM declarada tiene que llegar al cierre.
+ *
+ * El resumen declara la mensual y el banco NO la saca dividiendo la anual por
+ * doce: usa treinta dias sobre trescientos sesenta y cinco. Eso ya se sabia y
+ * se guardaba en `debts.tem`, pero el cierre --el unico lugar donde la app
+ * escribe un saldo-- lo ignoraba y calculaba con la anual sobre doce. La
+ * pantalla mostraba una cifra y la base guardaba otra.
+ *
+ * Esta seccion existe para que no vuelva a pasar en silencio.
+ */
+console.log("");
+console.log("=== 9. La TEM declarada manda sobre la anual ===\n");
+
+{
+  const saldo = 3_295_527;
+  const tem = 0.06616; // la que declara el resumen de la Patagonia de septiembre
+  const tna = 80.5; // la anual del mismo resumen
+
+  const conTem = closeStatement({
+    previousBalance: saldo,
+    annualRate: tna,
+    monthlyRate: tem,
+    newCharges: 0,
+    minimumPayment: 0,
+    amountPaid: 0,
+  });
+  const conTna = closeStatement({
+    previousBalance: saldo,
+    annualRate: tna,
+    newCharges: 0,
+    minimumPayment: 0,
+    amountPaid: 0,
+  });
+
+  check("el interes sale de la TEM y no de la anual sobre doce", conTem.interest, Math.round(saldo * tem));
+
+  const deMas = conTna.interest - conTem.interest;
+  console.log(
+    "  " + (deMas > 0 ? "= " : "!=") +
+      " lo que se cobraba de mas por mes cuando se ignoraba: " + formatMoney(deMas)
+  );
+  if (deMas <= 0) note("La anual sobre doce dejo de dar mas que la TEM: revisar el caso.");
+
+  // Sin TEM cargada se sigue usando la anual, que es lo unico que hay.
+  check(
+    "sin TEM se cae a la anual",
+    closeStatement({
+      previousBalance: saldo,
+      annualRate: tna,
+      monthlyRate: null,
+      newCharges: 0,
+      minimumPayment: 0,
+      amountPaid: 0,
+    }).interest,
+    conTna.interest
+  );
+}
+
 console.log("");
 console.log("=== Diferencias encontradas ===\n");
 if (differences.length === 0) {

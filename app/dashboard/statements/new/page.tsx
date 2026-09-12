@@ -47,6 +47,49 @@ export default async function NewStatementPage({
    * saldo anterior del PDF, usa el nuestro; pero sí sabe que pasó, y avisar es
    * lo que puede hacer.
    */
+  /*
+   * Los pagos que todavia restan del saldo, por tarjeta.
+   *
+   * El servidor calcula el saldo anterior del resumen como el saldo base menos
+   * estos pagos. Si la pantalla manda el saldo base crudo, la cuenta que se ve
+   * antes de guardar no es la que queda guardada — y eso pasa justo en el
+   * camino mas comun: cargar el resumen del mes siguiente despues de que el
+   * anterior dejara su pago.
+   */
+  const { data: livePayments } = scenario
+    ? await supabase
+        .from("debt_payments")
+        .select("debt_id, amount")
+        .eq("scenario_id", scenario.id)
+        .eq("is_absorbed", false)
+    : { data: [] };
+
+  const livePaidByDebt = new Map<string, number>();
+  for (const p of livePayments ?? []) {
+    livePaidByDebt.set(p.debt_id, (livePaidByDebt.get(p.debt_id) ?? 0) + Number(p.amount));
+  }
+
+  /*
+   * El saldo anterior que guardo cada resumen, por tarjeta y periodo. Volver a
+   * cargar un resumen lo corrige, y para eso el servidor reusa el saldo que ese
+   * resumen guardo. Sin esto la pantalla mostraba el saldo base —que a esa
+   * altura ya es el cierre que dejo el mismo resumen— y la cuenta salia con el
+   * mes contado dos veces.
+   */
+  const { data: previousBalances } = scenario
+    ? await supabase
+        .from("card_statements")
+        .select("debt_id, period, previous_balance")
+        .eq("scenario_id", scenario.id)
+    : { data: [] };
+
+  const previousByDebt = new Map<string, Record<string, number>>();
+  for (const row of previousBalances ?? []) {
+    const forDebt = previousByDebt.get(row.debt_id) ?? {};
+    forDebt[row.period] = Number(row.previous_balance);
+    previousByDebt.set(row.debt_id, forDebt);
+  }
+
   const { data: usdHistory } = scenario
     ? await supabase
         .from("card_statements")
@@ -123,11 +166,12 @@ export default async function NewStatementPage({
         cards={(cards ?? []).map((c) => ({
           id: c.id,
           name: c.name,
-          balance: Number(c.base_balance),
+          balance: Math.max(0, Number(c.base_balance) - (livePaidByDebt.get(c.id) ?? 0)),
           // La misma prioridad que el resto de la app: la TEM cargada manda
           // sobre la TNA cuando están las dos.
           monthlyRate:
             c.tem != null ? Number(c.tem) : monthlyRateFromAnnual(c.annual_interest_rate),
+          previousByPeriod: previousByDebt.get(c.id) ?? {},
           lastUsd: lastUsdByDebt.get(c.id) ?? null,
         }))}
         defaultDebtId={query.deuda}

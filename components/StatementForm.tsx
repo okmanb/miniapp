@@ -43,8 +43,25 @@ import { PdfCard } from "./StatementImport";
 export interface StatementCard {
   id: string;
   name: string;
-  /** Saldo de arranque de la tarjeta: el saldo anterior de este resumen. */
+  /**
+   * El saldo anterior de un resumen nuevo: el saldo base de la tarjeta menos
+   * los pagos que todavia restan.
+   *
+   * Neto de pagos y no crudo, porque es lo que el servidor usa al guardar.
+   * Cuando venia crudo, cargar el resumen de un mes despues de haber
+   * registrado un pago mostraba un saldo anterior mas alto que el que se
+   * guardaba, y la cuenta de la pantalla no era la que quedaba en la base.
+   */
   balance: number;
+  /**
+   * El saldo anterior que ya guardo cada resumen de esta tarjeta, por periodo.
+   *
+   * Volver a cargar un resumen lo CORRIGE: el servidor reusa el saldo anterior
+   * que ese resumen guardo, en vez del saldo base —que a esa altura ya es el
+   * cierre que dejo el mismo resumen, y usarlo cobraria el mes dos veces. La
+   * pantalla tiene que mirar lo mismo o muestra un saldo inflado.
+   */
+  previousByPeriod?: Record<string, number>;
   /** Tasa mensual en decimal. */
   monthlyRate: number;
   /**
@@ -218,6 +235,7 @@ export function StatementForm({
   const usdInPesos = Math.round((parseArgNumber(usdBalance) ?? 0) * (parseArgNumber(usdRate) ?? 0));
 
   const existingCard = cards.find((c) => c.id === debtId) ?? null;
+
   const card: StatementCard | null = creatingCard
     ? {
         id: NEW_CARD,
@@ -245,20 +263,33 @@ export function StatementForm({
    */
   const usdWarning = card?.lastUsd && period > card.lastUsd.period ? card.lastUsd : null;
 
+  /*
+   * El saldo anterior contra el que se hace la cuenta, con el mismo criterio
+   * que el servidor: si este mes ya tiene un resumen guardado, el suyo; si no,
+   * el saldo de la tarjeta neto de pagos.
+   */
+  const previousBalance = card
+    ? (card.previousByPeriod?.[period] ?? card.balance)
+    : 0;
+
   // Cómo queda la tarjeta, con la misma función que va a correr el servidor al
   // guardar. Es la cuenta que decide si conviene pagar el mínimo o algo más, y
   // esa decisión se toma antes de guardar, no después.
   const preview = useMemo(() => {
     if (!card) return null;
     return closeStatement({
-      previousBalance: card.balance,
-      annualRate: card.monthlyRate * 12 * 100,
+      previousBalance,
+      // La mensual va derecho. Antes se la multiplicaba por doce para que
+      // `closeStatement` volviera a dividirla, y ese ida y vuelta escondia que
+      // el servidor no hacia lo mismo: guardaba con la anual.
+      annualRate: null,
+      monthlyRate: card.monthlyRate,
       newCharges: parseMoney(newCharges),
       minimumPayment: parseMoney(minimum),
       amountPaid: parseMoney(paid),
       usdCharges: usdInPesos,
     });
-  }, [card, newCharges, minimum, paid, usdInPesos]);
+  }, [card, previousBalance, newCharges, minimum, paid, usdInPesos]);
 
   /**
    * El tipo de pago no es un dato aparte: es un atajo que escribe "cuánto
@@ -628,8 +659,8 @@ export function StatementForm({
           {blockedHint && <p className="help mt-1.5">{blockedHint}</p>}
         </fieldset>
 
-        {card && preview && card.balance > 0 && (
-          <StatementPreview card={card} close={preview} />
+        {card && preview && previousBalance > 0 && (
+          <StatementPreview card={card} previousBalance={previousBalance} close={preview} />
         )}
 
         {state.message && (
@@ -719,9 +750,16 @@ const PAY_KINDS: { value: PayKind; label: string }[] = [
  */
 function StatementPreview({
   card,
+  previousBalance,
   close,
 }: {
   card: StatementCard;
+  /**
+   * El mismo saldo anterior con el que se hizo la cuenta. Va aparte de la
+   * tarjeta porque no siempre es su saldo base: neto de pagos en un resumen
+   * nuevo, y el que guardo el resumen cuando se lo esta corrigiendo.
+   */
+  previousBalance: number;
   close: ReturnType<typeof closeStatement>;
 }) {
   return (
@@ -729,7 +767,7 @@ function StatementPreview({
       <div className="text-label uppercase text-muted">Cómo queda {card.name}</div>
 
       <div className="mt-2 space-y-1">
-        <PreviewRow label="Saldo anterior" value={formatMoney(card.balance)} />
+        <PreviewRow label="Saldo anterior" value={formatMoney(previousBalance)} />
         <PreviewRow label="Interés del mes" value={formatMoney(close.interest)} />
         {close.usdCharges > 0 && (
           <PreviewRow label="Consumos en dólares" value={formatMoney(close.usdCharges)} />
