@@ -364,6 +364,16 @@ export function StatementForm({
 
         {needsConfirm && <input type="hidden" name="confirmed" value="1" />}
         {paidOn && <input type="hidden" name="paid_on" value={paidOn} />}
+        {/*
+          La TEM que declaro el PDF, para cualquier tarjeta y no solo la que se
+          crea acá. Antes viajaba únicamente en el alta, así que una tarjeta
+          cargada a mano —o creada antes de que esto existiera— cerraba para
+          siempre con la anual sobre doce, que da de más. El campo de editar
+          deuda no tiene dónde ponerla: este resumen es la única fuente.
+        */}
+        {cardMonthlyRate != null && (
+          <input type="hidden" name="declared_monthly_rate" value={cardMonthlyRate} />
+        )}
         {/* Las cuotas detectadas viajan enteras: se guardan al confirmar. */}
         {parsed?.ok && parsed.installments && parsed.installments.length > 0 && (
           <input type="hidden" name="installments" value={JSON.stringify(parsed.installments)} />
@@ -459,9 +469,6 @@ export function StatementForm({
                 </p>
               ) : (
                 <p className="help mt-1.5">La anual, no la del mes. Es la que mueve todo el cálculo.</p>
-              )}
-              {cardMonthlyRate != null && (
-                <input type="hidden" name="new_card_monthly_rate" value={cardMonthlyRate} />
               )}
             </div>
 

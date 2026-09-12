@@ -43,6 +43,9 @@ mensajes de commit, que explican el porqué.
   efectivamente pidió. La fórmula literal NO se implementó, y la razón está medida.
 - **Tres notas de este mismo documento resultaron falsas** al ir a usarlas. Están corregidas,
   pero la lección es del documento: **si vas a apoyarte en algo de acá, verificalo.**
+- **La TEM solo se podía guardar al crear la tarjeta.** El formulario de editar deuda no la
+  tiene, así que cualquier tarjeta anterior se quedaba con `tem` en null para siempre. Ahora
+  la declara el resumen de cada mes, para cualquier tarjeta, y se guarda al cargarlo.
 - **El cierre ignoraba la TEM** (12 de septiembre). Se guardaba en `debts.tem`, se leía en la
   acción, y no se pasaba: el saldo se escribía con la anual sobre doce. $ 3.043 por mes de
   más en la Patagonia, arrastrándose al mes siguiente. Lo fija la sección 9 del cross-check.

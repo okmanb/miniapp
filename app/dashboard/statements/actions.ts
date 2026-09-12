@@ -71,8 +71,11 @@ export async function saveStatement(
      * La mensual que declaró el resumen, en decimal. Se guarda porque el motor
      * la prefiere sobre la anual cuando está: el banco convierte con 30/365 y
      * nosotros con /12, así que derivarla da 1,4% de más todos los meses.
+     *
+     * Es el mismo campo que viaja para cualquier tarjeta, no uno del alta: la
+     * tasa la declara el resumen, y de dónde salga la tarjeta no la cambia.
      */
-    const monthlyRaw = Number(formData.get("new_card_monthly_rate"));
+    const monthlyRaw = Number(formData.get("declared_monthly_rate"));
     const monthlyRate =
       Number.isFinite(monthlyRaw) && monthlyRaw > 0 && monthlyRaw < 100 ? monthlyRaw / 100 : null;
     if (rate !== null && (rate < 0 || rate > 1000)) {
@@ -176,6 +179,23 @@ export async function saveStatement(
 
   if (!debt) return { message: "No encontramos esa tarjeta." };
 
+  /*
+   * La TEM que declara ESTE resumen manda sobre la que tenga guardada la
+   * tarjeta: es la tasa del periodo que se esta cerrando, y el banco la cambia
+   * mes a mes (80,5% en septiembre, 83,8% en agosto).
+   *
+   * Se guarda ademas en la tarjeta. `debts.tem` no se puede escribir desde
+   * ningun otro lado —el formulario de editar deuda no la tiene— asi que sin
+   * esto una tarjeta creada antes de que el alta la guardara se quedaba con
+   * `tem` en null para siempre, cerrando con la anual sobre doce.
+   */
+  const declaredRaw = Number(formData.get("declared_monthly_rate"));
+  const declaredMonthlyRate =
+    Number.isFinite(declaredRaw) && declaredRaw > 0 && declaredRaw < 100
+      ? declaredRaw / 100
+      : null;
+  const monthlyRate = declaredMonthlyRate ?? (debt.tem != null ? Number(debt.tem) : null);
+
   // Gastos abiertos cargados a mano a esta tarjeta.
   const { data: openExpenses } = await supabase
     .from("expenses")
@@ -231,11 +251,7 @@ export async function saveStatement(
   const close = closeStatement({
     previousBalance,
     annualRate: debt.annual_interest_rate,
-    // La TEM que declaro el resumen manda sobre la anual, como en el resto de
-    // la app. Se leia de la base y no se usaba: el cierre se guardaba con la
-    // anual sobre doce, o sea con la tasa que este proyecto ya midio que esta
-    // mal, justo en el unico lugar donde se escribe un saldo.
-    monthlyRate: debt.tem != null ? Number(debt.tem) : null,
+    monthlyRate,
     newCharges,
     minimumPayment: minimumPayment ?? 0,
     amountPaid,
@@ -290,6 +306,8 @@ export async function saveStatement(
     .update({
       base_balance: close.grossBalance,
       base_balance_at: new Date().toISOString().slice(0, 10),
+      // Solo si el resumen la declaro: sin dato no se pisa lo que haya.
+      ...(declaredMonthlyRate != null ? { tem: declaredMonthlyRate } : {}),
     })
     .eq("id", debtId);
 
