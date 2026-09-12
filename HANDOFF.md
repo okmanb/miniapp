@@ -806,8 +806,30 @@ dentro del sistema (pine, teal, mint, Work Sans + Plex Mono, radios 8/12/14/pill
 Mas la pantalla **Ingresar** en la direccion A, que agrega algo que hoy falta: "Probar sin
 cuenta". Quien cae en `/login` sin tener cuenta hoy tiene que volver atras con el navegador.
 
-**Esta esperando que se elija una dirección**, y despues va el icono acorde. **La app no
-tiene ningun icono**: no hay `app/icon.*`, ni favicon, ni `public/`.
+**Se eligio la B** el 12 de septiembre. `Ingresar` se rehizo en esa misma lengua: traia la
+cabecera oscura de A, y una pantalla oscura justo despues de una landing clara rompe lo unico
+que sostiene a B. Los campos no se tocaron — son los de `AuthShell` y estan bien.
+
+### El icono ya existe, y sale de la fuente de la app
+
+`app/icon.svg` y `app/apple-icon.tsx` (PNG de 180 generado con `next/og`, porque
+`apple-touch-icon` no acepta SVG). Next emite los dos `<link>` solo, verificado en el
+navegador.
+
+**La forma NO esta dibujada a mano.** El primer intento fue un `<path>` hecho a ojo y se leia
+como un gancho de pescar; corregirlo a ojo era empujar numeros sin saber contra que. La forma
+correcta ya estaba en el proyecto: es el glifo `questiondown` de **Work Sans**, la fuente de
+la app, que `next/font` deja como .woff2 en `.next/`. `scripts/generar-icono.py` lo saca de
+ahi y lo aplana a una caja de 100, asi el icono es literalmente la misma letra que el titulo
+de la landing.
+
+Es el mismo criterio que el resto del proyecto: **donde hay una fuente real, no se dibuja de
+memoria.** Para regenerarlo hace falta `pip install fonttools brotli` y que `.next/` tenga
+las fuentes.
+
+**El path esta duplicado** en el `.svg` y en el `.tsx` a proposito: no se puede importar un
+SVG dentro de un `ImageResponse`, y dos copias de una forma que no cambia son mejores que un
+paso de build que nadie recuerda. El script escribe las dos.
 
 ---
 
