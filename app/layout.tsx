@@ -22,6 +22,20 @@ export const metadata: Metadata = {
   title: "¿Llegás?",
   description:
     "Mirá el mes que viene antes de que llegue: en qué mes te quedás sin plata, por qué crece cada saldo, y qué cambia si pagás distinto.",
+  /*
+   * La etiqueta que le prueba a Google que el sitio es nuestro.
+   *
+   * Hace falta porque la pantalla de consentimiento de "entrar con Google"
+   * no muestra el nombre de la app ni los links a privacidad y términos
+   * mientras el dominio no esté verificado — y el dominio es de Vercel, así
+   * que la verificación por DNS no está disponible. La de prefijo de URL sí,
+   * y se hace con esto.
+   *
+   * No es un secreto: viaja en el HTML de todas las páginas, que es
+   * justamente para lo que sirve. Si se saca, Google deja de mostrar el
+   * branding en la próxima revisión.
+   */
+  verification: { google: "5Rzolz0vNgud24m2b6n2OOiwqHu5e3IHEen1OgNqnwo" },
 };
 
 export const viewport: Viewport = {
