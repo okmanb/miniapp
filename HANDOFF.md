@@ -79,9 +79,36 @@ Lo que falta no es código:
    Services ID y la clave privada del *Sign in with Apple*. No hay forma de saltearlo, y por
    eso el botón está escrito pero probablemente no se use por ahora.
 
-Ninguno de los dos se pudo probar de punta a punta: sin credenciales no hay a dónde redirigir.
-Lo verificado es que los botones aparecen y desaparecen con la respuesta de `/auth/v1/settings`,
-mirado en el navegador con los dos estados forzados.
+#### "Prendido" no es "configurado", y se aprendió a los golpes
+
+Apple quedó prendido en el panel **sin credenciales**. `/auth/v1/settings` lo daba por activo
+—`apple: true`— así que el botón se mostraba, y arrancar el flujo devolvía:
+
+    400 · "Unsupported provider: missing OAuth secret"
+
+Un botón que lleva derecho a un error. Por eso `proveedoresHabilitados()` pregunta **dos**
+cosas: `settings` para saber qué está prendido, y `/auth/v1/authorize?provider=…` con
+`redirect: "manual"` para saber si además arranca. Un 3xx es que sí; un 400 es que falta el
+secret. Solo se prueba lo que dice estar prendido, y las dos respuestas se cachean cinco
+minutos.
+
+Verificado contra el proyecto real: hoy `settings` dice `apple: true`, el authorize da 400, y
+la app no muestra ningún botón — que es lo correcto.
+
+#### El "OAuth Server" del panel es otra cosa, y quedó prendido
+
+Es el camino contrario: hace que **¿Llegás? sea el proveedor de identidad de otras apps**
+("entrar con ¿Llegás?" desde un tercero), no que se pueda entrar con Google. No aporta nada
+al alta y hoy está prendido, con dos consecuencias:
+
+- El `Authorization Path` apunta a `/oauth/consent`, **que la app no implementa**. Cualquier
+  intento de autorización cae en un 404.
+- `Allow Dynamic OAuth Apps` está prendido, así que
+  `…/auth/v1/oauth/clients/register` acepta registros de cualquiera. Verificado: el
+  `.well-known/openid-configuration` responde y publica ese endpoint.
+
+**Conviene apagarlo** (*Authentication → OAuth Server*) mientras no haya una app de terceros
+que lo necesite. Si alguna vez la hay, lo que falta es la pantalla de consentimiento.
 
 ### Archivar una deuda ahora es una papelera con fecha, no un para siempre
 
