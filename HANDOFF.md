@@ -7,7 +7,7 @@ pantallas contra el prototipo y la desplegó; la tercera la usó en producción 
 que aparece solo cuando la abrís; la cuarta arregló los cuatro controles que la tercera dejó
 rotos al mirarlos en un teléfono de verdad. La quinta y la sexta la usaron con resúmenes
 reales del banco, y ahí apareció casi todo lo que sigue. La séptima encontró que la TEM se
-guardaba y no se usaba, y diseñó la puerta de entrada. **La octava encontró que las cuotas
+guardaba y no se usaba, y diseñó la puerta de entrada. **La octava encontró que los 504 del gateway se leían como datos faltantes, que las cuotas
 del PDF nunca se guardaron** —la tabla tenía cero filas después de seis resúmenes— y
 convirtió la prueba sin cuenta en una cuenta de prueba de verdad, que se borra sola a las 24
 horas.
@@ -33,6 +33,34 @@ estar vacía.
 ---
 
 ## Lo que encontró la octava sesión
+
+### Los 504 del gateway, y un cartel que echaba la culpa a los datos
+
+Cargando la segunda tarjeta del día salió **"No hay un escenario activo donde guardar la
+tarjeta"** con el escenario activo y sano en la base. Los `edge_logs` tienen el evento real:
+
+    17:50:12 · GET /rest/v1/scenarios?select=id&is_active=eq.true → 504 · 5012 ms
+
+Un timeout del gateway de Supabase. La consulta ni llegó a Postgres. El código descartaba el
+error del `select`, así que "la lectura falló" y "no hay escenario" terminaban en el mismo
+cartel — y el cartel mandaba a buscar un problema que no existe.
+
+**No fue un caso aislado.** En veinticuatro horas hubo cuatro, en cuatro tablas distintas
+(`scenarios`, `expenses`, `card_statements`, `incomes`), todos a los **5 segundos clavados**.
+Es el borde de Supabase cansándose de esperar, no una consulta pesada.
+
+Dos arreglos, uno por capa:
+
+1. **`lib/supabase/server.ts` reintenta las lecturas.** El cliente lleva su propio `fetch`:
+   hasta tres intentos para GET y HEAD, con 250 y 500 ms de espera. **Solo lecturas** — un
+   504 no quiere decir que no pasó nada, así que repetir un POST podría crear la tarjeta dos
+   veces o cobrar el resumen dos veces, que es peor que el error. Probado con un servidor de
+   juguete que falla dos veces: el GET vuelve con 200 a los 829 ms y el POST sale una sola
+   vez.
+2. **`saveStatement` dejó de descartar los errores de sus cinco lecturas.** Cada una dice qué
+   pasó y que no se guardó nada. Tres de esas cinco no eran solo cosmética: si los gastos
+   abiertos, el resumen del mes o los pagos vivos vuelven vacíos por un error de red, el
+   saldo se calcula mal y nadie se entera.
 
 ### Las cuotas del PDF nunca se guardaron, y el índice era el motivo
 

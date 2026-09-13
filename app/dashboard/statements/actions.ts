@@ -88,11 +88,28 @@ export async function saveStatement(
       return { message: "El día de vencimiento va de 1 a 31." };
     }
 
-    const { data: scenario } = await supabase
+    /*
+     * Ojo con la diferencia entre "no hay escenario" y "no pudimos leerlo".
+     *
+     * Acá el error se descartaba y las dos cosas terminaban en el mismo
+     * cartel. Pasó de verdad: un 504 del gateway de Supabase --la consulta ni
+     * llegó a Postgres-- le dijo a alguien que no tenía un escenario activo
+     * teniéndolo, y lo mandó a buscar un problema que no existía. El reintento
+     * de `lib/supabase/server.ts` hace que sea raro; el mensaje hace que,
+     * cuando pase, se entienda.
+     */
+    const { data: scenario, error: scenarioError } = await supabase
       .from("scenarios")
       .select("id")
       .eq("is_active", true)
       .maybeSingle();
+
+    if (scenarioError) {
+      console.error("saveStatement: no se pudo leer el escenario activo", scenarioError);
+      return {
+        message: `No pudimos leer tu escenario activo: ${scenarioError.message}. No se guardó nada — probá de nuevo.`,
+      };
+    }
 
     if (!scenario) {
       return { message: "No hay un escenario activo donde guardar la tarjeta." };
@@ -188,11 +205,20 @@ export async function saveStatement(
   if (otherCharges < 0) return { message: "Los impuestos no pueden ser negativos." };
   if (credits < 0) return { message: "La cuotificación no puede ser negativa." };
 
-  const { data: debt } = await supabase
+  const { data: debt, error: debtReadError } = await supabase
     .from("debts")
     .select("id, scenario_id, base_balance, annual_interest_rate, tem")
     .eq("id", debtId)
     .maybeSingle();
+
+  // Mismo cuidado que con el escenario: "no existe" y "no la pudimos leer" no
+  // son la misma noticia, y la segunda se arregla probando de nuevo.
+  if (debtReadError) {
+    console.error("saveStatement: no se pudo leer la tarjeta", debtReadError);
+    return {
+      message: `No pudimos leer esa tarjeta: ${debtReadError.message}. No se guardó nada — probá de nuevo.`,
+    };
+  }
 
   if (!debt) return { message: "No encontramos esa tarjeta." };
 
@@ -214,11 +240,24 @@ export async function saveStatement(
   const monthlyRate = declaredMonthlyRate ?? (debt.tem != null ? Number(debt.tem) : null);
 
   // Gastos abiertos cargados a mano a esta tarjeta.
-  const { data: openExpenses } = await supabase
+  const { data: openExpenses, error: expensesError } = await supabase
     .from("expenses")
     .select("id, description, amount")
     .eq("debt_id", debtId)
     .eq("is_archived", false);
+
+  /*
+   * Si esto falla NO se sigue. De esta lista salen dos cosas: el aviso de
+   * doble conteo (regla 6) y el archivado de los gastos que el resumen ya
+   * trae adentro (regla 3). Con la lista vacía por error, las dos se saltean
+   * en silencio y el saldo queda contando dos veces los mismos consumos.
+   */
+  if (expensesError) {
+    console.error("saveStatement: no se pudieron leer los gastos abiertos", expensesError);
+    return {
+      message: `No pudimos revisar los gastos cargados a esta tarjeta: ${expensesError.message}. No se guardó nada — probá de nuevo.`,
+    };
+  }
 
   const duplicates = (openExpenses ?? []).map((e) => ({
     id: e.id,
@@ -241,23 +280,41 @@ export async function saveStatement(
    * guardó y no de base_balance — que a esta altura ya es el cierre que dejó
    * él mismo, y usarlo cobraría el interés dos veces.
    */
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("card_statements")
     .select("id, previous_balance")
     .eq("debt_id", debtId)
     .eq("period", period)
     .maybeSingle();
 
+  // Sin esta respuesta no se puede cerrar el mes: creer que no existe cuando
+  // existe le cobra el interés dos veces al mismo saldo.
+  if (existingError) {
+    console.error("saveStatement: no se pudo buscar el resumen de ese mes", existingError);
+    return {
+      message: `No pudimos fijarnos si ya habías cargado el resumen de ${period}: ${existingError.message}. No se guardó nada — probá de nuevo.`,
+    };
+  }
+
   /*
    * Los pagos que todavía restan. Lo que la tarjeta debía al cerrar el mes
    * anterior es el saldo base menos ellos: base_balance guarda el cierre sin
    * los pagos descontados, y la resta la hace `deriveBalance`.
    */
-  const { data: livePayments } = await supabase
+  const { data: livePayments, error: paymentsError } = await supabase
     .from("debt_payments")
     .select("id, amount")
     .eq("debt_id", debtId)
     .eq("is_absorbed", false);
+
+  // Y estos entran derecho al saldo anterior: leer cero pagos por un error de
+  // red deja el mes arrancando desde un saldo más alto del que era.
+  if (paymentsError) {
+    console.error("saveStatement: no se pudieron leer los pagos vivos", paymentsError);
+    return {
+      message: `No pudimos leer los pagos de esta tarjeta: ${paymentsError.message}. No se guardó nada — probá de nuevo.`,
+    };
+  }
 
   const livePaid = (livePayments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
 
