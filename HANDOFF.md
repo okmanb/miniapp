@@ -95,6 +95,27 @@ minutos.
 Verificado contra el proyecto real: hoy `settings` dice `apple: true`, el authorize da 400, y
 la app no muestra ningún botón — que es lo correcto.
 
+#### El CLI quedó linkeado, y `config diff` es la herramienta que vale
+
+`supabase/config.toml` está en el repo y salió de un `config pull`, así que refleja el
+proyecto. Dos cosas aprendidas al usarlo:
+
+- **En PowerShell hay que llamar `npx.cmd`**, no `npx`: la política de ejecución de Windows
+  bloquea `npx.ps1` (*"running scripts is disabled on this system"*). Vale para todo el
+  proyecto, no solo para Supabase.
+- **Un `pull` no deja el archivo idéntico al proyecto.** Corriendo `config diff` justo
+  después aparecen dos diferencias que el pull no trajo: `auth.sms.twilio.enabled` (local
+  `false`, remoto **`true`**) y `auth.password_requirements`. O sea que un push le apagaría
+  el Twilio al proyecto sin que nadie lo haya pedido. Nadie usa el alta por teléfono, pero la
+  regla queda: **`config diff` siempre antes de `config push`**, y lo que el diff llama
+  *unmanaged* —el OAuth server, los `client_id`, los límites de mails— ni se compara ni se
+  empuja.
+
+**`enable_manual_linking` está en `false` en el proyecto**, y hace falta prenderlo antes de
+que Google sirva para guardar una cuenta de prueba: sin eso `linkIdentity` falla y la única
+salida es abrir una cuenta nueva, que deja la de prueba —con todo lo cargado— esperando que
+el cron la borre. Se prende en *Authentication → Sign In / Providers*.
+
 #### El "OAuth Server" del panel es otra cosa, y quedó prendido
 
 Es el camino contrario: hace que **¿Llegás? sea el proveedor de identidad de otras apps**
@@ -108,7 +129,10 @@ al alta y hoy está prendido, con dos consecuencias:
   `.well-known/openid-configuration` responde y publica ese endpoint.
 
 **Conviene apagarlo** (*Authentication → OAuth Server*) mientras no haya una app de terceros
-que lo necesite. Si alguna vez la hay, lo que falta es la pantalla de consentimiento.
+que lo necesite. Si alguna vez la hay, lo que falta es la pantalla de consentimiento. Al
+13 de septiembre sigue prendido: el `.well-known/openid-configuration` responde 200.
+
+Apple, en cambio, **ya se apagó**: `/auth/v1/settings` da `apple: false`.
 
 ### Archivar una deuda ahora es una papelera con fecha, no un para siempre
 
