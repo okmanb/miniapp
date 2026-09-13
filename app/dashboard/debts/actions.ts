@@ -93,8 +93,17 @@ export async function saveDebt(
 }
 
 /**
- * Archivar una deuda. No se borra: sus pagos y resúmenes son historial real, y
- * borrarla los dejaría huérfanos o se los llevaría puestos.
+ * Archivar una deuda: sale de la vista y del cálculo, y a los 7 días se borra.
+ *
+ * El archivado era para siempre, con el argumento de que los pagos y resúmenes
+ * son historial real. No se sostenía: ese historial no se muestra en ningún
+ * lado —la pantalla de pagos filtra por `debts.is_active`—, así que archivar
+ * juntaba filas que nadie iba a mirar. Volver a cargar el resumen de una
+ * tarjeta como "tarjeta nueva" dejaba una archivada cada vez: en una tarde,
+ * siete.
+ *
+ * La fecha la pone un trigger de la base y el borrado lo hace un cron
+ * (migración 014). Acá no hay que hacer nada más que apagar `is_active`.
  */
 export async function archiveDebt(id: string): Promise<{ ok: boolean; message?: string }> {
   const supabase = await createClient();

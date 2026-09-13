@@ -35,6 +35,34 @@ estar vacía.
 
 ## Lo que encontró la octava sesión
 
+### Archivar una deuda ahora es una papelera con fecha, no un para siempre
+
+Borrar una tarjeta nunca borró nada: `archiveDebt` pone `is_active = false`, con el
+argumento —escrito en el código— de que sus pagos y resúmenes son historial real. **El
+argumento no se sostenía**: ese historial no se muestra en ningún lado. La pantalla de pagos
+filtra por `debts.is_active`, y el tablero y el flujo solo leen las activas. Archivar
+guardaba datos que nadie podía mirar nunca más.
+
+Y se juntan rápido por un camino de lo más normal: volver a cargar el resumen de una tarjeta
+como "tarjeta nueva" crea una fila nueva y archiva la anterior. En una sola tarde quedaron
+**siete**, todas del período 2026-08, todas versiones viejas de las tres tarjetas vivas. Se
+borraron a mano, con un respaldo en `Downloads/llegas-tarjetas-archivadas-2026-09-13.md`.
+
+De ahora en más lo hace solo (migración 014): `debts.archived_at` lo pone un **trigger** —no
+la app, para que cualquier camino que apague `is_active` quede marcado igual— y
+`borrar_tarjetas_archivadas()` corre por pg_cron todos los días a las 4:23 UTC y borra las
+de más de **7 días**, con sus resúmenes, pagos y cuotas en cascada.
+
+`created_at` no servía para medir esa espera: dice cuándo se creó la tarjeta, no cuándo se
+archivó, así que una tarjeta vieja archivada hoy se habría borrado en el acto.
+
+Verificado en la base, en una transacción que después se revirtió: el trigger marca la fecha
+al archivar, una archivada hoy sobrevive a la pasada del cron, y una con la fecha corrida
+ocho días atrás se borra.
+
+Los 7 días están en dos lados que tienen que coincidir: la migración y el texto de
+`DebtActionsSheet` ("se borran del todo" a los 7 días).
+
 ### "Cuánto pagaste" no es lo que vas a pagar: es lo que el banco ya te tomó
 
 La Visa quedó mostrando **$ 9.841.296** con un resumen que cierra en **$ 8.042.456**, y la
@@ -1074,7 +1102,7 @@ paso de build que nadie recuerda. El script escribe las dos.
 ## Migraciones aplicadas en la base
 
 Las de estas sesiones ya corrieron sobre el proyecto `udhqdbpjhifeotgoqaoa` y están en el
-repo como `supabase/migration_003_*.sql` a `_013_*.sql`. `supabase/schema.sql` quedó al día.
+repo como `supabase/migration_003_*.sql` a `_014_*.sql`. `supabase/schema.sql` quedó al día.
 
 - `bridge_loans`: se sumaron `is_taken` y `monthly_interest_rate`, y se fue
   `annual_interest_rate` — nunca se escribió desde la app y la tasa que pide la pantalla es
@@ -1104,6 +1132,9 @@ repo como `supabase/migration_003_*.sql` a `_013_*.sql`. `supabase/schema.sql` q
   anónimas de más de 24 horas, una vez por hora. El `cron.schedule` **no** está en
   `schema.sql` —inserta una fila, no define un objeto, y correrlo de nuevo lo duplica—; el
   que manda es el de la migración.
+- `debts.archived_at`, el trigger `debts_marcar_archivada` y
+  `public.borrar_tarjetas_archivadas()` (migración 014): la papelera de tarjetas, que se
+  vacía sola a los 7 días. El `cron.schedule` tampoco está en `schema.sql`, por lo mismo.
 - Se le revocó el `EXECUTE` público a `rls_auto_enable()` (migración 006). Es un objeto de
   la plataforma, no nuestro, así que no está en `schema.sql`. Verificado que el guardarraíl
   sigue funcionando: una tabla creada después del revoke sigue quedando con RLS activa.

@@ -106,6 +106,12 @@ create table if not exists debts (
 
   account_last4 text,
   is_active boolean not null default true,
+
+  -- Cuándo se archivó. Lo pone el trigger `debts_marcar_archivada`, más abajo,
+  -- y a los 7 días la tarjeta se borra de verdad. No sirve `created_at` para
+  -- eso: dice cuándo se creó, no cuándo dejó de usarse.
+  archived_at timestamptz,
+
   created_at timestamptz not null default now()
 );
 
@@ -288,6 +294,65 @@ alter table card_installment_plans enable row level security;
 
 create policy "cuotas propias" on card_installment_plans
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- -----------------------------------------------------------------------------
+-- La papelera de las tarjetas archivadas
+--
+-- Borrar una deuda en la app pone `is_active = false` y no borra nada. Ese
+-- historial, sin embargo, no se muestra en ningún lado: la pantalla de pagos
+-- filtra por `debts.is_active`, y el tablero y el flujo solo leen las activas.
+-- Así que el archivado es una papelera, y desde la migración 014 tiene fecha:
+-- a los 7 días se borra de verdad, con sus resúmenes, pagos y cuotas en
+-- cascada.
+--
+-- `archived_at` lo pone un trigger y no la app, para que cualquier camino que
+-- apague `is_active` quede marcado igual. Los 7 días están también en el texto
+-- de `DebtActionsSheet`: si cambia uno, cambia el otro.
+
+create or replace function public.marcar_archivada()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.is_active = false and (tg_op = 'INSERT' or old.is_active = true) then
+    new.archived_at = now();
+  elsif new.is_active = true then
+    new.archived_at = null;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists debts_marcar_archivada on debts;
+
+create trigger debts_marcar_archivada
+  before insert or update of is_active on debts
+  for each row execute function public.marcar_archivada();
+
+create or replace function public.borrar_tarjetas_archivadas()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare borradas integer;
+begin
+  delete from public.debts
+  where is_active = false
+    and archived_at is not null
+    and archived_at < now() - interval '7 days';
+
+  get diagnostics borradas = row_count;
+  return borradas;
+end;
+$$;
+
+revoke all on function public.borrar_tarjetas_archivadas() from public, anon, authenticated;
+
+-- select cron.schedule('borrar-tarjetas-archivadas', '23 4 * * *',
+--   $$select public.borrar_tarjetas_archivadas()$$);
+-- Comentado por lo mismo que el otro cron: inserta una fila, no define un
+-- objeto. El que manda es el de la migración 014.
 
 -- -----------------------------------------------------------------------------
 -- Las cuentas de prueba

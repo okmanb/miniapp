@@ -129,10 +129,21 @@ export function DebtActionsSheet({ debtId, debtName }: { debtId: string; debtNam
               ))}
 
               {/*
-                Archivar, no borrar: los pagos y resúmenes de esta deuda son
-                historial real, y borrarla los dejaría huérfanos. El botón dice
-                "borrar" porque es lo que la persona cree que hace, y la ayuda
-                de abajo aclara qué pasa de verdad.
+                Archivar primero, borrar después.
+
+                Durante mucho tiempo esto archivaba y listo, con el argumento
+                de que los pagos y resúmenes son historial real. El argumento
+                no se sostenía: ese historial no se muestra en ningún lado —la
+                pantalla de pagos filtra por `debts.is_active`— así que lo
+                único que hacía era juntar filas que nadie iba a ver. En una
+                sola tarde quedaron siete, todas versiones viejas de las tres
+                tarjetas vivas, por volver a cargar el resumen como "tarjeta
+                nueva".
+
+                Ahora la papelera tiene fecha: a los 7 días la borra un cron
+                (migración 014), con todo lo suyo. La ayuda de abajo lo dice,
+                porque siete días es tiempo de sobra para arrepentirse pero
+                solo si uno sabe que existen.
               */}
               <div className="border-t border-[#EDF1EC] px-[18px] pb-4 pt-3">
                 <button
@@ -150,7 +161,8 @@ export function DebtActionsSheet({ debtId, debtName }: { debtId: string; debtNam
                   {archiving ? "Borrando…" : "Borrar esta deuda"}
                 </button>
                 <p className="help mt-2">
-                  Sale de tus deudas y del cálculo. Sus pagos y resúmenes quedan guardados.
+                  Sale de tus deudas y del cálculo ahora mismo. Sus pagos y resúmenes quedan
+                  guardados 7 días por si te arrepentís, y después se borran del todo.
                 </p>
               </div>
             </div>
