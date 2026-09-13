@@ -90,6 +90,21 @@ Lo que falta no es código:
    Services ID y la clave privada del *Sign in with Apple*. No hay forma de saltearlo, y por
    eso el botón está escrito pero probablemente no se use por ahora.
 
+#### La verificación del dominio en Search Console
+
+La pantalla de consentimiento de Google no muestra el nombre de la app ni los links legales
+mientras el dominio no esté verificado: *"The website of your home page URL … is not
+registered to you"*. Por DNS no se puede —el dominio es de Vercel— pero **la verificación por
+prefijo de URL sí**, y se hace desde la app: `app/layout.tsx` declara
+`verification: { google: … }`, que sale como `<meta name="google-site-verification">` en todas
+las páginas. Verificado contra producción con `curl`.
+
+Dos cosas que confunden y no son problemas: en Search Console el "Processing data, please
+check again in a day or so" es de los datos de indexación, no de la verificación de
+propiedad; y en la consola OAuth, después de pedir la re-revisión, **el panel sigue mostrando
+los problemas de la revisión anterior** hasta que Google termine, que tarda horas o días.
+Mientras tanto el login funciona igual.
+
 #### "Prendido" no es "configurado", y se aprendió a los golpes
 
 Apple quedó prendido en el panel **sin credenciales**. `/auth/v1/settings` lo daba por activo
@@ -105,6 +120,26 @@ minutos.
 
 Verificado contra el proyecto real: hoy `settings` dice `apple: true`, el authorize da 400, y
 la app no muestra ningún botón — que es lo correcto.
+
+#### `robots.txt`, `sitemap.xml` y el `noindex` del tablero
+
+Con el sitio dado de alta en Search Console, Google va a indexar lo que encuentre. Las
+públicas son tres —la landing, `/privacidad` y `/terminos`— y son las únicas que entran en el
+`sitemap.xml`. El `robots.txt` deja pasar eso y marca `Disallow` en `/dashboard`, `/auth`,
+`/clave` y `/dev-preview`.
+
+**Nada de esto protege nada**, y conviene tenerlo claro: la protección es la sesión, en
+`proxy.ts`. Un robot que pida `/dashboard` recibe el login. Lo que evita es que el índice se
+llene de redirecciones al login y que una URL del tablero aparezca en un resultado, que en
+una app de deudas es ruido con mala prensa.
+
+El `robots.txt` es una cortesía que un buscador puede ignorar, así que el marco del tablero
+además declara `robots: { index: false, follow: false }`, que viaja en el HTML de cada
+pantalla privada. Verificado en el navegador con una cuenta de prueba: `/dashboard` sale con
+`noindex, nofollow` y la landing sin ninguna etiqueta.
+
+Las URLs salen de `appOrigin()`, el mismo que usan los mails de confirmación, así que en una
+preview de Vercel apuntan a la preview y no a producción.
 
 #### Borrar la cuenta, no solo los datos
 

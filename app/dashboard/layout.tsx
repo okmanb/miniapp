@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { BottomNav } from "@/components/BottomNav";
 import { ToastHost } from "@/components/Toast";
 import { DraftImporter } from "@/components/onboarding/DraftImporter";
@@ -11,6 +12,19 @@ import { getDashboard } from "@/lib/data/dashboard";
  * El contador de alertas sale de la misma lectura que usa el dashboard: está
  * memoizada por request, así que tenerla acá no agrega una consulta.
  */
+/**
+ * Nada de acá adentro se indexa.
+ *
+ * El `robots.txt` ya lo pide, pero eso es una cortesía que el buscador puede
+ * ignorar; esto viaja en el HTML de cada pantalla privada. Ninguna de las dos
+ * cosas protege nada —eso lo hace la sesión, en `proxy.ts`— y las dos existen
+ * para lo mismo: que una URL del tablero no termine en un resultado de
+ * búsqueda.
+ */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Si la lectura falla, la barra igual tiene que aparecer: el error se
   // muestra en el contenido, no rompiendo la navegación.
