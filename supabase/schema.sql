@@ -290,6 +290,45 @@ create policy "cuotas propias" on card_installment_plans
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- -----------------------------------------------------------------------------
+-- Las cuentas de prueba
+--
+-- Probar sin cuenta abre una sesión anónima de Supabase: una cuenta igual a
+-- cualquier otra, con su propio `auth.uid()` y bajo las mismas políticas, pero
+-- sin mail — así que nadie puede volver a abrirla. Por eso vive 24 horas y la
+-- borra este cron (migración 013). Guardarla es colgarle un mail: deja de ser
+-- anónima y esto no la mira más.
+--
+-- Las 24 horas están también en `lib/auth/prueba.ts`, que es lo que dice el
+-- cartel de las pantallas privadas. Si cambia una, cambia la otra.
+
+create extension if not exists pg_cron;
+
+create or replace function public.borrar_cuentas_de_prueba()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare borradas integer;
+begin
+  delete from auth.users
+  where is_anonymous is true
+    and created_at < now() - interval '24 hours';
+
+  get diagnostics borradas = row_count;
+  return borradas;
+end;
+$$;
+
+revoke all on function public.borrar_cuentas_de_prueba() from public, anon, authenticated;
+
+-- select cron.schedule('borrar-cuentas-de-prueba', '7 * * * *',
+--   $$select public.borrar_cuentas_de_prueba()$$);
+-- Va comentado acá a propósito: `cron.schedule` inserta una fila, no define un
+-- objeto, y correrlo de nuevo sobre una base que ya lo tiene lo duplica. El
+-- que manda es el de la migración 013.
+
+-- -----------------------------------------------------------------------------
 -- Gastos
 --
 -- Las ocho reglas de PRODUCT-RULES.md viven acá. La diferencia entre gasto

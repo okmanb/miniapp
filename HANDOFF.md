@@ -8,8 +8,9 @@ que aparece solo cuando la abrís; la cuarta arregló los cuatro controles que l
 rotos al mirarlos en un teléfono de verdad. La quinta y la sexta la usaron con resúmenes
 reales del banco, y ahí apareció casi todo lo que sigue. La séptima encontró que la TEM se
 guardaba y no se usaba, y diseñó la puerta de entrada. **La octava encontró que las cuotas
-del PDF nunca se guardaron** —la tabla tenía cero filas después de seis resúmenes— y que
-"Ir a mi tablero", en la prueba sin cuenta, mandaba a la pantalla de login.
+del PDF nunca se guardaron** —la tabla tenía cero filas después de seis resúmenes— y
+convirtió la prueba sin cuenta en una cuenta de prueba de verdad, que se borra sola a las 24
+horas.
 
 ---
 
@@ -65,6 +66,56 @@ pudimos guardar las N compras en cuotas: …". La lección se repite por tercera
 proyecto: **un error de Supabase que no se lee es un bug que no existe hasta que alguien
 mira la tabla.** Si ves un `await supabase...` sin `error`, eso es un candidato.
 
+### Probar sin cuenta ahora es una cuenta de prueba de 24 horas
+
+El paso 3 del onboarding vuelve a decir **"Ir a mi tablero"**, como el prototipo, y esta vez
+cumple: abre una **sesión anónima de Supabase** y entra al tablero de verdad. Esa cuenta es
+igual a cualquier otra —su propio `auth.uid()`, sus propias filas, las mismas políticas de
+RLS— con una sola diferencia: no tiene mail, así que nadie puede volver a abrirla. Ni
+nosotros.
+
+Por eso vive **24 horas** y lo dice en todas las pantallas. El número está en dos lados que
+tienen que coincidir: `HORAS_DE_PRUEBA` en `lib/auth/prueba.ts` y el `interval '24 hours'`
+de la migración 013. No hay forma de que uno lea al otro.
+
+- **El cartel** (`components/CuentaDePrueba.tsx`) vive en el marco del tablero, así que sale
+  en las dieciséis pantallas privadas y dice cuánto falta, no "temporal" a secas.
+- **Ajustes** encabeza con "Cuenta de prueba", ofrece guardarla, y el botón de salir dice lo
+  que hace de verdad: "Salir y descartar la prueba".
+- **El borrado** lo hace `public.borrar_cuentas_de_prueba()`, que corre por pg_cron en el
+  minuto 7 de cada hora. Supabase no tiene limpieza automática de usuarios anónimos, lo dice
+  su documentación. Verificado contra la base que las once tablas caen en cascada: se borró
+  una cuenta de prueba real con su deuda adentro y la deuda se fue con ella.
+
+#### Guardar la cuenta es un `updateUser`, no un alta
+
+El usuario es **el mismo** —el mismo id— así que no se mueve una sola fila. La otra opción
+sería crear una cuenta nueva y mover los datos, y es la peligrosa: para hacerla habría que
+creerle al navegador de quién era la cuenta vieja.
+
+La conversión queda partida en dos porque Supabase no deja ponerle clave a una cuenta
+anónima sin mail confirmado. Está medido, con estas palabras:
+
+    422 · "Updating password of an anonymous user without an email or phone is not allowed"
+
+Entonces: `/signup` con sesión anónima pide **nombre y mail, sin clave**, hace
+`updateUser({ email })` y deja `clave_pendiente` en el metadata. El link de confirmación
+vuelve por `/auth/callback`, que mira esa marca y manda a **`/clave`**, la única pantalla
+nueva. Ahí se pone la clave y se apaga la marca.
+
+**Ojo con el hueco:** entre que se pide el mail y se confirma, la cuenta **sigue siendo
+anónima**, así que el cron la puede borrar si se cumplen las 24 horas. La pantalla de
+"revisá tu mail" lo dice.
+
+Lo que falta verificar es exactamente eso: el mail de confirmación de punta a punta. Está
+probado que el link se acepta (HTTP 200, `email_change_sent_at` con fecha), pero no que al
+volver la cuenta quede permanente y la clave se guarde — hace falta un buzón de verdad.
+
+Y ojo con el pendiente 2, que ahora pesa más: **el servidor de mail incorporado solo entrega
+a los miembros de la organización**. Guardar una cuenta de prueba manda un mail, así que hoy
+solo puede guardarla `okmanb@gmail.com`. Para cualquier otra persona la prueba funciona
+entera y **no se puede guardar**: se le borra a las 24 horas. Eso es SMTP propio, no código.
+
 ### La prueba sin cuenta terminaba en la pantalla de login
 
 El paso 3 del onboarding tenía "Ir a mi tablero" apuntando a `/dashboard`, que `proxy.ts`
@@ -72,17 +123,15 @@ protege: sin sesión rebota a `/login?redirectTo=/dashboard`, sin decir por qué
 renglones después de prometer que probar no pide cuenta. Es el mismo callejón que ya se
 había cerrado en el paso 1 con el botón del PDF.
 
-**Es una diferencia deliberada con el prototipo**, la tercera: el prototipo pone ese botón
-primero porque no tiene cuentas —su tablero es una pantalla más, con datos de mentira— y en
-la app el tablero vive detrás de la sesión. Ahora el botón dice lo que hace: "Crear mi
-tablero" → `/signup?desde=onboarding`, con "Ya tengo cuenta" → `/login?desde=onboarding`
-debajo. Las dos pantallas reconocen el parámetro y dicen qué pasa con lo cargado, que lo
-sube `DraftImporter` la primera vez que se entra con sesión. Los tres pasos se siguen viendo
-enteros sin cuenta, que es lo que el prototipo protege de verdad.
+El primer arreglo fue de texto: el botón pasó a decir "Crear mi tablero" y a mandar al
+alta. **Eso duró una hora**: se habilitaron las sesiones anónimas en el proyecto y el botón
+volvió a ser el del prototipo, con la cuenta de prueba detrás (arriba). Queda acá porque
+explica por qué `/signup` y `/login` entienden `?desde=onboarding`: quien llega sin cuenta
+de prueba —porque las sesiones anónimas estén apagadas— sigue teniendo ese camino, y las dos
+pantallas dicen qué pasa con lo que cargó.
 
-Si alguna vez se quiere el botón literal del prototipo, el camino es habilitar las sesiones
-anónimas de Supabase (`signInAnonymously`) y convertirlas al crear la cuenta. No está hecho:
-hay que habilitarlo en el proyecto y decidir qué pasa con las cuentas anónimas que quedan.
+`DraftImporter` sube el borrador del navegador la primera vez que se entra con sesión, sea
+una cuenta de prueba o una de verdad.
 
 ---
 
@@ -951,7 +1000,7 @@ paso de build que nadie recuerda. El script escribe las dos.
 ## Migraciones aplicadas en la base
 
 Las de estas sesiones ya corrieron sobre el proyecto `udhqdbpjhifeotgoqaoa` y están en el
-repo como `supabase/migration_003_*.sql` a `_012_*.sql`. `supabase/schema.sql` quedó al día.
+repo como `supabase/migration_003_*.sql` a `_013_*.sql`. `supabase/schema.sql` quedó al día.
 
 - `bridge_loans`: se sumaron `is_taken` y `monthly_interest_rate`, y se fue
   `annual_interest_rate` — nunca se escribió desde la app y la tasa que pide la pantalla es
@@ -977,6 +1026,10 @@ repo como `supabase/migration_003_*.sql` a `_012_*.sql`. `supabase/schema.sql` q
   emite PostgREST. **No volver a ponerle el WHERE**: lo que protegía —que dos cuotas sin
   cupón no sean la misma— lo hace igual el índice completo, porque en un índice único dos
   NULL son distintos.
+- `pg_cron` y `public.borrar_cuentas_de_prueba()` (migración 013): borra las cuentas
+  anónimas de más de 24 horas, una vez por hora. El `cron.schedule` **no** está en
+  `schema.sql` —inserta una fila, no define un objeto, y correrlo de nuevo lo duplica—; el
+  que manda es el de la migración.
 - Se le revocó el `EXECUTE` público a `rls_auto_enable()` (migración 006). Es un objeto de
   la plataforma, no nuestro, así que no está en `schema.sql`. Verificado que el guardarraíl
   sigue funcionando: una tabla creada después del revoke sigue quedando con RLS activa.

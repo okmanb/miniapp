@@ -20,12 +20,15 @@ export function SettingsView({
   email,
   scenarioName,
   counts,
+  prueba,
 }: {
   displayName: string;
   /** Solo se muestra cuando además hay nombre: si no, ya es el título. */
   email: string;
   scenarioName: string | null;
   counts: SettingsCounts;
+  /** "en 7 horas" si es una cuenta de prueba; null si es una de verdad. */
+  prueba: string | null;
 }) {
   const STATS = [
     { label: "Deudas activas", value: counts.debts, href: "/dashboard" },
@@ -113,14 +116,42 @@ export function SettingsView({
 
       <h2 className="mt-6 text-label uppercase text-muted">Cuenta</h2>
 
+      {/*
+        En una cuenta de prueba, cerrar sesión no es "salir": es tirar todo.
+        Sin mail no hay forma de volver a abrirla, ni siquiera para nosotros.
+        Por eso acá arriba está la salida buena —guardarla— y el botón de abajo
+        dice lo que hace de verdad.
+      */}
+      {prueba && (
+        <>
+          <Link
+            href="/signup?desde=prueba"
+            className="mt-2 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
+          >
+            Guardar mi cuenta <span aria-hidden>→</span>
+          </Link>
+          <p className="help mt-2">
+            Esta cuenta es de prueba y se borra sola {prueba}, con todo lo que tenga cargado.
+            Ponerle tu mail la deja como cualquier otra.
+          </p>
+        </>
+      )}
+
       <form action={logout} className="mt-2">
         <button
           type="submit"
           className="flex min-h-[51px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
         >
-          Cerrar sesión
+          {prueba ? "Salir y descartar la prueba" : "Cerrar sesión"}
         </button>
       </form>
+
+      {prueba && (
+        <p className="help mt-2">
+          Salir sin guardar cierra esta cuenta para siempre: no tiene mail, así que no hay
+          cómo volver a entrar.
+        </p>
+      )}
 
       <DeleteAllDataForm />
     </Screen>

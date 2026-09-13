@@ -114,6 +114,16 @@ export default function PrivateScreensPreview() {
         email="ana@ejemplo.com"
         scenarioName="Plan base"
         counts={{ debts: 5, payments: 4, incomes: 1, expenses: 3 }}
+        prueba={null}
+      />
+
+      <Rotulo>16b · Ajustes de una cuenta de prueba</Rotulo>
+      <SettingsView
+        displayName="Cuenta de prueba"
+        email=""
+        scenarioName="Plan base"
+        counts={{ debts: 1, payments: 0, incomes: 1, expenses: 1 }}
+        prueba="en 7 horas"
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { SettingsView } from "@/components/SettingsView";
+import { estadoDePrueba } from "@/lib/auth/prueba";
 
 export const dynamic = "force-dynamic";
 
@@ -37,12 +38,17 @@ export default async function SettingsPage() {
     counts.expenses = e.count ?? 0;
   }
 
+  // Una cuenta de prueba no tiene mail ni nombre, así que sin esto la pantalla
+  // se encabezaba con "Sin cuenta" y no decía que se está por borrar sola.
+  const prueba = auth.user?.is_anonymous ? estadoDePrueba(auth.user.created_at).etiqueta : null;
+
   return (
     <SettingsView
-      displayName={fullName || email || "Sin cuenta"}
+      displayName={fullName || email || (prueba ? "Cuenta de prueba" : "Sin cuenta")}
       email={fullName ? email : ""}
       scenarioName={scenario?.name ?? null}
       counts={counts}
+      prueba={prueba}
     />
   );
 }

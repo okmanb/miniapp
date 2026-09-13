@@ -1,6 +1,7 @@
 import { BottomNav } from "@/components/BottomNav";
 import { ToastHost } from "@/components/Toast";
 import { DraftImporter } from "@/components/onboarding/DraftImporter";
+import { CuentaDePrueba } from "@/components/CuentaDePrueba";
 import { getDashboard } from "@/lib/data/dashboard";
 
 /**
@@ -25,6 +26,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <>
       {/* Sube lo que se cargó en el onboarding sin cuenta, una sola vez. */}
       <DraftImporter />
+      {/* Arriba de todo y en todas las pantallas: la cuenta se borra sola. */}
+      <CuentaDePrueba />
       {children}
       <BottomNav alertCount={alertCount} />
       {/* Una sola vez para todas las pantallas privadas: el toast se dispara

@@ -19,8 +19,109 @@ export async function login(formData: FormData) {
   redirect("/dashboard");
 }
 
+/**
+ * Entrar a probar: una cuenta temporal, de verdad, sin pedir nada.
+ *
+ * La sesión anónima de Supabase da un `auth.uid()` propio, así que el tablero
+ * de la prueba es el tablero de verdad —las mismas consultas, las mismas
+ * políticas de RLS, las mismas cuentas— y no una maqueta que después hay que
+ * mantener en paralelo. Lo que se carga probando queda guardado y sobrevive a
+ * recargar la página.
+ *
+ * Dura `HORAS_DE_PRUEBA` horas y lo dice el cartel de todas las pantallas. La
+ * borra un cron (migración 013), no esta app.
+ *
+ * Si el proyecto tiene las sesiones anónimas apagadas, esto no puede funcionar
+ * y no tiene sentido disimularlo: manda a crear la cuenta, que es el otro
+ * camino al mismo lugar, con un aviso que lo explica.
+ */
+export async function probarConCuentaTemporal() {
+  const supabase = await createClient();
+
+  // Con sesión abierta el botón ya no significa nada: el tablero es este.
+  const { data: sesion } = await supabase.auth.getUser();
+  if (sesion.user) redirect("/dashboard");
+
+  const { error } = await supabase.auth.signInAnonymously();
+
+  if (error) {
+    console.error("probarConCuentaTemporal: no se pudo abrir la cuenta de prueba", error);
+    redirect("/signup?desde=onboarding&sin_prueba=1");
+  }
+
+  redirect("/dashboard");
+}
+
+/**
+ * Guardar una cuenta de prueba: se le cuelga un mail y deja de ser anónima.
+ *
+ * Es un `updateUser`, NO un alta. El usuario es el mismo —el mismo id— así que
+ * no hay que mover una sola fila: las deudas, los pagos y los resúmenes ya
+ * apuntan ahí. Mover datos de un usuario a otro sería la otra opción, y es la
+ * peligrosa: para hacerla habría que creerle al navegador de quién era la
+ * cuenta vieja.
+ *
+ * La clave no se puede poner todavía. Supabase la rechaza con todas las
+ * letras —"Updating password of an anonymous user without an email or phone is
+ * not allowed"— hasta que el mail esté confirmado. Por eso queda marcada como
+ * pendiente en el metadata y se pide en `/clave`, ni bien vuelve del link.
+ */
+async function guardarCuentaDePrueba(formData: FormData) {
+  const supabase = await createClient();
+
+  const email = String(formData.get("email") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+
+  const { error } = await supabase.auth.updateUser(
+    {
+      email,
+      data: { ...(name ? { full_name: name } : {}), clave_pendiente: true },
+    },
+    { emailRedirectTo: `${await appOrigin()}/auth/callback` }
+  );
+
+  if (error) {
+    console.error("guardarCuentaDePrueba: no se pudo colgar el mail", error);
+    redirect(`/signup?desde=prueba&error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect("/signup?check_email=1&desde=prueba");
+}
+
+/**
+ * La clave, ya con el mail confirmado (pantalla `/clave`).
+ *
+ * Cierra la conversión: hasta acá la cuenta tiene mail pero no tiene con qué
+ * volver a entrar. `clave_pendiente` se apaga para que el callback deje de
+ * mandar a esta pantalla.
+ */
+export async function guardarClaveDeCuentaNueva(formData: FormData) {
+  const supabase = await createClient();
+  const password = String(formData.get("password") ?? "");
+
+  if (password.length < 8) {
+    redirect("/clave?error=" + encodeURIComponent("La clave tiene que tener al menos 8 caracteres."));
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password,
+    data: { clave_pendiente: false },
+  });
+
+  if (error) {
+    console.error("guardarClaveDeCuentaNueva: no se pudo guardar la clave", error);
+    redirect(`/clave?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect("/dashboard?cuenta_guardada=1");
+}
+
 export async function signup(formData: FormData) {
   const supabase = await createClient();
+
+  // Viene de probar: no se crea una cuenta nueva, se guarda la que ya tiene.
+  const { data: sesion } = await supabase.auth.getUser();
+  if (sesion.user?.is_anonymous) return guardarCuentaDePrueba(formData);
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
