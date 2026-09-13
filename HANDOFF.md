@@ -1,13 +1,15 @@
 # Dónde quedó esto — para retomar
 
-Última actualización: 12 de septiembre de 2026.
+Última actualización: 13 de septiembre de 2026.
 
-Siete sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
+Ocho sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
 pantallas contra el prototipo y la desplegó; la tercera la usó en producción y arregló lo
 que aparece solo cuando la abrís; la cuarta arregló los cuatro controles que la tercera dejó
-rotos al mirarlos en un teléfono de verdad. Las dos últimas la usaron con resúmenes reales
-del banco, y ahí apareció casi todo lo que sigue. La séptima encontró que la TEM se
-guardaba y no se usaba.
+rotos al mirarlos en un teléfono de verdad. La quinta y la sexta la usaron con resúmenes
+reales del banco, y ahí apareció casi todo lo que sigue. La séptima encontró que la TEM se
+guardaba y no se usaba, y diseñó la puerta de entrada. **La octava encontró que las cuotas
+del PDF nunca se guardaron** —la tabla tenía cero filas después de seis resúmenes— y que
+"Ir a mi tablero", en la prueba sin cuenta, mandaba a la pantalla de login.
 
 ---
 
@@ -20,12 +22,71 @@ sobre una tarjeta que ya tiene uno, la absorción del pago anterior, y el aviso 
 conteo de dólares. Los dos PDF están en `Downloads` y encadenan —el cierre de agosto es
 exactamente el saldo anterior de septiembre— así que sirven además como control.
 
-El patrón lleva tres sesiones seguidas cumpliéndose: **cada vez que la app se usó con datos
-reales apareció un bug, y casi ninguno se veía leyendo el código.**
+El patrón lleva cuatro sesiones seguidas cumpliéndose: **cada vez que la app se usó con
+datos reales apareció un bug, y casi ninguno se veía leyendo el código.**
+
+Al cargarlos, mirá que las cuotas queden: hasta la migración 012 no quedaba ninguna. Después
+de guardar un resumen con compras en cuotas, `card_installment_plans` tiene que dejar de
+estar vacía.
 
 ---
 
-## Lo que pasó en las dos últimas sesiones
+## Lo que encontró la octava sesión
+
+### Las cuotas del PDF nunca se guardaron, y el índice era el motivo
+
+`card_installment_plans` tenía **cero filas** en producción después de seis resúmenes reales
+cargados, varios con refinanciaciones y compras en cuotas que la pantalla reconocía bien
+("Encontramos 8 compras en cuotas … Se guardan al confirmar"). Se leían, viajaban en el
+formulario en un `<input type="hidden">`, y desaparecían al guardar.
+
+El motivo era el índice único, que era **parcial**:
+
+```sql
+create unique index card_installment_plans_debt_cupon_idx
+  on card_installment_plans (debt_id, cupon) where cupon is not null;
+```
+
+El código hace `upsert(..., { onConflict: "debt_id,cupon" })`, que PostgREST traduce a
+`on conflict (debt_id, cupon)`. Postgres solo acepta un índice parcial como árbitro si el
+INSERT repite su cláusula WHERE, y PostgREST no la emite. Cada upsert moría con
+`42P10: there is no unique or exclusion constraint matching the ON CONFLICT specification`
+—y el código **descartaba el error**, igual que hacía con `debtError` antes de la sesión
+anterior. Fallo total, silencioso, en el único camino por el que las cuotas entran a la app.
+
+La migración 012 lo cambia por un índice completo, que conserva la intención: dos NULL son
+distintos entre sí en un índice único (NULLS DISTINCT es el default), así que dos cuotas
+cargadas a mano sin cupón siguen conviviendo. Verificado contra la base: el `explain` del
+INSERT ahora resuelve el árbitro, y dos upserts seguidos dejan **una** fila con el importe
+del segundo, que es lo que tiene que pasar al cargar dos veces el mismo resumen.
+
+Del lado del código, el error del upsert ahora se devuelve: "Guardamos el resumen pero no
+pudimos guardar las N compras en cuotas: …". La lección se repite por tercera vez en el
+proyecto: **un error de Supabase que no se lee es un bug que no existe hasta que alguien
+mira la tabla.** Si ves un `await supabase...` sin `error`, eso es un candidato.
+
+### La prueba sin cuenta terminaba en la pantalla de login
+
+El paso 3 del onboarding tenía "Ir a mi tablero" apuntando a `/dashboard`, que `proxy.ts`
+protege: sin sesión rebota a `/login?redirectTo=/dashboard`, sin decir por qué, tres
+renglones después de prometer que probar no pide cuenta. Es el mismo callejón que ya se
+había cerrado en el paso 1 con el botón del PDF.
+
+**Es una diferencia deliberada con el prototipo**, la tercera: el prototipo pone ese botón
+primero porque no tiene cuentas —su tablero es una pantalla más, con datos de mentira— y en
+la app el tablero vive detrás de la sesión. Ahora el botón dice lo que hace: "Crear mi
+tablero" → `/signup?desde=onboarding`, con "Ya tengo cuenta" → `/login?desde=onboarding`
+debajo. Las dos pantallas reconocen el parámetro y dicen qué pasa con lo cargado, que lo
+sube `DraftImporter` la primera vez que se entra con sesión. Los tres pasos se siguen viendo
+enteros sin cuenta, que es lo que el prototipo protege de verdad.
+
+Si alguna vez se quiere el botón literal del prototipo, el camino es habilitar las sesiones
+anónimas de Supabase (`signInAnonymously`) y convertirlas al crear la cuenta. No está hecho:
+hay que habilitarlo en el proyecto y decidir qué pasa con las cuentas anónimas que quedan.
+
+---
+
+## Lo que pasó en las dos sesiones anteriores
 
 Por si venís en frío y querés el titular de cada cosa. El detalle está más abajo y en los
 mensajes de commit, que explican el porqué.
@@ -890,7 +951,7 @@ paso de build que nadie recuerda. El script escribe las dos.
 ## Migraciones aplicadas en la base
 
 Las de estas sesiones ya corrieron sobre el proyecto `udhqdbpjhifeotgoqaoa` y están en el
-repo como `supabase/migration_003_*.sql` a `_006_*.sql`. `supabase/schema.sql` quedó al día.
+repo como `supabase/migration_003_*.sql` a `_012_*.sql`. `supabase/schema.sql` quedó al día.
 
 - `bridge_loans`: se sumaron `is_taken` y `monthly_interest_rate`, y se fue
   `annual_interest_rate` — nunca se escribió desde la app y la tasa que pide la pantalla es
@@ -910,6 +971,12 @@ repo como `supabase/migration_003_*.sql` a `_006_*.sql`. `supabase/schema.sql` q
 - `card_statements`: se sumaron `usd_balance` y `usd_rate` (migración 009). Se guardan las
   dos y no solo el resultado: el peso equivalente ya quedó adentro del cierre, así que sin
   la cotización no habría forma de explicar de dónde salió.
+- `card_installment_plans`: el índice único de `(debt_id, cupon)` dejó de ser parcial
+  (migración 012). Era `where cupon is not null` y por eso el upsert de cuotas fallaba
+  siempre, en silencio. Un índice parcial no sirve de árbitro para el `on conflict` que
+  emite PostgREST. **No volver a ponerle el WHERE**: lo que protegía —que dos cuotas sin
+  cupón no sean la misma— lo hace igual el índice completo, porque en un índice único dos
+  NULL son distintos.
 - Se le revocó el `EXECUTE` público a `rls_auto_enable()` (migración 006). Es un objeto de
   la plataforma, no nuestro, así que no está en `schema.sql`. Verificado que el guardarraíl
   sigue funcionando: una tabla creada después del revoke sigue quedando con RLS activa.

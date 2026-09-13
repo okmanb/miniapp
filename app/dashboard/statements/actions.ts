@@ -403,33 +403,56 @@ export async function saveStatement(
     }
   }
 
-  // Cuotas que trajo el PDF. Se guardan con upsert por (debt_id, cupon):
-  // cargar dos meses seguidos el mismo resumen no tiene que duplicarlas, y
-  // el cupón es el identificador que el banco le da a cada compra.
+  /*
+   * Cuotas que trajo el PDF. Se guardan con upsert por (debt_id, cupon):
+   * cargar dos meses seguidos el mismo resumen no tiene que duplicarlas, y el
+   * cupón es el identificador que el banco le da a cada compra.
+   *
+   * El error del upsert se DEVUELVE. Antes se descartaba, y eso escondió un
+   * fallo total: el índice único de (debt_id, cupon) era parcial, Postgres no
+   * acepta un índice parcial como árbitro del `on conflict` que emite
+   * PostgREST, y cada upsert moría con 42P10. Seis resúmenes reales cargados,
+   * la pantalla diciendo "Encontramos 8 compras en cuotas", y la tabla vacía.
+   * Lo arregla la migración 012; esto es para que no vuelva a pasar callado.
+   *
+   * El resumen ya se guardó a esta altura, así que el mensaje lo dice: los
+   * números que mueven el saldo están, lo que falta es el detalle de cuotas.
+   */
   const installmentsRaw = String(formData.get("installments") ?? "");
   if (installmentsRaw) {
+    let plans: ParsedInstallmentInput[] = [];
     try {
-      const plans = JSON.parse(installmentsRaw) as ParsedInstallmentInput[];
-      if (Array.isArray(plans) && plans.length > 0) {
-        await supabase.from("card_installment_plans").upsert(
-          plans.map((plan) => ({
-            user_id: auth.user.id,
-            scenario_id: debt.scenario_id,
-            debt_id: debtId,
-            cupon: plan.cupon,
-            description: plan.description,
-            first_period: plan.firstPeriod,
-            total_installments: plan.totalInstallments,
-            installment_amount: plan.installmentAmount,
-            tna: plan.tna,
-            is_active: true,
-          })),
-          { onConflict: "debt_id,cupon" }
-        );
-      }
+      const parsed = JSON.parse(installmentsRaw) as ParsedInstallmentInput[];
+      if (Array.isArray(parsed)) plans = parsed;
     } catch {
       // Que las cuotas no se puedan leer no invalida el resumen: los números
       // principales ya se guardaron y son los que mueven el saldo.
+      console.error("saveStatement: las cuotas del formulario no son JSON válido");
+    }
+
+    if (plans.length > 0) {
+      const { error: plansError } = await supabase.from("card_installment_plans").upsert(
+        plans.map((plan) => ({
+          user_id: auth.user.id,
+          scenario_id: debt.scenario_id,
+          debt_id: debtId,
+          cupon: plan.cupon,
+          description: plan.description,
+          first_period: plan.firstPeriod,
+          total_installments: plan.totalInstallments,
+          installment_amount: plan.installmentAmount,
+          tna: plan.tna,
+          is_active: true,
+        })),
+        { onConflict: "debt_id,cupon" }
+      );
+
+      if (plansError) {
+        console.error("saveStatement: no se pudieron guardar las cuotas", plansError);
+        return {
+          message: `Guardamos el resumen pero no pudimos guardar las ${plans.length} compras en cuotas: ${plansError.message}`,
+        };
+      }
     }
   }
 

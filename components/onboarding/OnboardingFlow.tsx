@@ -438,27 +438,44 @@ function StepToday({ draft }: { draft: OnboardingDraft }) {
       </ul>
 
       {/*
-        El orden es el del prototipo y no es un detalle: la accion principal
-        es seguir usando la app, no registrarse. Poner "guardar con una
-        cuenta" primero convertiria la pantalla en un muro de registro, que es
-        justo lo que el texto de abajo promete que no va a pasar.
+        ## Por qué acá NO dice "Ir a mi tablero"
+
+        El prototipo pone ese botón primero, y la razón era buena: la acción
+        principal es seguir usando la app, no registrarse. Pero el prototipo no
+        tiene cuentas —su tablero es una pantalla más, con datos de mentira— y
+        en la app el tablero es `/dashboard`, que vive detrás de la sesión. El
+        botón mandaba a todo el mundo a la pantalla de login, sin decir por
+        qué, tres renglones después de prometer que probar no pide cuenta.
+
+        Un botón que promete una pantalla y entrega un formulario de login es
+        peor que uno que pide la cuenta de frente. Así que ahora dice lo que
+        hace: el tablero se crea, y crearlo es crear la cuenta.
+
+        Lo que cargaste no se pierde en el camino: queda en el navegador y lo
+        sube `DraftImporter` la primera vez que entrás con sesión, sin importar
+        si entraste creando la cuenta o con una que ya tenías.
+
+        Sigue sin haber muro: los tres pasos —la deuda, la capacidad, el
+        vencimiento de arriba— se ven enteros sin cuenta, que es lo que el
+        prototipo protege de verdad.
       */}
       <Link
-        href="/dashboard"
+        href="/signup?desde=onboarding"
         className="mt-7 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-pill bg-teal px-[14px] py-[11px] text-card text-white transition-colors duration-150 ease-sd hover:bg-teal-hover"
       >
-        Ir a mi tablero <span aria-hidden>→</span>
+        Crear mi tablero <span aria-hidden>→</span>
       </Link>
 
       <Link
-        href="/signup?desde=onboarding"
+        href="/login?desde=onboarding"
         className="mt-3 flex min-h-[51px] w-full items-center justify-center rounded-pill border border-border bg-surface px-[14px] py-[11px] text-card text-pine transition-colors duration-150 ease-sd hover:bg-surface-sunken"
       >
-        Guardar esto con una cuenta
+        Ya tengo cuenta
       </Link>
 
       <p className="help mt-3 text-center">
-        Podés seguir sin cuenta. Te la vamos a pedir recién cuando quieras guardar.
+        El tablero proyecta esto a seis meses y lo guarda mes a mes, así que vive en tu
+        cuenta. Lo que cargaste recién queda en este navegador y se sube solo cuando entrás.
       </p>
     </>
   );

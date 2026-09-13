@@ -7,14 +7,22 @@ export const dynamic = "force-dynamic";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; redirectTo?: string }>;
+  searchParams: Promise<{ error?: string; redirectTo?: string; desde?: string }>;
 }) {
   const query = await searchParams;
+
+  // Viene de la prueba: ya cargó una deuda sin cuenta y lo que quiere saber es
+  // qué pasa con eso. Lo sube `DraftImporter` al entrar; acá se dice.
+  const desdeOnboarding = query.desde === "onboarding";
 
   return (
     <AuthShell
       title="Ingresar"
-      note="Entrás y recuperás tus deudas, tu flujo y tu plan tal como los dejaste."
+      note={
+        desdeOnboarding
+          ? "Entrás y lo que acabás de cargar se suma a lo que ya tenías, sin volver a escribirlo."
+          : "Entrás y recuperás tus deudas, tu flujo y tu plan tal como los dejaste."
+      }
     >
       <form action={login} className="mt-6">
         <AuthField id="email" label="Email" type="email" autoComplete="email" />
@@ -45,7 +53,10 @@ export default async function LoginPage({
 
       <p className="mt-6 text-center text-[12px] text-muted">
         ¿Todavía no tenés cuenta?{" "}
-        <Link href="/signup" className="text-pine underline underline-offset-2">
+        <Link
+          href={desdeOnboarding ? "/signup?desde=onboarding" : "/signup"}
+          className="text-pine underline underline-offset-2"
+        >
           Crear una
         </Link>
       </p>

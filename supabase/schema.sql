@@ -271,11 +271,18 @@ create index if not exists plans_debt_idx on card_installment_plans (debt_id);
 
 -- El cupón es el identificador que el banco le da a cada compra en cuotas.
 -- Sin esto, cargar dos veces el mismo resumen duplica todas sus cuotas.
--- Parcial: una cuota cargada a mano puede no tener cupón, y dos sin cupón no
--- son necesariamente la misma compra.
+--
+-- NO puede ser parcial, y eso costó que ninguna cuota se guardara nunca
+-- (migración 012). Era `where cupon is not null`, y Postgres solo acepta un
+-- índice parcial como árbitro del ON CONFLICT si el INSERT repite esa misma
+-- cláusula WHERE — cosa que PostgREST no emite. Cada upsert de cuotas moría
+-- con 42P10 y el código descartaba el error.
+--
+-- Completo hace lo mismo que hacía el WHERE: dos NULL son distintos entre sí
+-- en un índice único (NULLS DISTINCT es el default), así que dos cuotas
+-- cargadas a mano sin cupón siguen conviviendo.
 create unique index if not exists card_installment_plans_debt_cupon_idx
-  on card_installment_plans (debt_id, cupon)
-  where cupon is not null;
+  on card_installment_plans (debt_id, cupon);
 
 alter table card_installment_plans enable row level security;
 
