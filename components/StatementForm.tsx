@@ -202,6 +202,18 @@ export function StatementForm({
    * escribir: el mínimo, del campo de arriba; el total, del saldo de la
    * tarjeta. Sin esta línea el botón gris no explica nada.
    */
+  /**
+   * El pago que declara el PDF, si lo declara.
+   *
+   * No es lo mismo que lo que está escrito en "cuánto pagaste": el campo se
+   * puede editar, y los atajos de tipo de pago lo reescriben. Tenerlos
+   * separados es lo que permite avisar cuando dejaron de coincidir.
+   */
+  const pagoDeclarado =
+    parsed?.ok && parsed.paidInPeriod != null && parsed.paidInPeriod > 0
+      ? Math.round(parsed.paidInPeriod)
+      : null;
+
   const missing: string[] = [];
   if (parseMoney(minimum) <= 0) missing.push("cargá el pago mínimo");
   if (!debtId) missing.push("elegí la tarjeta");
@@ -698,13 +710,40 @@ export function StatementForm({
         <MoneyField
           id="amount_paid"
           label="Cuánto pagaste"
-          help="Si pagás menos que el mínimo se suma un punitorio del 3% sobre la diferencia. Dejalo en cero si todavía no pagaste."
+          /*
+            Antes decía "dejalo en cero si todavía no pagaste", y eso llevaba
+            derecho al error de abajo: el saldo con el que el resumen cierra YA
+            tiene descontado el pago que el banco recibió en el período, así
+            que poner cero deja nuestro cierre por encima del suyo por el monto
+            exacto de ese pago.
+          */
+          help="El pago que el banco ya te tomó en este resumen; el PDF lo trae. Si pagaste menos que el mínimo se suma un punitorio del 3% sobre la diferencia."
           value={paid}
           onChange={(v) => {
             setPaid(v);
             setPayKind("variable");
           }}
         />
+
+        {/*
+          El pago que declara el PDF, cuando no es el que está escrito.
+          
+          Pasó en una Visa real: el resumen traía un pago de $ 1.798.840, el
+          campo quedó en cero, y la tarjeta cerró $ 1.798.840 por encima de lo
+          que decía el banco. La comparación de más abajo lo mostraba, pero
+          nombra la diferencia sin decir de dónde sale — y el lugar donde se
+          entiende es al lado del campo que la produce.
+        */}
+        {pagoDeclarado != null && (
+          <PagoDeclarado
+            declarado={pagoDeclarado}
+            escrito={parseMoney(paid)}
+            onUsar={() => {
+              setPaid(String(pagoDeclarado));
+              setPayKind("variable");
+            }}
+          />
+        )}
 
         <fieldset className="mt-5">
           <legend className="text-label uppercase text-muted">Tipo de pago</legend>
@@ -1045,6 +1084,64 @@ function ParseSummary({ parsed }: { parsed: ParseResult }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/**
+ * El pago que declara el PDF, cuando no es el que está escrito.
+ *
+ * Pasó en una Visa real: el resumen traía un pago de $ 1.798.840, el campo
+ * quedó en cero, y la tarjeta cerró $ 1.798.840 por encima de lo que decía el
+ * banco. La comparación del final lo mostraba —"nuestra cuenta da 1.798.840
+ * más que el resumen"— pero nombra la diferencia sin decir de dónde sale, y el
+ * lugar donde se entiende es al lado del campo que la produce.
+ *
+ * La ayuda del campo tenía parte de la culpa: decía "dejalo en cero si todavía
+ * no pagaste", y lo que va acá no es lo que uno va a pagar sino lo que el banco
+ * ya tomó dentro de este resumen. El saldo con el que el resumen cierra lo
+ * tiene descontado.
+ *
+ * En gold y no en rojo: no hay nada roto, hay algo que no coincide y que se
+ * arregla con un botón.
+ */
+export function PagoDeclarado({
+  declarado,
+  escrito,
+  onUsar,
+}: {
+  declarado: number;
+  escrito: number;
+  /** Opcional para poder mirarlo desde el banco de pruebas, que es un
+   *  componente de servidor y no puede pasar handlers. */
+  onUsar?: () => void;
+}) {
+  if (declarado === escrito) return null;
+
+  return (
+    <div className="mt-1.5 rounded-surface border border-gold-border bg-[#FCF4E7] px-3 py-2.5">
+      <p className="text-[11.5px] leading-[1.5] text-gold-ink">
+        {escrito === 0 ? (
+          <>
+            El resumen declara un pago de <strong>{formatMoney(declarado)}</strong> y acá hay
+            cero. El banco ya lo descontó del saldo con el que cierra, así que dejarlo así deja
+            la tarjeta {formatMoney(declarado)} por encima.
+          </>
+        ) : (
+          <>
+            El resumen declara un pago de <strong>{formatMoney(declarado)}</strong>, y acá dice{" "}
+            {formatMoney(escrito)}. Si pagaste algo más después del cierre, registralo como un
+            pago aparte en vez de cambiarlo acá.
+          </>
+        )}
+      </p>
+      <button
+        type="button"
+        onClick={onUsar}
+        className="mt-2 inline-flex min-h-touch items-center rounded-pill border border-gold-border bg-surface px-3 py-1.5 text-[11.5px] font-semibold text-gold-ink transition-colors duration-150 ease-sd hover:bg-surface-sunken"
+      >
+        Poner el del resumen
+      </button>
     </div>
   );
 }

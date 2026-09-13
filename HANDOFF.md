@@ -7,7 +7,8 @@ pantallas contra el prototipo y la desplegó; la tercera la usó en producción 
 que aparece solo cuando la abrís; la cuarta arregló los cuatro controles que la tercera dejó
 rotos al mirarlos en un teléfono de verdad. La quinta y la sexta la usaron con resúmenes
 reales del banco, y ahí apareció casi todo lo que sigue. La séptima encontró que la TEM se
-guardaba y no se usaba, y diseñó la puerta de entrada. **La octava encontró que los 504 del gateway se leían como datos faltantes, que las cuotas
+guardaba y no se usaba, y diseñó la puerta de entrada. **La octava encontró que "cuánto pagaste" invitaba a borrar el pago que el banco ya había
+tomado, que los 504 del gateway se leían como datos faltantes, que las cuotas
 del PDF nunca se guardaron** —la tabla tenía cero filas después de seis resúmenes— y
 convirtió la prueba sin cuenta en una cuenta de prueba de verdad, que se borra sola a las 24
 horas.
@@ -33,6 +34,38 @@ estar vacía.
 ---
 
 ## Lo que encontró la octava sesión
+
+### "Cuánto pagaste" no es lo que vas a pagar: es lo que el banco ya te tomó
+
+La Visa quedó mostrando **$ 9.841.296** con un resumen que cierra en **$ 8.042.456**, y la
+diferencia es exactamente el pago que trae el PDF: **$ 1.798.840**.
+
+No fue un error de cálculo. Son dos cargas del mismo resumen, a quince minutos una de otra:
+
+| Hora  | "Cuánto pagaste" | Cierre guardado | ¿Coincide con el banco? |
+| ----- | ---------------- | --------------- | ----------------------- |
+| 17:48 | 1.798.840        | 8.042.456       | sí                      |
+| 18:13 | 0                | 9.841.296       | no, por 1.798.840       |
+
+El saldo con el que un resumen cierra **ya tiene descontado** el pago que el banco recibió
+durante el período — es la línea "SU PAGO" del PDF, y el parser la lee (`pagosDelPeriodo`).
+Poner cero ahí no dice "todavía no pagué el resumen": dice "el banco no me tomó ningún
+pago", y deja el cierre por encima del suyo por el monto exacto de ese pago.
+
+**La ayuda del campo empujaba a eso.** Decía, con todas las letras, *"Dejalo en cero si
+todavía no pagaste"* — que leído desde el vencimiento del mes que viene es exactamente lo que
+no hay que hacer. Ahora dice qué es: el pago que el banco ya tomó en este resumen.
+
+Y arriba de eso hay un aviso nuevo, `PagoDeclarado`, pegado al campo: cuando el PDF declara
+un pago y el campo no lo tiene, lo nombra, dice cuánto se va a desviar la tarjeta y trae un
+botón para ponerlo. La comparación del final ya mostraba la diferencia —"nuestra cuenta da
+$ 1.798.840 más que el resumen"— pero nombra el síntoma sin decir de dónde sale. Se puede
+mirar en `/dev-preview/pantallas`, sección 06b, en sus dos estados.
+
+**Queda una ambigüedad conocida:** los atajos de "tipo de pago" (mínimo / total) escriben en
+ese mismo campo, y bajo esta lectura significan "el banco ya me tomó esto". Es del prototipo
+y no se tocó, pero si alguna vez el campo se parte en dos —lo que el banco tomó y lo que voy
+a pagar—, este es el motivo.
 
 ### Los 504 del gateway, y un cartel que echaba la culpa a los datos
 
