@@ -87,6 +87,19 @@ de la migración 013. No hay forma de que uno lea al otro.
   su documentación. Verificado contra la base que las once tablas caen en cascada: se borró
   una cuenta de prueba real con su deuda adentro y la deuda se fue con ella.
 
+#### El advisor de Supabase ahora tira trece avisos, y están bien
+
+Apenas se habilitan las sesiones anónimas, `get_advisors` marca
+`auth_allow_anonymous_sign_ins` en las once tablas nuestras (más dos de `cron`): dice que
+hay políticas que le dan acceso a usuarios anónimos. **Es correcto y es a propósito.** Las
+políticas son `auth.uid() = user_id`, así que un usuario anónimo ve exactamente sus propias
+filas y nada más — que es justo lo que hace falta para que el tablero de la prueba sea el
+tablero de verdad.
+
+**No las "arregles"** agregando políticas restrictivas con `is_anonymous is false`: eso deja
+a la cuenta de prueba sin poder leer ni escribir nada, y la prueba entera se cae. El aviso
+existe para proyectos donde una tabla es compartida entre usuarios; acá no hay ninguna.
+
 #### Guardar la cuenta es un `updateUser`, no un alta
 
 El usuario es **el mismo** —el mismo id— así que no se mueve una sola fila. La otra opción
