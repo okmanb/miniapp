@@ -154,6 +154,18 @@ export function SettingsView({
       )}
 
       <DeleteAllDataForm />
+
+      {/* Las dos páginas legales, también acá: quien ya entró no vuelve a la
+          landing para buscarlas. */}
+      <footer className="mt-8 flex items-center justify-center gap-3 border-t border-border pt-5 text-[11.5px] text-muted">
+        <Link href="/privacidad" className="min-h-touch py-2 hover:text-pine">
+          Privacidad
+        </Link>
+        <span aria-hidden className="text-border-input">·</span>
+        <Link href="/terminos" className="min-h-touch py-2 hover:text-pine">
+          Términos
+        </Link>
+      </footer>
     </Screen>
   );
 }

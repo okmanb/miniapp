@@ -75,6 +75,17 @@ Lo que falta no es código:
    de auth del `config.toml`, así que puede pisar cosas que hoy están prendidas a mano —las
    sesiones anónimas, sin ir más lejos—. El PATCH toca solo lo que se nombra.
 
+   Dos cosas que aparecieron al configurarlo, las dos verificadas contra la consola:
+
+   - **`supabase.co` NO se puede poner como *Authorized domain*.** Google contesta *"must be
+     a top private domain"*: está en la lista de sufijos públicos, porque Supabase reparte
+     subdominios ahí. En estado **Testing** ese campo no hace falta, así que se deja vacío.
+   - **Publicar (salir de Testing) va a necesitar dominio propio.** Pide política de
+     privacidad, términos y un *authorized domain*, y `vercel.app` también es un sufijo
+     público. En Testing entran solo los mails cargados como *test users*, hasta 100, que
+     para probar alcanza. **Es el mismo dominio que falta para el SMTP**: dos cosas
+     bloqueadas por la misma compra.
+
 2. **Apple.** Necesita **cuenta paga de Apple Developer** (US$ 99 por año) para crear el
    Services ID y la clave privada del *Sign in with Apple*. No hay forma de saltearlo, y por
    eso el botón está escrito pero probablemente no se use por ahora.
@@ -94,6 +105,33 @@ minutos.
 
 Verificado contra el proyecto real: hoy `settings` dice `apple: true`, el authorize da 400, y
 la app no muestra ningún botón — que es lo correcto.
+
+#### Privacidad y términos, en `/privacidad` y `/terminos`
+
+Las pide Google para publicar la pantalla de consentimiento, pero la razón buena es la otra:
+una app donde alguien escribe cuánto debe tiene que poder decir en un clic qué hace con eso.
+Se llegan desde el pie de la landing y desde Ajustes.
+
+**Todo lo que afirman está verificado contra el código**, no es una plantilla:
+
+- el PDF no se guarda (`parse-actions.ts` lo dice y lo cumple: se lee en memoria y se
+  descarta),
+- la base está en `us-west-2` (Oregón) —consultado al proyecto, no supuesto—,
+- no hay una sola librería de analítica ni de rastreo en el `package.json`,
+- la única cookie es la de sesión, y el borrador del onboarding vive en `localStorage`,
+- las cuentas de prueba se borran a las 24 h y las tarjetas archivadas a los 7 días, que es
+  lo que hacen los dos cron de las migraciones 013 y 014,
+- **"Borrar todos mis datos" no borra la cuenta**: borra los escenarios en cascada y las
+  preferencias de alerta, y la cuenta queda abierta y vacía. La página lo dice y ofrece el
+  mail para pedir la baja.
+
+La regla que queda: **si cambia alguna de esas conductas, la página cambia en el mismo
+commit.** Una política de privacidad desactualizada es peor que no tenerla, por lo mismo que
+un handoff desactualizado.
+
+Dos cosas para que las mire una persona: el mail de contacto es el personal
+(`okmanb@gmail.com`, el mismo que ya va a quedar público en la pantalla de Google), y esto
+lo escribió un modelo, no un abogado.
 
 #### El CLI quedó linkeado, y `config diff` es la herramienta que vale
 

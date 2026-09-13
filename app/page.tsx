@@ -146,6 +146,22 @@ export default async function HomePage({
           </Link>
         </p>
       </div>
+
+      {/*
+        El pie. Las dos páginas legales tienen que ser alcanzables desde una
+        pantalla pública: Google lo pide para publicar el ingreso con su
+        cuenta, y antes que eso, una app donde alguien escribe cuánto debe
+        tiene que poder decir en un clic qué hace con eso.
+      */}
+      <footer className="mt-9 flex items-center justify-center gap-3 border-t border-border pt-5 text-[11.5px] text-muted">
+        <Link href="/privacidad" className="min-h-touch py-2 hover:text-pine">
+          Privacidad
+        </Link>
+        <span aria-hidden className="text-border-input">·</span>
+        <Link href="/terminos" className="min-h-touch py-2 hover:text-pine">
+          Términos
+        </Link>
+      </footer>
     </main>
   );
 }
