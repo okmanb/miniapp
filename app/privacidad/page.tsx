@@ -148,20 +148,22 @@ export default function PrivacidadPage() {
           inmediato y no tiene vuelta atrás.
         </p>
         <p>
-          Eso deja la cuenta abierta y vacía. Si además querés que borremos la cuenta,
-          escribinos a{" "}
-          <a href="mailto:okmanb@gmail.com" className="text-pine underline underline-offset-2">
-            okmanb@gmail.com
-          </a>{" "}
-          desde la dirección de esa cuenta y la damos de baja.
+          Eso deja la cuenta abierta y vacía, por si querés empezar de nuevo. Justo abajo está{" "}
+          <strong className="text-ink">Borrar mi cuenta</strong>, que se lleva también la
+          cuenta: no hay que pedirlo por mail ni esperar a que alguien lo haga. Es inmediato y
+          tampoco tiene vuelta atrás.
         </p>
       </SeccionLegal>
 
       <SeccionLegal titulo="Tus derechos">
         <p>
           Podés pedir acceso, rectificación, actualización o supresión de tus datos personales
-          escribiendo al mail de arriba. La mayor parte la podés hacer sin pedir permiso: todo
-          lo que guardamos se ve y se edita en pantalla.
+          escribiendo a{" "}
+          <a href="mailto:okmanb@gmail.com" className="text-pine underline underline-offset-2">
+            okmanb@gmail.com
+          </a>
+          . La mayor parte la podés hacer sin pedirle permiso a nadie: todo lo que guardamos se
+          ve, se edita y se borra desde la app.
         </p>
         <p>
           La Agencia de Acceso a la Información Pública, en su carácter de órgano de control de

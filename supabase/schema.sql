@@ -296,6 +296,35 @@ create policy "cuotas propias" on card_installment_plans
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- -----------------------------------------------------------------------------
+-- Borrar la propia cuenta
+--
+-- Ajustes ofrece dos cosas distintas: borrar los datos (los escenarios, que se
+-- llevan todo en cascada) y borrar la cuenta entera. Esta función es la
+-- segunda, y va en la base y no en la app para no tener que repartir la
+-- service role key: `security definer` corre con los permisos del dueño, pero
+-- borra exactamente una fila, la de `auth.uid()`. No recibe argumentos: no hay
+-- forma de pedirle que borre a otro.
+
+create or replace function public.borrar_mi_cuenta()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare quien uuid := auth.uid();
+begin
+  if quien is null then
+    raise exception 'No hay sesion: no hay cuenta que borrar.' using errcode = '28000';
+  end if;
+
+  delete from auth.users where id = quien;
+end;
+$$;
+
+revoke all on function public.borrar_mi_cuenta() from public, anon;
+grant execute on function public.borrar_mi_cuenta() to authenticated;
+
+-- -----------------------------------------------------------------------------
 -- La papelera de las tarjetas archivadas
 --
 -- Borrar una deuda en la app pone `is_active = false` y no borra nada. Ese

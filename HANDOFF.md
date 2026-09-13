@@ -106,6 +106,26 @@ minutos.
 Verificado contra el proyecto real: hoy `settings` dice `apple: true`, el authorize da 400, y
 la app no muestra ningún botón — que es lo correcto.
 
+#### Borrar la cuenta, no solo los datos
+
+Ajustes tenía "Borrar todos mis datos", que borra los escenarios en cascada y deja la cuenta
+abierta y vacía. Faltaba la otra mitad, y se notó al escribir la política de privacidad: la
+página tenía que decir "escribinos un mail y te damos de baja", que es pedirle a alguien que
+confíe en que otro se acuerde.
+
+Ahora hay **Borrar mi cuenta** debajo, con el mismo patrón —plegado, con palabra de
+confirmación— y en ese orden a propósito: primero la reversible de las dos.
+
+El borrado lo hace `borrar_mi_cuenta()` **adentro de la base** (migración 015), no la API de
+admin. Hacerlo desde la app necesitaría la service role key, que saltea RLS entera y ni
+siquiera está en el entorno local. La función es `security definer`, no recibe argumentos y
+borra una sola fila: la de `auth.uid()`. Ese filtro es toda la seguridad del asunto — no hay
+forma de pedirle que borre a otro.
+
+Probado de punta a punta en el navegador: se abrió una cuenta de prueba con una deuda, se
+borró desde Ajustes, y en la base quedaron en cero la cuenta, su escenario y su deuda, sin
+tocar las otras dos cuentas de prueba que había en ese momento.
+
 #### Privacidad y términos, en `/privacidad` y `/terminos`
 
 Las pide Google para publicar la pantalla de consentimiento, pero la razón buena es la otra:
@@ -1239,7 +1259,7 @@ paso de build que nadie recuerda. El script escribe las dos.
 ## Migraciones aplicadas en la base
 
 Las de estas sesiones ya corrieron sobre el proyecto `udhqdbpjhifeotgoqaoa` y están en el
-repo como `supabase/migration_003_*.sql` a `_014_*.sql`. `supabase/schema.sql` quedó al día.
+repo como `supabase/migration_003_*.sql` a `_015_*.sql`. `supabase/schema.sql` quedó al día.
 
 - `bridge_loans`: se sumaron `is_taken` y `monthly_interest_rate`, y se fue
   `annual_interest_rate` — nunca se escribió desde la app y la tasa que pide la pantalla es
@@ -1269,6 +1289,8 @@ repo como `supabase/migration_003_*.sql` a `_014_*.sql`. `supabase/schema.sql` q
   anónimas de más de 24 horas, una vez por hora. El `cron.schedule` **no** está en
   `schema.sql` —inserta una fila, no define un objeto, y correrlo de nuevo lo duplica—; el
   que manda es el de la migración.
+- `public.borrar_mi_cuenta()` (migración 015): la usa Ajustes para darse de baja. Security
+  definer, sin argumentos, borra solo `auth.uid()`.
 - `debts.archived_at`, el trigger `debts_marcar_archivada` y
   `public.borrar_tarjetas_archivadas()` (migración 014): la papelera de tarjetas, que se
   vacía sola a los 7 días. El `cron.schedule` tampoco está en `schema.sql`, por lo mismo.

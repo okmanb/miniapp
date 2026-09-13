@@ -40,3 +40,44 @@ export async function deleteAllData(formData: FormData): Promise<SettingsResult>
   revalidatePath("/dashboard/settings");
   return { ok: true };
 }
+
+/**
+ * Borrar la cuenta entera.
+ *
+ * La otra mitad de "borrar mis datos", y la que faltaba. Se notó al escribir
+ * la política de privacidad: la página tenía que decir "escribinos un mail y
+ * te damos de baja", que es pedirle a alguien que confíe en que otro se
+ * acuerde.
+ *
+ * El borrado lo hace `borrar_mi_cuenta()` adentro de la base (migración 015).
+ * Desde acá no se puede tocar `auth.users`: haría falta la service role key,
+ * que saltea RLS entera y no está ni en el entorno local. La función corre con
+ * los permisos del dueño pero borra una sola fila —la de `auth.uid()`— y no
+ * recibe argumentos, así que no hay forma de pedirle que borre a otro.
+ *
+ * Después se cierra la sesión igual. La cuenta ya no existe, pero la cookie
+ * sigue en el navegador y sin esto la app quedaría mostrando pantallas vacías
+ * con un token que no apunta a nadie.
+ */
+export async function deleteAccount(formData: FormData): Promise<SettingsResult> {
+  const supabase = await createClient();
+
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
+
+  const typed = String(formData.get("confirm") ?? "").trim().toUpperCase();
+  if (typed !== DELETE_CONFIRMATION) {
+    return { ok: false, message: `Escribí ${DELETE_CONFIRMATION} para confirmar.` };
+  }
+
+  const { error } = await supabase.rpc("borrar_mi_cuenta");
+
+  if (error) {
+    console.error("deleteAccount: no se pudo borrar la cuenta", error);
+    return { ok: false, message: `No pudimos borrar la cuenta: ${error.message}` };
+  }
+
+  await supabase.auth.signOut();
+
+  return { ok: true };
+}

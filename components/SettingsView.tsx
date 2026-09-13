@@ -2,6 +2,7 @@ import Link from "next/link";
 import { logout } from "@/app/auth-actions";
 import { Card, Screen, Amount } from "@/components/ui";
 import { DeleteAllDataForm } from "@/components/DeleteAllDataForm";
+import { DeleteAccountForm } from "@/components/DeleteAccountForm";
 
 /**
  * El cuerpo de la pantalla 16. Aparte de la página por lo mismo que la 03 y la
@@ -154,6 +155,10 @@ export function SettingsView({
       )}
 
       <DeleteAllDataForm />
+
+      {/* Vaciar y irse son dos decisiones distintas, y van en ese orden: la
+          reversible de las dos primero. */}
+      <DeleteAccountForm esDePrueba={prueba != null} />
 
       {/* Las dos páginas legales, también acá: quien ya entró no vuelve a la
           landing para buscarlas. */}
