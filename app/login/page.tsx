@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { login } from "@/app/auth-actions";
-import { AuthShell, AuthField, AuthSubmit, AuthError, AuthProbar } from "@/components/AuthShell";
+import { AuthShell, AuthField, AuthSubmit, AuthError, AuthProbar, EntrarConProveedores } from "@/components/AuthShell";
+import { proveedoresHabilitados } from "@/lib/auth/proveedores";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ export default async function LoginPage({
   // Viene de la prueba: ya cargó una deuda sin cuenta y lo que quiere saber es
   // qué pasa con eso. Lo sube `DraftImporter` al entrar; acá se dice.
   const desdeOnboarding = query.desde === "onboarding";
+
+  const proveedores = await proveedoresHabilitados();
 
   return (
     <AuthShell
@@ -44,12 +47,14 @@ export default async function LoginPage({
         </AuthSubmit>
       </form>
 
+      <EntrarConProveedores google={proveedores.google} apple={proveedores.apple} />
+
       {/*
         La salida a probar. Quien llega acá sin cuenta —desde un link, desde el
         historial— no tenía cómo llegar a probar que no fuera el botón de atrás
         del navegador.
       */}
-      <AuthProbar />
+      <AuthProbar separador={!proveedores.google && !proveedores.apple} />
 
       <p className="mt-6 text-center text-[12px] text-muted">
         ¿Todavía no tenés cuenta?{" "}

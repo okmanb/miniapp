@@ -35,6 +35,54 @@ estar vacía.
 
 ## Lo que encontró la octava sesión
 
+### Entrar con Google o con Apple: el lado de la app está hecho y espera el interruptor
+
+Los botones ya están en `/login` y en `/signup`, y **aparecen solos**: `proveedoresHabilitados()`
+le pregunta a `/auth/v1/settings` de Supabase cuáles están prendidos y cachea la respuesta
+cinco minutos. Hoy están los dos apagados, así que no se ve nada. El día que se habilite uno,
+el botón aparece sin tocar código — y si se apaga, desaparece.
+
+**Por qué importa más de lo que parece:** el servidor de mail incorporado de Supabase solo
+entrega a los miembros de la organización, así que hoy **nadie que no sea `okmanb@gmail.com`
+puede crear cuenta**. Con Google no hay mail que mandar: es la forma más barata de destrabar
+el alta sin resolver el SMTP (pendiente 2).
+
+**Con una cuenta de prueba abierta se ENLAZA, no se crea otra.** `entrarConProveedor` usa
+`linkIdentity` cuando la sesión es anónima: mismo id, misma deuda cargada. Con
+`signInWithOAuth` se abriría una cuenta nueva y la de prueba quedaría esperando que el cron
+la borre con todo adentro. Eso necesita **manual linking** habilitado en el proyecto.
+
+Lo que falta no es código:
+
+1. **Google.** Crear un proyecto en console.cloud.google.com, configurar la pantalla de
+   consentimiento, y crear un *OAuth client ID* de tipo **Web application** con esta URI de
+   redirección:
+
+       https://udhqdbpjhifeotgoqaoa.supabase.co/auth/v1/callback
+
+   Después, con el client id y el secret, en *Supabase → Authentication → Sign In / Providers
+   → Google*, o por la Management API con un token de
+   https://supabase.com/dashboard/account/tokens:
+
+   ```bash
+   curl -X PATCH "https://api.supabase.com/v1/projects/udhqdbpjhifeotgoqaoa/config/auth"      -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"      -H "Content-Type: application/json"      -d '{"external_google_enabled":true,
+          "external_google_client_id":"EL_CLIENT_ID",
+          "external_google_secret":"EL_SECRET",
+          "security_manual_linking_enabled":true}'
+   ```
+
+   El CLI de Supabase (`supabase config push`) también puede, pero empuja **toda** la config
+   de auth del `config.toml`, así que puede pisar cosas que hoy están prendidas a mano —las
+   sesiones anónimas, sin ir más lejos—. El PATCH toca solo lo que se nombra.
+
+2. **Apple.** Necesita **cuenta paga de Apple Developer** (US$ 99 por año) para crear el
+   Services ID y la clave privada del *Sign in with Apple*. No hay forma de saltearlo, y por
+   eso el botón está escrito pero probablemente no se use por ahora.
+
+Ninguno de los dos se pudo probar de punta a punta: sin credenciales no hay a dónde redirigir.
+Lo verificado es que los botones aparecen y desaparecen con la respuesta de `/auth/v1/settings`,
+mirado en el navegador con los dos estados forzados.
+
 ### Archivar una deuda ahora es una papelera con fecha, no un para siempre
 
 Borrar una tarjeta nunca borró nada: `archiveDebt` pone `is_active = false`, con el

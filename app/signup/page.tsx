@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { signup } from "@/app/auth-actions";
 import { createClient } from "@/lib/supabase/server";
-import { AuthShell, AuthField, AuthSubmit, AuthError } from "@/components/AuthShell";
+import { AuthShell, AuthField, AuthSubmit, AuthError, EntrarConProveedores } from "@/components/AuthShell";
+import { proveedoresHabilitados } from "@/lib/auth/proveedores";
 import { estadoDePrueba } from "@/lib/auth/prueba";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,8 @@ export default async function SignupPage({
    * entra con sesión: acá solo se dice, que es la parte que faltaba.
    */
   const desdeOnboarding = query.desde === "onboarding";
+
+  const proveedores = await proveedoresHabilitados();
 
   if (query.check_email) {
     return (
@@ -113,6 +116,17 @@ export default async function SignupPage({
           </AuthSubmit>
         </form>
 
+        {/*
+          Con Google o Apple la conversión es de un toque y sin mail de por
+          medio: `linkIdentity` le cuelga la identidad a esta misma cuenta, así
+          que no se pierde nada de lo cargado.
+        */}
+        <EntrarConProveedores
+          google={proveedores.google}
+          apple={proveedores.apple}
+          verbo="Guardar"
+        />
+
         <p className="mt-6 text-center text-[12px] text-muted">
           <Link href="/dashboard" className="text-pine underline underline-offset-2">
             Seguir probando
@@ -166,6 +180,12 @@ export default async function SignupPage({
           </span>
         </AuthSubmit>
       </form>
+
+      <EntrarConProveedores
+        google={proveedores.google}
+        apple={proveedores.apple}
+        verbo="Crear cuenta"
+      />
 
       <p className="mt-6 text-center text-[12px] text-muted">
         <Link

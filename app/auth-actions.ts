@@ -53,6 +53,61 @@ export async function probarConCuentaTemporal() {
 }
 
 /**
+ * Entrar con Google o con Apple.
+ *
+ * Sirve para las tres cosas a la vez —crear cuenta, entrar, y guardar una
+ * cuenta de prueba— porque del otro lado es el mismo gesto. Y resuelve el
+ * problema más grande que tiene hoy el alta: el servidor de mail incorporado
+ * de Supabase solo entrega a los miembros de la organización, así que **nadie
+ * más que el dueño puede crear cuenta con mail**. Por acá no hay mail que
+ * mandar.
+ *
+ * ## Con una cuenta de prueba abierta se ENLAZA, no se crea otra
+ *
+ * `linkIdentity` le cuelga la identidad de Google a la cuenta anónima que ya
+ * existe: mismo id, misma deuda cargada, misma proyección. `signInWithOAuth`
+ * en cambio abriría una cuenta nueva y dejaría la de prueba ahí, esperando que
+ * el cron la borre con todo lo que tenga adentro.
+ *
+ * Las dos devuelven una URL en vez de redirigir solas: el redirect lo hace
+ * Next, y por eso va fuera del try.
+ */
+async function entrarConProveedor(provider: "google" | "apple") {
+  const supabase = await createClient();
+  const origen = await appOrigin();
+
+  const { data: sesion } = await supabase.auth.getUser();
+  const esDePrueba = sesion.user?.is_anonymous === true;
+
+  const opciones = { redirectTo: `${origen}/auth/callback` };
+
+  const { data, error } = esDePrueba
+    ? await supabase.auth.linkIdentity({ provider, options: opciones })
+    : await supabase.auth.signInWithOAuth({ provider, options: opciones });
+
+  if (error || !data?.url) {
+    console.error(`entrarConProveedor(${provider})`, error);
+    const destino = esDePrueba ? "/signup" : "/login";
+    redirect(
+      `${destino}?error=${encodeURIComponent(
+        error?.message ?? "No pudimos abrir la pantalla de ese proveedor."
+      )}`
+    );
+  }
+
+  redirect(data.url);
+}
+
+/** Uno por proveedor, para colgarlos de un `<form action>` sin envolver nada. */
+export async function entrarConGoogle() {
+  await entrarConProveedor("google");
+}
+
+export async function entrarConApple() {
+  await entrarConProveedor("apple");
+}
+
+/**
  * Guardar una cuenta de prueba: se le cuelga un mail y deja de ser anónima.
  *
  * Es un `updateUser`, NO un alta. El usuario es el mismo —el mismo id— así que
