@@ -144,29 +144,22 @@ export function AuthError({ message }: { message: string }) {
  * probar que no fuera el botón de atrás del navegador. La landing ofrece las
  * dos puertas; estas pantallas ofrecían una sola.
  */
-export function AuthProbar({ separador = true }: { separador?: boolean }) {
+export function AuthProbar() {
   return (
     <>
-      {/*
-        El "o" va una sola vez por pantalla. Con los botones de proveedor
-        prendidos ya hay uno arriba, y dos seguidos leen como si hubiera tres
-        caminos alternativos en vez de una lista.
-      */}
-      {separador && (
-        <div className="mt-7 flex items-center gap-3">
-          <span className="h-px grow bg-border" />
-          {/* En minúscula: la "O" mayúscula en una mono de cifras tabulares se
-              lee como un cero, y este separador quedaba diciendo "0". */}
-          <span className="font-mono text-[10.5px] font-semibold tracking-[.06em] text-muted">
-            o
-          </span>
-          <span className="h-px grow bg-border" />
-        </div>
-      )}
+      <div className="mt-7 flex items-center gap-3">
+        <span className="h-px grow bg-border" />
+        {/* En minúscula: la "O" mayúscula en una mono de cifras tabulares se
+            lee como un cero, y este separador quedaba diciendo "0". */}
+        <span className="font-mono text-[10.5px] font-semibold tracking-[.06em] text-muted">
+          o
+        </span>
+        <span className="h-px grow bg-border" />
+      </div>
 
       <Link
         href="/?probar"
-        className={`${separador ? "mt-4" : "mt-2.5"} ${ENTRY_SECONDARY} justify-between`}
+        className={`mt-4 ${ENTRY_SECONDARY} justify-between`}
       >
         <span>Probar sin cuenta</span>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden className="stroke-current">

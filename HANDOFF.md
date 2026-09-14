@@ -119,6 +119,41 @@ que se traba con `vercel.app` porque no es un dominio que se pueda acreditar com
 sea que la frase completa —nombre, logo, dominio— sale con la misma compra que destraba el
 SMTP: **un dominio**. Está dicho en la sección de la octava sesión y sigue siendo cierto.
 
+### La limpieza del repo, y lo que a propósito NO se borró
+
+Se fue **`Tail.zip`**: 1,7 MB de punteros del mouse para Windows, subidos por accidente desde
+la web de GitHub ("Add files via upload") y sin relación con nada. Era el archivo más pesado
+del repo después del prototipo.
+
+Lo demás que parecía de más resultó que no, y conviene que quede escrito para no volver a
+mirarlo:
+
+- **`design/`** — el `.gitignore` explica que los artboards `.dc.html` se versionan y el
+  lienzo empaquetado de dos megas no. Es deliberado.
+- **`app/dev-preview/`** — es la herramienta con la que se compararon las pantallas contra el
+  prototipo, y está documentada acá mismo.
+- **`handoff/*.md`** — los cinco están citados desde el código o desde estos documentos.
+- **`lib/debt-engine/` y `lib/card-statements/`** — el motor viejo. La app no lo usa, pero
+  `cross-check.ts` sí, y `RESET.md` pide conservarlo como control.
+
+Dos cosas quedaron señaladas y sin tocar, porque borrarlas es una decisión de producto y no
+de limpieza:
+
+1. **Dentro del motor viejo, `payoff-plan.ts` y `personal-cashflow.ts` (346 líneas) no los
+   alcanza nadie**: el cruzado entra por `schedule.ts` y por `card-statements`. Se
+   conservaron porque `RESET.md` pide conservar el motor viejo, no la mitad.
+2. **Cuatro acciones de servidor exportadas que ninguna pantalla llama**:
+   `deletePayment`, `raiseIncome`, `archiveInstallmentPlan` y `updateScenarioNote`. Son
+   endpoints vivos sin interfaz. O les falta la pantalla, o sobran.
+
+### El README
+
+Estaba desactualizado en lo que más importa: mandaba a configurar el registro por mail, no
+nombraba `forms-check` entre los controles, y no decía cómo se entra a la app. Ahora dice
+dónde vive en producción, las cuatro variables de entorno con qué hace cada una, cómo es el
+ingreso con Google —y que el de mail está dormido—, el mapa de carpetas completo, los tres
+controles que corren antes del push, y qué leer antes de tocar el cálculo.
+
 ### Lo que se tocó de copia
 
 Tres carteles decían "ponele tu mail" para guardar una cuenta de prueba —el del tablero, el
