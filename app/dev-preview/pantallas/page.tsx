@@ -12,7 +12,7 @@ import { AlertCard, SnoozedRow } from "@/components/AlertCard";
 import { BridgeLoanCard } from "@/components/BridgeLoanCard";
 import { ScenarioComparison } from "@/components/ScenarioComparison";
 import { DebtForm } from "@/components/DebtForm";
-import { StatementForm, PagoDeclarado } from "@/components/StatementForm";
+import { StatementForm } from "@/components/StatementForm";
 import { ToastDemo } from "../ToastDemo";
 import { ToastHost } from "@/components/Toast";
 
@@ -203,19 +203,6 @@ export default function ScreensPreview() {
 
       <Section title="04 · Agregar deuda — tarjeta nueva">
         <DebtForm />
-      </Section>
-
-      {/*
-        El aviso del pago declarado, que de otra forma solo se ve subiendo un
-        PDF de verdad. Los dos casos: el campo en cero y el campo distinto.
-      */}
-      <Section title="06b · El pago que declara el resumen, cuando no coincide">
-        <PagoDeclarado declarado={1_798_840} escrito={0} />
-        <PagoDeclarado declarado={1_798_840} escrito={1_000_000} />
-        <p className="help mt-2">
-          El de arriba es el que apareció con una Visa real: el resumen traía el pago, el campo
-          quedó en cero, y la tarjeta cerró $ 1.798.840 por encima del banco.
-        </p>
       </Section>
 
       <Section title="06 · Resumen del mes">

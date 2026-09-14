@@ -221,6 +221,16 @@ create table if not exists card_statements (
   total_due numeric(14, 2) not null default 0,
 
   minimum_payment numeric(14, 2),
+
+  -- Los dos pagos, que no son el mismo pago (migración 016).
+  --
+  -- El del banco: la línea "SU PAGO" del PDF. Se pagó durante el período que
+  -- cerró —contra el resumen anterior— y el banco ya lo restó para llegar a su
+  -- SALDO ACTUAL, así que entra en la cuenta del cierre y no se edita.
+  payments_in_period numeric(14, 2) not null default 0,
+  -- Y el tuyo: lo que se paga de ESTE resumen. Cero es lo normal al cargarlo,
+  -- porque el vencimiento todavía no llegó. No cambia el cierre; se guarda
+  -- además como fila en debt_payments, para que tenga recibo.
   amount_paid numeric(14, 2) not null default 0,
   -- Lo que el parser pudo leer linea por linea en dolares. NO es el total del
   -- resumen: sirve para avisar cuando no coinciden, no para mostrar.

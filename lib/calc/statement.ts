@@ -2,7 +2,19 @@
  * Cierre del mes de una tarjeta, portado de `_stmtProj` en
  * handoff/prototipo.html:
  *
- *   nuevo = saldo anterior + interés + punitorio + consumos + dólares − pagado
+ *   nuevo = saldo anterior − pagos que tomó el banco
+ *           + interés + punitorio + consumos + dólares + impuestos − créditos
+ *
+ * y aparte, lo que la persona pague de ese resumen, que no cambia el cierre:
+ * cambia lo que queda después.
+ *
+ * ## Los dos pagos no son el mismo pago
+ *
+ * El resumen de septiembre trae un pago hecho en agosto: es el pago del
+ * resumen ANTERIOR, y el banco ya lo restó para llegar a su SALDO ACTUAL. El
+ * pago de ESTE resumen todavía no existe cuando el resumen se emite — vence
+ * el mes que viene. Mezclarlos en un solo campo hacía que la pantalla
+ * preguntara "cuánto pagaste" por algo que la persona no había pagado.
  *
  * Dos cosas que lo separan del motor viejo (lib/card-statements) y que son la
  * razón de que esta sea la implementación que va a producción:
@@ -32,14 +44,19 @@ export interface StatementClose {
   /** Saldo con el que cierra el mes. Nunca negativo. */
   newBalance: number;
   /**
-   * El cierre ANTES de restar lo pagado.
+   * El saldo con el que cierra el resumen según el banco: su SALDO ACTUAL.
    *
-   * Es lo que se guarda como saldo base de la tarjeta, porque el pago no se
-   * guarda restado: se guarda como pago y la resta la hace `deriveBalance`.
-   * Así el pago del resumen queda con recibo propio en el historial en vez de
-   * desaparecer adentro de un saldo, que es lo que pasaba antes.
+   * Ya tiene descontados los pagos que el banco tomó durante el período, y
+   * NO tiene descontado lo que la persona pague de este resumen — eso todavía
+   * no pasó cuando el resumen se emite.
+   *
+   * Es lo que se guarda como saldo base de la tarjeta. El pago posterior no se
+   * guarda restado: se guarda como pago y la resta la hace `deriveBalance`,
+   * así queda con recibo propio en el historial.
    */
   grossBalance: number;
+  /** Lo que el banco ya había descontado adentro del cierre. */
+  periodPayments: number;
   /** Lo que entró por consumos en dólares, en pesos. 0 si no hay o no hay cotización. */
   usdCharges: number;
   /** Impuestos y demás cargos del resumen. 0 si no se declararon. */
@@ -69,7 +86,27 @@ export function closeStatement(params: {
   newCharges: number;
   /** Pago mínimo exigido por el banco. */
   minimumPayment: number;
-  /** Cuánto se pagó realmente. */
+  /**
+   * Lo que el banco YA descontó adentro de este resumen.
+   *
+   * Es la línea "SU PAGO" del PDF, y no es plata que se esté pagando ahora:
+   * es lo que se pagó durante el período que cerró —el resumen anterior— y
+   * que el banco ya restó para llegar a su SALDO ACTUAL. Por eso entra acá
+   * adentro del cierre y no afuera como `amountPaid`.
+   *
+   * Tenerlos separados arregla además un doble conteo que estaba latente: si
+   * la persona registraba ese pago cuando lo hizo Y el PDF lo declaraba, el
+   * saldo lo restaba dos veces.
+   */
+  periodPayments?: number;
+  /**
+   * Lo que se paga de ESTE resumen, si ya se pagó. Cero es lo normal al
+   * cargarlo: el vencimiento todavía no llegó.
+   *
+   * No cambia el cierre —el cierre es un dato del banco— sino lo que queda
+   * después de pagar. Por eso se guarda como pago y no restado adentro del
+   * saldo base: así tiene recibo propio en el historial.
+   */
   amountPaid: number;
   /**
    * Consumos en dólares del resumen, YA convertidos a pesos.
@@ -139,6 +176,7 @@ export function closeStatement(params: {
   const usdRaw = params.usdCharges ?? 0;
   const otherRaw = params.otherCharges ?? 0;
   const creditsRaw = params.credits ?? 0;
+  const periodRaw = params.periodPayments ?? 0;
 
   /*
    * Se suma con los centavos y se redondea UNA vez.
@@ -152,9 +190,12 @@ export function closeStatement(params: {
   const usdCharges = Math.round(usdRaw);
   const otherCharges = Math.round(otherRaw);
   const credits = Math.round(creditsRaw);
+  const periodPayments = Math.round(periodRaw);
   const grossBalance = Math.max(
     0,
-    Math.round(previous + interestRaw + lateFee + params.newCharges + usdRaw + otherRaw - creditsRaw)
+    Math.round(
+      previous + interestRaw + lateFee + params.newCharges + usdRaw + otherRaw - creditsRaw - periodRaw
+    )
   );
   const newBalance = Math.max(0, grossBalance - Math.round(params.amountPaid));
 
@@ -164,6 +205,7 @@ export function closeStatement(params: {
     usdCharges,
     otherCharges,
     credits,
+    periodPayments,
     grossBalance,
     newBalance,
     delta: newBalance - previous,

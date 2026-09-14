@@ -476,7 +476,10 @@ console.log("=== 10. Los resumenes reales cierran exacto ===\n");
     usdCharges: 241_163.5,
     otherCharges: 344_696.24,
     minimumPayment: 4_614_770,
-    amountPaid: 1_798_839.63,
+    // El pago que el banco ya tomó adentro de este resumen, no el pago de
+    // este resumen: se hizo en agosto, contra el resumen anterior.
+    periodPayments: 1_798_839.63,
+    amountPaid: 0,
   });
   check("Visa de septiembre cierra donde dice el banco", visa.newBalance, 8_089_852);
 
@@ -493,7 +496,8 @@ console.log("=== 10. Los resumenes reales cierran exacto ===\n");
     otherCharges: 59_180.22,
     credits: 2_952_659.25,
     minimumPayment: 0,
-    amountPaid: 1_200_000,
+    periodPayments: 1_200_000,
+    amountPaid: 0,
   });
   check("la Mastercard cuotificada cierra donde dice el banco", master.newBalance, 1_368_580);
 
@@ -507,7 +511,8 @@ console.log("=== 10. Los resumenes reales cierran exacto ===\n");
     usdCharges: 100_639.2,
     otherCharges: 81_044.53,
     minimumPayment: 675_505,
-    amountPaid: 310_000,
+    periodPayments: 310_000,
+    amountPaid: 0,
   });
   check("la Patagonia de septiembre cierra donde dice el banco", pata.newBalance, 4_644_436);
 
@@ -530,6 +535,40 @@ console.log("=== 10. Los resumenes reales cierran exacto ===\n");
       " lo que el modelo viejo dejaba afuera en un solo resumen: " + formatMoney(falta)
   );
   if (falta <= 1_000_000) note("El modelo viejo dejo de diferir: revisar el caso.");
+}
+
+console.log("");
+console.log("=== 10b. El pago del banco y el pago tuyo no son el mismo pago ===\n");
+
+{
+  /*
+   * La Visa de septiembre otra vez, con los dos pagos a la vez: el que el
+   * banco ya tomo (1.798.840, hecho en agosto) y uno de 2.000.000 que la
+   * persona registra al cargar el resumen.
+   *
+   * El cierre NO se mueve --es un dato del banco-- y lo que cambia es lo que
+   * queda despues. Antes los dos iban al mismo campo, asi que registrar el
+   * segundo borraba el primero o lo sumaba, segun como se mirara.
+   */
+  const base = {
+    previousBalance: 5_710_670.92,
+    annualRate: 68.63,
+    monthlyRate: 0.05641,
+    declaredInterest: 242_071.81,
+    newCharges: 3_350_089.59,
+    usdCharges: 241_163.5,
+    otherCharges: 344_696.24,
+    minimumPayment: 4_614_770,
+    periodPayments: 1_798_839.63,
+  };
+
+  const sinPagar = closeStatement({ ...base, amountPaid: 0 });
+  const pagando = closeStatement({ ...base, amountPaid: 2_000_000 });
+
+  check("el cierre es el mismo se pague o no", pagando.grossBalance, sinPagar.grossBalance);
+  check("...y es el que declara el banco", pagando.grossBalance, 8_089_852);
+  check("lo que queda despues del pago", pagando.newBalance, 8_089_852 - 2_000_000);
+  check("los pagos del banco quedan nombrados", pagando.periodPayments, 1_798_840);
 }
 
 console.log("");

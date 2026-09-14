@@ -125,6 +125,8 @@ export function StatementForm({
   const [newCharges, setNewCharges] = useState("");
   const [minimum, setMinimum] = useState("");
   const [paid, setPaid] = useState("");
+  /** Los pagos que declara el resumen, cuando hay que cargarlos a mano. */
+  const [pagosDelBanco, setPagosDelBanco] = useState("");
   /*
    * Lo que el resumen cobra y hasta ahora no tenia donde entrar.
    *
@@ -166,7 +168,6 @@ export function StatementForm({
    * Sale del vencimiento que trae el PDF. Sin PDF queda vacio y el servidor
    * usa hoy, que es cuando se esta cargando.
    */
-  const [paidOn, setPaidOn] = useState("");
   const [rateBusy, startRate] = useTransition();
   const [rateNote, setRateNote] = useState<string | null>(null);
 
@@ -235,12 +236,12 @@ export function StatementForm({
     if (result.interest != null) setInterest(String(Math.round(result.interest)));
     if (result.otherCharges != null) setOtherCharges(String(Math.round(result.otherCharges)));
     if (result.credits != null) setCredits(String(Math.round(result.credits)));
-    // Lo que el resumen dice que se pago en el periodo. Es el dato del banco:
-    // antes habia que buscarlo en el PDF y escribirlo.
-    if (result.paidInPeriod != null && result.paidInPeriod > 0) {
-      setPaid(String(Math.round(result.paidInPeriod)));
-      setPayKind("variable");
-    }
+    /*
+     * Lo que el resumen dice que se pago en el periodo NO se escribe en ningun
+     * campo: se muestra tal cual y viaja en un hidden. Antes prellenaba
+     * "cuanto pagaste", y ahi empezaba la confusion — ese pago es del mes
+     * pasado y la pregunta parecia ser por este.
+     */
     // Y la cotizacion a la que el banco paso los dolares a pesos, que viene en
     // su linea de transferencia de deuda.
     if (result.usdRateFromStatement != null) setUsdRate(formatArgNumber(result.usdRateFromStatement));
@@ -256,7 +257,6 @@ export function StatementForm({
     if (result.previousBalance != null) {
       setCardPrevious(String(Math.round(result.previousBalance)));
     }
-    if (result.dueDate) setPaidOn(result.dueDate);
     if (result.usdBalance != null && result.usdBalance > 0) {
       setUsdBalance(formatArgNumber(result.usdBalance));
       setUsdOpen(true);
@@ -330,13 +330,26 @@ export function StatementForm({
       monthlyRate: card.monthlyRate,
       newCharges: parseMoney(newCharges),
       minimumPayment: parseMoney(minimum),
+      periodPayments: pagoDeclarado ?? parseMoney(pagosDelBanco),
       amountPaid: parseMoney(paid),
       usdCharges: usdInPesos,
       declaredInterest: interest ? parseMoney(interest) : null,
       otherCharges: parseMoney(otherCharges),
       credits: parseMoney(credits),
     });
-  }, [card, previousBalance, newCharges, minimum, paid, usdInPesos, interest, otherCharges, credits]);
+  }, [
+    card,
+    previousBalance,
+    newCharges,
+    minimum,
+    paid,
+    pagoDeclarado,
+    pagosDelBanco,
+    usdInPesos,
+    interest,
+    otherCharges,
+    credits,
+  ]);
 
   /**
    * El tipo de pago no es un dato aparte: es un atajo que escribe "cuánto
@@ -413,7 +426,6 @@ export function StatementForm({
         <input type="hidden" name="declared_interest" value={interest} />
         <input type="hidden" name="other_charges_total" value={otherCharges} />
         <input type="hidden" name="credits_total" value={credits} />
-        {paidOn && <input type="hidden" name="paid_on" value={paidOn} />}
         {/*
           La TEM que declaro el PDF, para cualquier tarjeta y no solo la que se
           crea acá. Antes viajaba únicamente en el alta, así que una tarjeta
@@ -707,17 +719,55 @@ export function StatementForm({
           value={minimum}
           onChange={setMinimum}
         />
+        {/*
+          El pago que el banco ya tomó: dato, no pregunta.
+
+          Es la línea "SU PAGO" del PDF y se pagó el mes pasado, contra el
+          resumen anterior. El banco ya lo restó para llegar a su saldo de
+          cierre, así que acá no hay nada que decidir — se muestra para que la
+          cuenta se pueda seguir, igual que el interés o los impuestos.
+
+          Cuando el PDF no lo trae (carga a mano) sí se pide: sin ese número el
+          cierre da de más por el monto exacto de lo que se pagó.
+        */}
+        {pagoDeclarado != null ? (
+          <div className="mt-5 rounded-surface border border-border bg-surface-sunken px-4 py-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-label uppercase text-muted">Pagos que ya tomó el banco</span>
+              <span className="num text-[15px] font-semibold text-ink">
+                −{formatMoney(pagoDeclarado)}
+              </span>
+            </div>
+            <p className="help mt-1.5">
+              Lo trae el resumen y ya está descontado del saldo con el que cierra. Se pagó
+              durante el período que cerró, así que no es el pago de este resumen.
+            </p>
+            <input type="hidden" name="period_payments" value={pagoDeclarado} />
+          </div>
+        ) : (
+          <MoneyField
+            id="period_payments"
+            label="Pagos que ya tomó el banco"
+            help="La línea «SU PAGO» del resumen, que el banco ya descontó del saldo de cierre. Dejalo en cero si el resumen no trae ninguno."
+            value={pagosDelBanco}
+            onChange={setPagosDelBanco}
+          />
+        )}
+
+        {/*
+          Y este es el otro pago: el de ESTE resumen, que vence el mes que
+          viene. Cero es la respuesta normal al cargarlo.
+
+          Antes los dos compartían un solo campo llamado "Cuánto pagaste", y
+          preguntaba por algo que todavía no había pasado: lo que el PDF traía
+          era el pago del mes anterior. Quien leía la pregunta y respondía con
+          la verdad —"todavía no lo pagué", cero— dejaba la tarjeta $ 1.798.840
+          por encima de lo que decía el banco.
+        */}
         <MoneyField
           id="amount_paid"
-          label="Cuánto pagaste"
-          /*
-            Antes decía "dejalo en cero si todavía no pagaste", y eso llevaba
-            derecho al error de abajo: el saldo con el que el resumen cierra YA
-            tiene descontado el pago que el banco recibió en el período, así
-            que poner cero deja nuestro cierre por encima del suyo por el monto
-            exacto de ese pago.
-          */
-          help="El pago que el banco ya te tomó en este resumen; el PDF lo trae. Si pagaste menos que el mínimo se suma un punitorio del 3% sobre la diferencia."
+          label="Registrar un pago de este resumen"
+          help="Dejalo en cero si todavía no lo pagaste: lo vas a poder registrar cuando pagues. Si ya lo pagaste, poné cuánto y queda con fecha de hoy."
           value={paid}
           onChange={(v) => {
             setPaid(v);
@@ -725,27 +775,7 @@ export function StatementForm({
           }}
         />
 
-        {/*
-          El pago que declara el PDF, cuando no es el que está escrito.
-          
-          Pasó en una Visa real: el resumen traía un pago de $ 1.798.840, el
-          campo quedó en cero, y la tarjeta cerró $ 1.798.840 por encima de lo
-          que decía el banco. La comparación de más abajo lo mostraba, pero
-          nombra la diferencia sin decir de dónde sale — y el lugar donde se
-          entiende es al lado del campo que la produce.
-        */}
-        {pagoDeclarado != null && (
-          <PagoDeclarado
-            declarado={pagoDeclarado}
-            escrito={parseMoney(paid)}
-            onUsar={() => {
-              setPaid(String(pagoDeclarado));
-              setPayKind("variable");
-            }}
-          />
-        )}
-
-        <fieldset className="mt-5">
+<fieldset className="mt-5">
           <legend className="text-label uppercase text-muted">Tipo de pago</legend>
           {/*
             Tres columnas iguales, no una fila que envuelve. Con la etiqueta
@@ -919,6 +949,14 @@ function StatementPreview({
 
       <div className="mt-2 space-y-1">
         <PreviewRow label="Saldo anterior" value={formatMoney(previousBalance)} />
+        {/* El pago del banco va arriba, donde el banco lo pone: se resta del
+            saldo anterior antes de que empiecen a sumar los cargos. */}
+        {close.periodPayments > 0 && (
+          <PreviewRow
+            label="Pagos que ya tomó el banco"
+            value={`−${formatMoney(close.periodPayments)}`}
+          />
+        )}
         <PreviewRow label="Interés del mes" value={formatMoney(close.interest)} />
         {close.usdCharges > 0 && (
           <PreviewRow label="Consumos en dólares" value={formatMoney(close.usdCharges)} />
@@ -941,11 +979,16 @@ function StatementPreview({
         )}
       </div>
 
+      {/*
+        El cierre primero y el pago tuyo después, en ese orden, porque ese es
+        el orden de los hechos: el resumen cierra en un número que el banco ya
+        decidió, y recién después la persona paga algo contra él.
+      */}
       <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-border-row pt-2">
-        <span className="text-card text-ink">Nuevo saldo</span>
+        <span className="text-card text-ink">Cierra en</span>
         <span className="text-right">
           <span className="block font-mono text-[15px] font-semibold text-ink">
-            {formatMoney(close.newBalance)}
+            {formatMoney(close.grossBalance)}
           </span>
           <span
             className="block font-mono text-[11px]"
@@ -957,6 +1000,21 @@ function StatementPreview({
         </span>
       </div>
 
+      {close.grossBalance !== close.newBalance && (
+        <div className="mt-2 space-y-1 border-t border-border-row pt-2">
+          <PreviewRow
+            label="Tu pago de este resumen"
+            value={`−${formatMoney(close.grossBalance - close.newBalance)}`}
+          />
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-card text-ink">Te queda debiendo</span>
+            <span className="num text-[15px] font-semibold text-ink">
+              {formatMoney(close.newBalance)}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/*
         El saldo del banco al lado del nuestro, cuando el PDF lo trajo.
         Coincidir no esta garantizado —el banco cobra impuestos que este
@@ -967,11 +1025,11 @@ function StatementPreview({
       {bankBalance != null && bankBalance > 0 && (
         <div className="mt-2 border-t border-border-row pt-2">
           <PreviewRow label="El resumen dice que cierra en" value={formatMoney(bankBalance)} />
-          {Math.abs(bankBalance - close.newBalance) >= 1 && (
+          {Math.abs(bankBalance - close.grossBalance) >= 1 && (
             <p className="help mt-1.5" style={{ color: "#823123" }}>
-              Nuestra cuenta da {formatMoney(Math.abs(bankBalance - close.newBalance))}{" "}
-              {close.newBalance < bankBalance ? "menos" : "más"} que el resumen. Revisá los
-              consumos y cuánto pagaste antes de guardar: lo que se guarda es nuestra cuenta.
+              Nuestra cuenta da {formatMoney(Math.abs(bankBalance - close.grossBalance))}{" "}
+              {close.grossBalance < bankBalance ? "menos" : "más"} que el resumen. Revisá los
+              consumos y los pagos antes de guardar: lo que se guarda es nuestra cuenta.
             </p>
           )}
         </div>
@@ -1084,64 +1142,6 @@ function ParseSummary({ parsed }: { parsed: ParseResult }) {
           ))}
         </ul>
       )}
-    </div>
-  );
-}
-
-/**
- * El pago que declara el PDF, cuando no es el que está escrito.
- *
- * Pasó en una Visa real: el resumen traía un pago de $ 1.798.840, el campo
- * quedó en cero, y la tarjeta cerró $ 1.798.840 por encima de lo que decía el
- * banco. La comparación del final lo mostraba —"nuestra cuenta da 1.798.840
- * más que el resumen"— pero nombra la diferencia sin decir de dónde sale, y el
- * lugar donde se entiende es al lado del campo que la produce.
- *
- * La ayuda del campo tenía parte de la culpa: decía "dejalo en cero si todavía
- * no pagaste", y lo que va acá no es lo que uno va a pagar sino lo que el banco
- * ya tomó dentro de este resumen. El saldo con el que el resumen cierra lo
- * tiene descontado.
- *
- * En gold y no en rojo: no hay nada roto, hay algo que no coincide y que se
- * arregla con un botón.
- */
-export function PagoDeclarado({
-  declarado,
-  escrito,
-  onUsar,
-}: {
-  declarado: number;
-  escrito: number;
-  /** Opcional para poder mirarlo desde el banco de pruebas, que es un
-   *  componente de servidor y no puede pasar handlers. */
-  onUsar?: () => void;
-}) {
-  if (declarado === escrito) return null;
-
-  return (
-    <div className="mt-1.5 rounded-surface border border-gold-border bg-[#FCF4E7] px-3 py-2.5">
-      <p className="text-[11.5px] leading-[1.5] text-gold-ink">
-        {escrito === 0 ? (
-          <>
-            El resumen declara un pago de <strong>{formatMoney(declarado)}</strong> y acá hay
-            cero. El banco ya lo descontó del saldo con el que cierra, así que dejarlo así deja
-            la tarjeta {formatMoney(declarado)} por encima.
-          </>
-        ) : (
-          <>
-            El resumen declara un pago de <strong>{formatMoney(declarado)}</strong>, y acá dice{" "}
-            {formatMoney(escrito)}. Si pagaste algo más después del cierre, registralo como un
-            pago aparte en vez de cambiarlo acá.
-          </>
-        )}
-      </p>
-      <button
-        type="button"
-        onClick={onUsar}
-        className="mt-2 inline-flex min-h-touch items-center rounded-pill border border-gold-border bg-surface px-3 py-1.5 text-[11.5px] font-semibold text-gold-ink transition-colors duration-150 ease-sd hover:bg-surface-sunken"
-      >
-        Poner el del resumen
-      </button>
     </div>
   );
 }

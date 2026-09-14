@@ -155,7 +155,21 @@ export async function saveStatement(
 
   const newCharges = parseArgNumber(String(formData.get("new_charges") ?? "")) ?? 0;
   const minimumPayment = parseArgNumber(String(formData.get("minimum_payment") ?? ""));
+  /*
+   * Los dos pagos, que no son el mismo pago.
+   *
+   * `period_payments` es la linea "SU PAGO" del resumen: se pago durante el
+   * periodo que cerro --contra el resumen anterior-- y el banco ya la resto
+   * para llegar a su SALDO ACTUAL. Es un dato, como los intereses.
+   *
+   * `amount_paid` es lo que la persona paga de ESTE resumen. Al cargarlo suele
+   * ser cero: el vencimiento todavia no llego. No cambia el cierre.
+   */
+  const periodPayments = parseArgNumber(String(formData.get("period_payments") ?? "")) ?? 0;
   const amountPaid = parseArgNumber(String(formData.get("amount_paid") ?? "")) ?? 0;
+
+  if (periodPayments < 0) return { message: "Los pagos del resumen no pueden ser negativos." };
+  if (amountPaid < 0) return { message: "Un pago no puede ser negativo." };
 
   /*
    * Los dolares del resumen. Entran al saldo solo si estan los DOS: el total en
@@ -168,12 +182,16 @@ export async function saveStatement(
    * como derivado de datos del banco.
    */
   /*
-   * Cuando se pago. El resumen de agosto se paga en septiembre, asi que el mes
-   * del pago no es el del resumen — y el mes del pago es el que mira todo lo
-   * que pregunta "que pagaste este mes".
+   * Cuando se pago lo que se registra acá.
    *
-   * Sale del vencimiento del PDF; sin el, hoy, que es cuando se esta cargando.
-   * Es el mismo criterio que `createPayment`.
+   * Hoy, salvo que el formulario mande otra fecha. Antes salía del vencimiento
+   * que trae el PDF, y con el campo viejo tenía sentido: ese pago era el del
+   * resumen anterior, ya vencido. El de ahora es un pago que se está haciendo
+   * —el vencimiento de este resumen todavía no llegó— así que fecharlo en el
+   * futuro sería inventar.
+   *
+   * Y el mes del pago importa: es el que mira todo lo que pregunta "qué pagaste
+   * este mes".
    */
   const paidOnRaw = String(formData.get("paid_on") ?? "").trim();
   const paidOn = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(paidOnRaw)
@@ -316,11 +334,17 @@ export async function saveStatement(
     };
   }
 
-  const livePaid = (livePayments ?? []).reduce((sum, p) => sum + Number(p.amount), 0);
-
+  /*
+   * El saldo anterior es el del banco, tal cual.
+   *
+   * Antes se le restaban los pagos vivos, y eso contaba dos veces la misma
+   * plata: el resumen la vuelve a restar en `periodPayments`. Ahora los pagos
+   * vivos no tocan el saldo anterior — se absorben mas abajo, que es la forma
+   * de decir "ya estan adentro de este cierre".
+   */
   const previousBalance = existing
     ? Number(existing.previous_balance)
-    : Math.max(0, Number(debt.base_balance) - livePaid);
+    : Math.max(0, Number(debt.base_balance));
 
   const close = closeStatement({
     previousBalance,
@@ -331,6 +355,7 @@ export async function saveStatement(
     credits,
     newCharges,
     minimumPayment: minimumPayment ?? 0,
+    periodPayments,
     amountPaid,
     usdCharges,
   });
@@ -346,10 +371,12 @@ export async function saveStatement(
         previous_balance: previousBalance,
         interest_charged: close.interest,
         new_charges: newCharges,
-        // Lo que el banco dice que debés al cerrar, con el pago ya descontado.
-        // Difiere a propósito de base_balance, que lo guarda sin descontar.
-        total_due: close.newBalance,
+        // El cierre del banco: su SALDO ACTUAL, con los pagos que él tomó ya
+        // descontados y sin descontar lo que se pague después. Es el mismo
+        // número que queda en base_balance.
+        total_due: close.grossBalance,
         minimum_payment: minimumPayment,
+        payments_in_period: close.periodPayments,
         amount_paid: amountPaid,
         // Las dos cifras y no solo el resultado: el equivalente en pesos ya
         // quedo adentro del cierre, asi que sin la cotizacion no habria forma
@@ -428,10 +455,14 @@ export async function saveStatement(
   }
 
   /*
-   * Y el pago de este resumen, que es lo que la persona escribió en "cuánto
-   * pagaste". Se borra y se reescribe en vez de actualizarse: así corregir el
-   * resumen corrige el pago, bajarlo a cero lo elimina, y volver a guardar no
-   * deja dos.
+   * Y el pago de este resumen, si la persona registró uno al cargarlo. Se borra
+   * y se reescribe en vez de actualizarse: así corregir el resumen corrige el
+   * pago, bajarlo a cero lo elimina, y volver a guardar no deja dos.
+   *
+   * Ojo con lo que NO entra acá: los pagos que el banco ya tomó dentro del
+   * resumen no se guardan como filas. Están adentro del cierre, en
+   * `payments_in_period`, y sus recibos —si la persona los registró cuando los
+   * hizo— son los que quedaron absorbidos unas líneas más arriba.
    */
   await supabase.from("debt_payments").delete().eq("statement_id", inserted.id);
 
@@ -448,6 +479,8 @@ export async function saveStatement(
       // y el pago del resumen no puede chocar con el atajo de pagar el mínimo.
       kind: "pago_variable",
       note: `Pago del resumen de ${period}`,
+      // Con statement_id porque ES el pago de ese resumen: el índice único
+      // garantiza uno solo, y volver a guardar lo corrige en vez de duplicarlo.
       statement_id: inserted.id,
       is_absorbed: false,
     });

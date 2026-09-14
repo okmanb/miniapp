@@ -255,7 +255,56 @@ ocho días atrás se borra.
 Los 7 días están en dos lados que tienen que coincidir: la migración y el texto de
 `DebtActionsSheet` ("se borran del todo" a los 7 días).
 
-### "Cuánto pagaste" no es lo que vas a pagar: es lo que el banco ya te tomó
+### El pago del banco y el pago tuyo son dos campos, no uno
+
+El primer arreglo fue de texto —ver más abajo— y no alcanzaba. El problema no era la ayuda
+del campo: era que **un solo campo servía para dos pagos que no son el mismo pago**.
+
+- El pago que trae el resumen de septiembre **se hizo en agosto**, contra el resumen
+  anterior, y el banco ya lo restó para llegar a su SALDO ACTUAL. Es un dato, como los
+  intereses o los impuestos.
+- El pago **de este** resumen todavía no existe cuando el resumen se emite: vence el mes que
+  viene. Cero es la respuesta honesta al cargarlo.
+
+Preguntando "cuánto pagaste" con el primero prellenado, quien contestaba la verdad —"todavía
+no lo pagué"— borraba el pago del banco y dejaba la tarjeta $ 1.798.840 por encima del
+resumen. Y quien lo dejaba, contestaba que sí había pagado algo que no había pagado.
+
+Ahora (migración 016) son dos:
+
+| En la pantalla | En la base | Qué es |
+| --- | --- | --- |
+| **Pagos que ya tomó el banco** (solo lectura) | `payments_in_period` | La línea "SU PAGO" del PDF. Entra en la cuenta del cierre. |
+| **Registrar un pago de este resumen** (0 por defecto) | `amount_paid` | Lo que pagás vos. No cambia el cierre: cambia lo que queda. |
+
+El de lectura se muestra editable únicamente cuando el PDF no lo trae (carga a mano), porque
+sin ese número el cierre da de más por el monto exacto de lo que se pagó.
+
+**De paso arregla un doble conteo que estaba latente.** El cálculo le restaba los pagos vivos
+al saldo anterior *y además* restaba el campo del cierre: quien registraba el pago cuando lo
+hacía y después cargaba el resumen que lo declaraba, se lo descontaba dos veces. Ahora el
+saldo anterior es el del banco tal cual, y lo único que resta adentro del cierre son los
+pagos que el banco declara.
+
+`total_due` pasó a ser el cierre del banco (su SALDO ACTUAL), el mismo número que queda en
+`base_balance`. Antes guardaba el neto de un pago que en realidad era del mes anterior.
+
+Verificado: los tres resúmenes reales de la sección 10 del control cruzado siguen cerrando
+exacto con el pago movido a `periodPayments`, hay una sección 10b nueva que fija que el
+cierre no se mueva se pague o no, y el preview se miró en el navegador:
+
+    Saldo anterior              $ 3.386.911
+    Pagos que ya tomó el banco  −$ 1.000.000
+    Interés del mes             $ 236.519
+    Cierra en                   $ 3.123.430
+    Tu pago de este resumen     −$ 400.000
+    Te queda debiendo           $ 2.723.430
+
+Lo ya cargado se migró solo: lo que vivía en `amount_paid` pasó a `payments_in_period`, el
+saldo base se netó una vez y las filas de pago quedaron absorbidas —siguen en el historial,
+que era el motivo por el que existen—. El saldo que ve la app no se movió.
+
+### El primer intento: "cuánto pagaste" no es lo que vas a pagar
 
 La Visa quedó mostrando **$ 9.841.296** con un resumen que cierra en **$ 8.042.456**, y la
 diferencia es exactamente el pago que trae el PDF: **$ 1.798.840**.
@@ -1294,7 +1343,7 @@ paso de build que nadie recuerda. El script escribe las dos.
 ## Migraciones aplicadas en la base
 
 Las de estas sesiones ya corrieron sobre el proyecto `udhqdbpjhifeotgoqaoa` y están en el
-repo como `supabase/migration_003_*.sql` a `_015_*.sql`. `supabase/schema.sql` quedó al día.
+repo como `supabase/migration_003_*.sql` a `_016_*.sql`. `supabase/schema.sql` quedó al día.
 
 - `bridge_loans`: se sumaron `is_taken` y `monthly_interest_rate`, y se fue
   `annual_interest_rate` — nunca se escribió desde la app y la tasa que pide la pantalla es
@@ -1324,6 +1373,9 @@ repo como `supabase/migration_003_*.sql` a `_015_*.sql`. `supabase/schema.sql` q
   anónimas de más de 24 horas, una vez por hora. El `cron.schedule` **no** está en
   `schema.sql` —inserta una fila, no define un objeto, y correrlo de nuevo lo duplica—; el
   que manda es el de la migración.
+- `card_statements.payments_in_period` (migración 016): el pago que el banco ya descontó
+  adentro del resumen, separado de `amount_paid`, que pasó a ser el pago que hacés vos. La
+  migración mueve lo viejo y neta el saldo base una vez.
 - `public.borrar_mi_cuenta()` (migración 015): la usa Ajustes para darse de baja. Security
   definer, sin argumentos, borra solo `auth.uid()`.
 - `debts.archived_at`, el trigger `debts_marcar_archivada` y
