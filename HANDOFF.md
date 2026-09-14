@@ -262,8 +262,14 @@ el PDF" (con saldo, consumos, mínimo y vencimiento), "La tarjeta, según el res
 dice el resumen" y el preview. Escribir seis cifras tres veces no las hace leer tres veces:
 las hace saltear.
 
-Ahora hay **una sola ficha**, la del preview, con la cuenta entera en el orden en que el
-banco la hace —saldo anterior, pagos que tomó, consumos, interés, dólares, impuestos, cierre,
+Ahora hay **una sola ficha** —la del preview— y no queda ninguna otra: la de la tarjeta nueva
+también se fundió ahí. Su nombre encabeza la ficha, su saldo anterior es el primer renglón de
+la cuenta, y lo único suyo que la cuenta no dice —la tasa con la que se va a calcular todos
+los meses y el día de vencimiento— entró en la bajada: *"Se crea con este resumen, calculando
+con el 5,641% mensual que él declara"*. El día no se repite cuando el pie ya muestra la fecha
+de este vencimiento.
+
+La ficha lleva la cuenta entera en el orden en que el banco la hace —saldo anterior, pagos que tomó, consumos, interés, dólares, impuestos, cierre,
 comparación— y un pie con lo que el resumen dice pero la cuenta no usa: el mínimo, el
 vencimiento y las compras en cuotas. Los consumos del mes, que faltaban en esa lista, ahora
 están.

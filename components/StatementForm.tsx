@@ -485,60 +485,20 @@ export function StatementForm({
         {/*
           El alta de la tarjeta, acá mismo. Son los cuatro campos del
           formulario de deuda y los cuatro salen del PDF, así que en el caso
-          normal no hay nada que escribir: solo confirmar lo leído.
-        */}
-        {/*
-          El alta de la tarjeta, acá mismo. Son los cuatro campos del
-          formulario de deuda y los cuatro salen del PDF, así que en el caso
           normal no hay nada que escribir.
 
-          Y por eso, con el PDF leído, no son campos: son los mismos renglones
-          que el resumen de abajo. El saldo anterior lo dice el banco, la tasa
-          la fija el banco y el día de vencimiento también. Preguntarlos era
-          pedir que alguien confirmara a mano lo que ya estaba leído.
+          Con el PDF leído ni siquiera se muestran acá: el nombre encabeza la
+          ficha de abajo, el saldo anterior es su primer renglón, y la tasa y
+          el día de vencimiento entran en su bajada. Dos fichas para una
+          tarjeta y su resumen eran dos lecturas del mismo papel.
         */}
         {creatingCard && soloLectura && (
-          <div className="mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3">
-            <div className="text-label uppercase text-muted">La tarjeta, según el resumen</div>
-
-            <div className="mt-2.5 space-y-1.5">
-              <DatoDelResumen label="Nombre" value={cardName || "sin nombre"} />
-              <DatoDelResumen
-                label="Saldo anterior"
-                value={formatMoney(parseMoney(cardPrevious))}
-              />
-              {cardRate && (
-                <DatoDelResumen label="Tasa anual" value={`${cardRate}%`} />
-              )}
-              {cardMonthlyRate != null && (
-                <DatoDelResumen
-                  label="Tasa mensual"
-                  value={`${formatArgNumber(cardMonthlyRate)}%`}
-                />
-              )}
-              {cardDueDay && <DatoDelResumen label="Vence el" value={`día ${cardDueDay}`} />}
-            </div>
-
-            <p className="help mt-2.5">
-              Se crea con este resumen.{" "}
-              {cardMonthlyRate != null
-                ? "Para calcular usamos la mensual que declara el resumen y no la anual sobre doce: el banco no la saca así, y la diferencia es de un 1,4% todos los meses."
-                : "El saldo anterior es con cuánto venía la tarjeta antes de este resumen, no el total que cierra."}
-            </p>
-
-            <button
-              type="button"
-              onClick={() => setCorrigiendo(true)}
-              className="mt-2.5 inline-flex min-h-touch items-center text-[12px] text-pine underline underline-offset-2 hover:text-leaf"
-            >
-              Alguno no coincide con mi resumen
-            </button>
-
+          <>
             <input type="hidden" name="new_card_name" value={cardName} />
             <input type="hidden" name="new_card_previous_balance" value={cardPrevious} />
             <input type="hidden" name="new_card_annual_rate" value={cardRate} />
             <input type="hidden" name="new_card_due_day" value={cardDueDay} />
-          </div>
+          </>
         )}
 
         {creatingCard && !soloLectura && (
@@ -942,6 +902,11 @@ export function StatementForm({
             card={card}
             previousBalance={previousBalance}
             close={preview}
+            tarjetaNueva={
+              creatingCard
+                ? { anual: cardRate, mensual: cardMonthlyRate, dia: cardDueDay }
+                : null
+            }
             newCharges={parseMoney(newCharges)}
             minimumPayment={parseMoney(minimum)}
             bankBalance={parsed?.ok ? (parsed.statementBalance ?? null) : null}
@@ -1040,6 +1005,7 @@ function StatementPreview({
   card,
   previousBalance,
   close,
+  tarjetaNueva,
   newCharges,
   minimumPayment,
   bankBalance,
@@ -1065,6 +1031,12 @@ function StatementPreview({
    * los dos numeros en pantallas distintas.
    */
   bankBalance: number | null;
+  /**
+   * Cuando la tarjeta se está creando con este resumen, lo suyo que la cuenta
+   * no dice: la tasa y el día de vencimiento. El nombre ya encabeza la ficha y
+   * el saldo anterior es su primer renglón.
+   */
+  tarjetaNueva: { anual: string; mensual: number | null; dia: string } | null;
   /** Los consumos del mes, que son parte de la cuenta y faltaban. */
   newCharges: number;
   /** El mínimo que exige el banco: no entra en la cuenta, pero es del resumen. */
@@ -1088,6 +1060,26 @@ function StatementPreview({
         saltean. Acá aparecen una vez, en el orden en que el banco los suma.
       */}
       <div className="text-label uppercase text-muted">Cómo queda {card.name}</div>
+
+      {/*
+        La tarjeta se crea con este resumen, así que lo que la define va acá y
+        no en una ficha aparte: la tasa con la que se va a calcular todos los
+        meses y el día que vence.
+      */}
+      {tarjetaNueva && (
+        <p className="help mt-1">
+          Se crea con este resumen
+          {tarjetaNueva.mensual != null
+            ? `, calculando con el ${formatArgNumber(tarjetaNueva.mensual)}% mensual que él declara`
+            : tarjetaNueva.anual
+              ? `, al ${tarjetaNueva.anual}% anual`
+              : ""}
+          {/* El día solo si el pie no muestra ya la fecha de este vencimiento:
+              "vence el día 7" arriba y "vence el 7 de septiembre" abajo son el
+              mismo dato dicho dos veces. */}
+          {tarjetaNueva.dia && !dueDate ? `, y vence el día ${tarjetaNueva.dia}` : ""}.
+        </p>
+      )}
 
       <div className="mt-2 space-y-1">
         <PreviewRow label="Saldo anterior" value={formatMoney(previousBalance)} />
