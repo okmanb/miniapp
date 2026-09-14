@@ -277,11 +277,17 @@ resumen"*, que devuelve todos los campos editables. Es una decisión explícita 
 abierto invitando a tocar, que era el problema: el formulario pedía confirmar catorce números
 del banco como si en cada uno hubiera algo que elegir.
 
+Lo mismo vale para el alta de la tarjeta, que es la otra mitad de la pantalla: el nombre, el
+saldo anterior, la tasa y el día de vencimiento también los dice el resumen, así que con el
+PDF leído son otra ficha —"La tarjeta, según el resumen"— con la tasa mensual declarada al
+lado de la anual, que es la que se usa para calcular.
+
 Sin PDF —carga a mano— no cambia nada: todo sigue siendo editable desde el principio.
 
-Verificado en el navegador forzando el estado (la ficha no se puede ver en `/dev-preview` sin
-subir un PDF de verdad): los siete renglones salen con sus cifras, abajo quedan solo la
-cotización y el pago, y el botón de corregir devuelve los nueve campos.
+Verificado en el navegador forzando el estado (las fichas no se pueden ver en `/dev-preview`
+sin subir un PDF de verdad): los siete renglones del resumen y los cinco de la tarjeta salen
+con sus cifras, los valores viajan igual en hidden, abajo quedan solo la cotización y el
+pago, y el botón de corregir devuelve los campos con lo leído adentro.
 
 ### El pago del banco y el pago tuyo son dos campos, no uno
 

@@ -486,7 +486,61 @@ export function StatementForm({
           formulario de deuda y los cuatro salen del PDF, así que en el caso
           normal no hay nada que escribir: solo confirmar lo leído.
         */}
-        {creatingCard && (
+        {/*
+          El alta de la tarjeta, acá mismo. Son los cuatro campos del
+          formulario de deuda y los cuatro salen del PDF, así que en el caso
+          normal no hay nada que escribir.
+
+          Y por eso, con el PDF leído, no son campos: son los mismos renglones
+          que el resumen de abajo. El saldo anterior lo dice el banco, la tasa
+          la fija el banco y el día de vencimiento también. Preguntarlos era
+          pedir que alguien confirmara a mano lo que ya estaba leído.
+        */}
+        {creatingCard && soloLectura && (
+          <div className="mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3">
+            <div className="text-label uppercase text-muted">La tarjeta, según el resumen</div>
+
+            <div className="mt-2.5 space-y-1.5">
+              <DatoDelResumen label="Nombre" value={cardName || "sin nombre"} />
+              <DatoDelResumen
+                label="Saldo anterior"
+                value={formatMoney(parseMoney(cardPrevious))}
+              />
+              {cardRate && (
+                <DatoDelResumen label="Tasa anual" value={`${cardRate}%`} />
+              )}
+              {cardMonthlyRate != null && (
+                <DatoDelResumen
+                  label="Tasa mensual"
+                  value={`${formatArgNumber(cardMonthlyRate)}%`}
+                />
+              )}
+              {cardDueDay && <DatoDelResumen label="Vence el" value={`día ${cardDueDay}`} />}
+            </div>
+
+            <p className="help mt-2.5">
+              Se crea con este resumen.{" "}
+              {cardMonthlyRate != null
+                ? "Para calcular usamos la mensual que declara el resumen y no la anual sobre doce: el banco no la saca así, y la diferencia es de un 1,4% todos los meses."
+                : "El saldo anterior es con cuánto venía la tarjeta antes de este resumen, no el total que cierra."}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setCorrigiendo(true)}
+              className="mt-2.5 inline-flex min-h-touch items-center text-[12px] text-pine underline underline-offset-2 hover:text-leaf"
+            >
+              Alguno no coincide con mi resumen
+            </button>
+
+            <input type="hidden" name="new_card_name" value={cardName} />
+            <input type="hidden" name="new_card_previous_balance" value={cardPrevious} />
+            <input type="hidden" name="new_card_annual_rate" value={cardRate} />
+            <input type="hidden" name="new_card_due_day" value={cardDueDay} />
+          </div>
+        )}
+
+        {creatingCard && !soloLectura && (
           <div className="mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3">
             <div className="text-label uppercase text-muted">La tarjeta nueva</div>
             <p className="help mt-1">
