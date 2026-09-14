@@ -14,6 +14,7 @@ import {
 } from "@/lib/calc/money";
 import { parseArgNumber } from "@/app/dashboard/debts/validation";
 import { closeStatement } from "@/lib/calc/statement";
+import { formatIsoDate } from "@/lib/calc/dates";
 import { Spinner, Chevron } from "./ui";
 import { CalendarField, describeCalendarValue } from "./CalendarField";
 import { ChoiceGroup } from "./ChoiceGroup";
@@ -637,78 +638,20 @@ export function StatementForm({
         </div>
 
         {/*
-          Lo que dice el resumen, junto y sin campos.
-
-          Todo esto lo decidio el banco: el minimo lo fija el, los consumos los
-          cargo el, el total en dolares lo dice el. Tenerlos como campos --y
-          encima mezclados con las dos cosas que si hay que decidir-- hacia
-          parecer que en cada uno habia algo que elegir. No lo hay.
-
-          La salida para cuando el lector se equivoca es el boton de abajo, que
-          es una decision explicita y no un campo abierto invitando a tocar.
+          Con el PDF leído, los números del resumen no son campos: viajan acá y
+          se muestran una sola vez, abajo, adentro de la cuenta que arman. Una
+          ficha con la lista y después otra con la misma lista sumada eran dos
+          pantallas para lo mismo.
         */}
         {soloLectura && (
-          <div className="mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3">
-            <div className="text-label uppercase text-muted">Lo que dice el resumen</div>
-
-            <div className="mt-2.5 space-y-1.5">
-              <DatoDelResumen label="Consumos del mes" value={formatMoney(parseMoney(newCharges))} />
-              {parseMoney(interest) > 0 && (
-                <DatoDelResumen
-                  label="Intereses del período"
-                  value={formatMoney(parseMoney(interest))}
-                />
-              )}
-              {parseMoney(otherCharges) > 0 && (
-                <DatoDelResumen
-                  label="Impuestos y otros cargos"
-                  value={formatMoney(parseMoney(otherCharges))}
-                />
-              )}
-              {parseMoney(credits) > 0 && (
-                <DatoDelResumen
-                  label="Cuotificación"
-                  value={`−${formatMoney(parseMoney(credits))}`}
-                />
-              )}
-              {pagoDeclarado != null && pagoDeclarado > 0 && (
-                <DatoDelResumen
-                  label="Pagos que ya tomó el banco"
-                  value={`−${formatMoney(pagoDeclarado)}`}
-                />
-              )}
-              {parseMoney(minimum) > 0 && (
-                <DatoDelResumen label="Pago mínimo" value={formatMoney(parseMoney(minimum))} />
-              )}
-              {(parseArgNumber(usdBalance) ?? 0) > 0 && (
-                <DatoDelResumen
-                  label="Total en dólares"
-                  value={formatUsd(parseArgNumber(usdBalance) ?? 0)}
-                />
-              )}
-            </div>
-
-            <p className="help mt-2.5">
-              Son los números del banco: acá no hay nada que decidir. Lo único que falta lo
-              pedimos abajo.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => setCorrigiendo(true)}
-              className="mt-2.5 inline-flex min-h-touch items-center text-[12px] text-pine underline underline-offset-2 hover:text-leaf"
-            >
-              Alguno no coincide con mi resumen
-            </button>
-
-            {/* Los valores viajan igual: lo que cambia es que no se toquen. */}
+          <>
             <input type="hidden" name="new_charges" value={newCharges} />
             <input type="hidden" name="minimum_payment" value={minimum} />
             <input type="hidden" name="usd_balance" value={usdBalance} />
             {pagoDeclarado != null && (
               <input type="hidden" name="period_payments" value={pagoDeclarado} />
             )}
-          </div>
+          </>
         )}
 
         {usdWarning && (
@@ -999,7 +942,12 @@ export function StatementForm({
             card={card}
             previousBalance={previousBalance}
             close={preview}
+            newCharges={parseMoney(newCharges)}
+            minimumPayment={parseMoney(minimum)}
             bankBalance={parsed?.ok ? (parsed.statementBalance ?? null) : null}
+            dueDate={parsed?.ok ? (parsed.dueDate ?? null) : null}
+            installments={parsed?.ok ? (parsed.installments ?? null) : null}
+            onCorregir={soloLectura ? () => setCorrigiendo(true) : null}
           />
         )}
 
@@ -1092,7 +1040,12 @@ function StatementPreview({
   card,
   previousBalance,
   close,
+  newCharges,
+  minimumPayment,
   bankBalance,
+  dueDate,
+  installments,
+  onCorregir,
 }: {
   card: StatementCard;
   /**
@@ -1112,9 +1065,28 @@ function StatementPreview({
    * los dos numeros en pantallas distintas.
    */
   bankBalance: number | null;
+  /** Los consumos del mes, que son parte de la cuenta y faltaban. */
+  newCharges: number;
+  /** El mínimo que exige el banco: no entra en la cuenta, pero es del resumen. */
+  minimumPayment: number;
+  dueDate: string | null;
+  installments: { installmentAmount: number }[] | null;
+  /** Con PDF, la salida a corregir lo leído. Sin PDF no hay nada que corregir. */
+  onCorregir: (() => void) | null;
 }) {
+  const cuotas = installments ?? [];
+  const cuotasTotal = cuotas.reduce((suma, cuota) => suma + cuota.installmentAmount, 0);
+  const diferencia = bankBalance != null ? bankBalance - close.grossBalance : 0;
   return (
     <div className="mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3">
+      {/*
+        Una sola ficha con la cuenta entera.
+        
+        Antes eran cuatro cajas que decían casi lo mismo: la de "leímos el
+        PDF", la de "lo que dice el resumen", la de la tarjeta nueva y esta. Los
+        mismos seis números escritos tres veces no se leen tres veces: se
+        saltean. Acá aparecen una vez, en el orden en que el banco los suma.
+      */}
       <div className="text-label uppercase text-muted">Cómo queda {card.name}</div>
 
       <div className="mt-2 space-y-1">
@@ -1126,6 +1098,9 @@ function StatementPreview({
             label="Pagos que ya tomó el banco"
             value={`−${formatMoney(close.periodPayments)}`}
           />
+        )}
+        {newCharges > 0 && (
+          <PreviewRow label="Consumos del mes" value={formatMoney(newCharges)} />
         )}
         <PreviewRow label="Interés del mes" value={formatMoney(close.interest)} />
         {close.usdCharges > 0 && (
@@ -1187,22 +1162,65 @@ function StatementPreview({
 
       {/*
         El saldo del banco al lado del nuestro, cuando el PDF lo trajo.
-        Coincidir no esta garantizado —el banco cobra impuestos que este
-        modelo no tiene, y calcula el interes sobre el saldo financiado y no
-        sobre el total— asi que la diferencia se nombra en vez de esconderla.
-        Es el numero que hay que mirar antes de guardar.
+        Coincidir no está garantizado —el banco cobra impuestos que este modelo
+        no tiene, y calcula el interés sobre el saldo financiado y no sobre el
+        total— así que la diferencia se nombra en vez de esconderla.
+
+        Pero se nombra en el tono que corresponde. Estaba en rojo y a tres
+        renglones, y eso hacía leer un error donde había una diferencia
+        esperable: $ 47.000 sobre ocho millones es el 0,6%. El rojo queda para
+        cuando la diferencia es grande de verdad; por debajo del 1% es un
+        renglón más, en gris.
       */}
       {bankBalance != null && bankBalance > 0 && (
         <div className="mt-2 border-t border-border-row pt-2">
           <PreviewRow label="El resumen dice que cierra en" value={formatMoney(bankBalance)} />
-          {Math.abs(bankBalance - close.grossBalance) >= 1 && (
-            <p className="help mt-1.5" style={{ color: "#823123" }}>
-              Nuestra cuenta da {formatMoney(Math.abs(bankBalance - close.grossBalance))}{" "}
-              {close.grossBalance < bankBalance ? "menos" : "más"} que el resumen. Revisá los
-              consumos y los pagos antes de guardar: lo que se guarda es nuestra cuenta.
+          {Math.abs(diferencia) >= 1 && (
+            <p
+              className="help mt-1.5"
+              style={{ color: Math.abs(diferencia) > bankBalance * 0.01 ? "#823123" : undefined }}
+            >
+              {Math.abs(diferencia) > bankBalance * 0.01
+                ? `Son ${formatMoney(Math.abs(diferencia))} de diferencia: revisá los consumos y los pagos antes de guardar.`
+                : `Nuestra cuenta da ${formatMoney(Math.abs(diferencia))} ${
+                    diferencia > 0 ? "menos" : "más"
+                  } — el banco cobra cargos que no publica renglón por renglón.`}
             </p>
           )}
         </div>
+      )}
+
+      {/*
+        El pie: lo que el resumen dice y la cuenta no usa. El mínimo no entra
+        en el cierre —es lo que el banco exige, no lo que cobra— y las cuotas
+        ya vienen adentro de los consumos: nombrarlas es para que se vea que se
+        guardan, no para sumarlas otra vez.
+      */}
+      {(minimumPayment > 0 || dueDate || cuotas.length > 0) && (
+        <div className="mt-2 space-y-1 border-t border-border-row pt-2">
+          {minimumPayment > 0 && (
+            <PreviewRow label="Pago mínimo del resumen" value={formatMoney(minimumPayment)} />
+          )}
+          {/* En castellano y no en ISO: "2026-10-07" es el formato del PDF, no
+              el de nadie que lo lea. */}
+          {dueDate && <PreviewRow label="Vence el" value={formatIsoDate(dueDate)} />}
+          {cuotas.length > 0 && (
+            <PreviewRow
+              label={`${cuotas.length} ${cuotas.length === 1 ? "compra" : "compras"} en cuotas`}
+              value={formatMoney(cuotasTotal)}
+            />
+          )}
+        </div>
+      )}
+
+      {onCorregir && (
+        <button
+          type="button"
+          onClick={onCorregir}
+          className="mt-3 inline-flex min-h-touch items-center text-[12px] text-pine underline underline-offset-2 hover:text-leaf"
+        >
+          Alguno no coincide con mi resumen
+        </button>
       )}
     </div>
   );
@@ -1233,74 +1251,38 @@ function PreviewRow({
 }
 
 /**
- * Lo que salió del PDF, incluido lo que NO salió. Los avisos del parser se
- * muestran tal cual: son la diferencia entre "el resumen dice cero" y "no
- * pudimos leerlo", que para un saldo no es lo mismo.
+ * Que el PDF se leyó, y lo que no se pudo leer de él.
+ *
+ * Antes era una tabla con el saldo, los consumos, el mínimo y el vencimiento,
+ * más un párrafo sobre los dólares y otros dos comparando lo declarado contra
+ * lo que se pudo leer línea por línea. Todo eso ya está abajo, en la cuenta
+ * del resumen, y algunos de esos números aparecían tres veces en la misma
+ * pantalla: escritos tres veces no se leen tres veces, se saltean.
+ *
+ * Lo que queda es lo único que esta caja puede decir y la de abajo no: que el
+ * archivo entró, y qué no pudimos sacarle. Los avisos que sí importan —"no
+ * encontramos el pago mínimo, completalo a mano"— siguen acá. Las diferencias
+ * entre lo declarado y lo leído línea por línea no: el declarado gana siempre,
+ * así que no había nada que hacer con esa información.
  */
 function ParseSummary({ parsed }: { parsed: ParseResult }) {
-  const rows = [
-    {
-      label: "Saldo del resumen",
-      value:
-        parsed.statementBalance != null ? formatMoney(parsed.statementBalance) : "no se pudo leer",
-      missing: parsed.statementBalance == null,
-    },
-    {
-      label: "Consumos del período",
-      value: parsed.newCharges != null ? formatMoney(parsed.newCharges) : "no se pudo leer",
-      missing: parsed.newCharges == null,
-    },
-    {
-      label: "Pago mínimo",
-      value: parsed.minimumPayment != null ? formatMoney(parsed.minimumPayment) : "no se pudo leer",
-      missing: parsed.minimumPayment == null,
-    },
-    {
-      label: "Vencimiento",
-      value: parsed.dueDate ?? "no se pudo leer",
-      missing: !parsed.dueDate,
-    },
-  ];
+  const faltan = [
+    parsed.statementBalance == null && "el saldo de cierre",
+    parsed.newCharges == null && "los consumos",
+    parsed.minimumPayment == null && "el pago mínimo",
+    !parsed.dueDate && "el vencimiento",
+  ].filter((x): x is string => typeof x === "string");
 
   return (
     <div className="mt-3 rounded-surface border border-border bg-surface px-3 py-3">
       <p className="text-[11.5px] font-semibold text-leaf-deep">Leímos {parsed.fileName}</p>
 
-      <dl className="mt-2">
-        {rows.map((row) => (
-          <div key={row.label} className="flex justify-between gap-3 py-1">
-            <dt className="text-[11.5px] text-muted">{row.label}</dt>
-            <dd
-              className="font-mono text-[11.5px]"
-              style={{ color: row.missing ? "#A77530" : "#12211D" }}
-            >
-              {row.value}
-            </dd>
-          </div>
-        ))}
-      </dl>
-
-      {parsed.installments && parsed.installments.length > 0 && (
-        <p className="mt-2 border-t border-border-row pt-2 text-[11px] text-muted">
-          {parsed.installments.length === 1
-            ? "Encontramos 1 compra en cuotas"
-            : `Encontramos ${parsed.installments.length} compras en cuotas`}{" "}
-          por {formatMoney(parsed.installments.reduce((s, i) => s + i.installmentAmount, 0))} este
-          mes. Se guardan al confirmar.
+      {faltan.length > 0 ? (
+        <p className="mt-1 text-[11px] text-gold-ink">
+          No pudimos leer {faltan.join(", ")}. Completalo abajo antes de guardar.
         </p>
-      )}
-
-      {/*
-        Se muestra el total que declara el resumen, no la suma de las líneas
-        que pudimos leer: la extracción por coordenadas deja algunas sin
-        importe, y el faltante se vería como "gastaste menos en dólares".
-      */}
-      {parsed.usdBalance != null && parsed.usdBalance > 0 && (
-        <p className="mt-2 text-[11px] text-gold-ink">
-          El resumen cierra con {formatUsd(parsed.usdBalance)} en dólares. Los pusimos en
-          “Consumos en dólares”, acá abajo: falta la cotización a la que los pagaste, porque el
-          resumen no la trae. Con ella entran al saldo; sin ella quedan afuera.
-        </p>
+      ) : (
+        <p className="help mt-1">Los números están abajo, en la cuenta del resumen.</p>
       )}
 
       {parsed.warnings && parsed.warnings.length > 0 && (

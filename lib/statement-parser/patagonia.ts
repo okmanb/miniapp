@@ -228,5 +228,6 @@ export function parsePatagoniaStatement(layoutText: string): ParsedStatement {
     usdChargesExcluded: Math.round(usdChargesExcluded * 100) / 100,
     chargeLines,
     warnings,
+    diagnostics: [],
   };
 }

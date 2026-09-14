@@ -156,6 +156,17 @@ export interface ParsedStatement {
   // §2.4). Vacío si el parser no distingue líneas individuales.
   chargeLines: ParsedChargeLine[];
   warnings: string[];
+  /**
+   * Diferencias entre lo que el resumen DECLARA y lo que se pudo leer linea
+   * por linea. No son avisos para nadie: el declarado gana siempre y es el que
+   * se usa, asi que la app se las arregla sola.
+   *
+   * Existen para los controles y para `probar-pdf`, que es donde sirven —
+   * cuando un banco cambia la maquetacion, esta es la primera senal. En
+   * pantalla eran ruido: le contaban a la persona una discusion interna entre
+   * dos lecturas de un numero que ya estaba resuelto.
+   */
+  diagnostics: string[];
 }
 
 /**
@@ -319,6 +330,7 @@ export function sumarConsumosDeclarados(lines: string[]): number | null {
 export function parseBbvaStatement(layoutText: string): ParsedStatement {
   const lines = layoutText.split("\n").map((l) => l.trim());
   const warnings: string[] = [];
+  const diagnostics: string[] = [];
 
   // --- Nombre de la tarjeta y cuenta ---
   // Formato: "Visa Signature cuenta 0805192166   CONSOLIDADO"
@@ -543,7 +555,7 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
   const leidoConCuotas =
     Math.round((newChargesArs + planVEntries.reduce((s, e) => s + e.installmentAmount, 0)) * 100) / 100;
   if (declaredCharges != null && Math.abs(declaredCharges - leidoConCuotas) > 0.01) {
-    warnings.push(
+    diagnostics.push(
       `El resumen declara $ ${declaredCharges} de consumos y linea por linea pudimos leer ` +
         `$ ${leidoConCuotas}. Vale el del resumen, y es el que va al campo de consumos.`
     );
@@ -576,7 +588,7 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
 
   const usdRounded = Math.round(usdChargesExcluded * 100) / 100;
   if (saldoActualUsd != null && saldoActualUsd > 0 && usdRounded < saldoActualUsd - 0.01) {
-    warnings.push(
+    diagnostics.push(
       `El resumen cierra con US$ ${saldoActualUsd} en dólares, pero solo pudimos leer ` +
         `US$ ${usdRounded} línea por línea. El que vale es el del resumen, y es el que va al ` +
         `campo de dólares: revisalo antes de ponerle la cotización.`
@@ -606,5 +618,6 @@ export function parseBbvaStatement(layoutText: string): ParsedStatement {
     usdChargesExcluded: Math.round(usdChargesExcluded * 100) / 100,
     chargeLines,
     warnings,
+    diagnostics,
   };
 }

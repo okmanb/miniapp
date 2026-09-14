@@ -125,10 +125,18 @@ console.log("\n=== Regresión: el total en dólares se lee, no se suma ===\n");
 // pantalla mostraba en su lugar la suma de las líneas que se podían
 // reconocer. En un resumen real eso daba US$ 102,08 en vez de US$ 127,06.
 check("saldo en dólares del encabezado", parsed.saldoActualUsd, 127.06);
-// Y cuando la suma línea por línea no llega al total del banco, se avisa: el
-// faltante es una limitación nuestra, no plata que no se gastó.
-const avisaFaltante = parsed.warnings.some((w) => /d[óo]lares/i.test(w));
-check("avisa si no pudo leerlas todas", avisaFaltante, true);
+/*
+ * Y cuando la suma línea por línea no llega al total del banco, queda anotado:
+ * el faltante es una limitación nuestra, no plata que no se gastó.
+ *
+ * Va en `diagnostics` y no en `warnings` desde que se limpió la pantalla: el
+ * declarado gana siempre, así que no hay nada que la persona pueda hacer con
+ * esa diferencia. Sigue importando acá —es la primera señal de que un banco
+ * cambió la maquetación— y en `probar-pdf`.
+ */
+const anotaFaltante = parsed.diagnostics.some((d) => /d[óo]lares/i.test(d));
+check("queda anotado que no pudo leerlas todas", anotaFaltante, true);
+check("y NO le llega a la persona como aviso", parsed.warnings.length, 0);
 
 console.log("\n=== Regresión: BBVA renombró el producto ===\n");
 // En los resúmenes de Visa de 2026 las refinanciaciones vienen como

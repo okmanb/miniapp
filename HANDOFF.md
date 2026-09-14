@@ -255,6 +255,44 @@ ocho días atrás se borra.
 Los 7 días están en dos lados que tienen que coincidir: la migración y el texto de
 `DebtActionsSheet` ("se borran del todo" a los 7 días).
 
+### Cuatro cajas diciendo lo mismo, y avisos que parecían errores
+
+Después de dejar todo en lectura quedaron **cuatro bloques con los mismos números**: "Leímos
+el PDF" (con saldo, consumos, mínimo y vencimiento), "La tarjeta, según el resumen", "Lo que
+dice el resumen" y el preview. Escribir seis cifras tres veces no las hace leer tres veces:
+las hace saltear.
+
+Ahora hay **una sola ficha**, la del preview, con la cuenta entera en el orden en que el
+banco la hace —saldo anterior, pagos que tomó, consumos, interés, dólares, impuestos, cierre,
+comparación— y un pie con lo que el resumen dice pero la cuenta no usa: el mínimo, el
+vencimiento y las compras en cuotas. Los consumos del mes, que faltaban en esa lista, ahora
+están.
+
+Arriba, pegado al que subió el archivo, quedó **lo único que esa caja puede decir y la otra
+no**: que el PDF entró, y qué no se le pudo leer ("No pudimos leer el pago mínimo. Completalo
+abajo antes de guardar").
+
+#### Las diferencias entre lo declarado y lo leído dejaron de ser avisos
+
+El parser comparaba el total que declara el resumen contra lo que podía sumar línea por
+línea, y escribía la diferencia en pantalla en color de aviso:
+
+> El resumen declara $ 3350089.59 de consumos y linea por linea pudimos leer $ 3332422.93.
+
+No hay nada que hacer con eso: **el declarado gana siempre** y es el que se usa. Era una
+discusión interna entre dos lecturas de un número ya resuelto, y en color de error. Se mudó a
+un campo nuevo, `ParsedStatement.diagnostics`, que no viaja a la pantalla: sigue en el
+control del parser —es la primera señal de que un banco cambió la maquetación— y en
+`probar-pdf`. `warnings` quedó para lo único que la persona puede accionar: "no encontramos
+el pago mínimo, completalo a mano".
+
+#### Y la diferencia contra el banco se nombra en el tono que le toca
+
+Estaba en rojo y a tres renglones. **$ 47.000 sobre ocho millones es el 0,6%**: leerlo como
+un error es leer mal. Ahora el rojo queda para diferencias mayores al 1% del cierre; por
+debajo es un renglón gris que dice cuánto y por qué —"el banco cobra cargos que no publica
+renglón por renglón"—.
+
 ### Lo que dice el resumen es lectura, no un formulario
 
 La pregunta que lo destapó: *"el pago mínimo está definido por el banco, ¿por qué habría de

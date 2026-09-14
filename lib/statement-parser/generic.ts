@@ -124,5 +124,6 @@ export function parseGenericStatement(layoutText: string): ParsedStatement {
     usdChargesExcluded: 0,
     chargeLines: [],
     warnings,
+    diagnostics: [],
   };
 }
