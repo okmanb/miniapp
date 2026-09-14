@@ -95,23 +95,6 @@ export async function createScenario(formData: FormData): Promise<ScenarioResult
   return { ok: true };
 }
 
-export async function updateScenarioNote(id: string, note: string): Promise<ScenarioResult> {
-  const supabase = await createClient();
-
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
-
-  const { error } = await supabase
-    .from("scenarios")
-    .update({ note: note.trim().slice(0, NOTE_MAX) || null })
-    .eq("id", id);
-
-  if (error) return { ok: false, message: "No pudimos guardar la nota." };
-
-  revalidateScenarios();
-  return { ok: true };
-}
-
 /**
  * Copiar un escenario tal cual, con todos sus datos — incluidos los ingresos.
  * Es distinto de crear uno nuevo copiando las deudas: acá no se reemplaza nada.

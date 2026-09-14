@@ -136,15 +136,24 @@ mirarlo:
 - **`lib/debt-engine/` y `lib/card-statements/`** — el motor viejo. La app no lo usa, pero
   `cross-check.ts` sí, y `RESET.md` pide conservarlo como control.
 
-Dos cosas quedaron señaladas y sin tocar, porque borrarlas es una decisión de producto y no
-de limpieza:
+Dos cosas más se señalaron como código muerto y **el usuario pidió borrarlas**, así que se
+fueron en el commit siguiente (469 líneas en total):
 
-1. **Dentro del motor viejo, `payoff-plan.ts` y `personal-cashflow.ts` (346 líneas) no los
-   alcanza nadie**: el cruzado entra por `schedule.ts` y por `card-statements`. Se
-   conservaron porque `RESET.md` pide conservar el motor viejo, no la mitad.
-2. **Cuatro acciones de servidor exportadas que ninguna pantalla llama**:
-   `deletePayment`, `raiseIncome`, `archiveInstallmentPlan` y `updateScenarioNote`. Son
-   endpoints vivos sin interfaz. O les falta la pantalla, o sobran.
+1. **Del motor viejo, `payoff-plan.ts` y `personal-cashflow.ts`** (346 líneas). No los
+   alcanzaba nadie: el cruzado entra por `schedule.ts` y por `card-statements`, y esos dos
+   quedan. `RESET.md` pide conservar el motor viejo como control, y el control sigue entero;
+   lo que se fue es la parte que ninguna línea del repo podía ejecutar.
+2. **Cuatro acciones de servidor que ninguna pantalla llamaba**: `deletePayment`,
+   `raiseIncome`, `archiveInstallmentPlan` y `updateScenarioNote` (123 líneas). Eran
+   endpoints vivos sin interfaz.
+
+**Una de esas cuatro vale la pena recordar dónde está.** `raiseIncome` era la única
+implementación de la regla 3 de `handoff/RESCATE-integridad-y-alertas.md` —"todo ajuste que
+sube de acá en más se aplica desde el mes correspondiente en adelante, sin reescribir el
+histórico"— aplicada a ingresos: cerraba el ingreso viejo con `ended_period` y abría uno
+nuevo, en vez de pisar el monto. Como no tenía pantalla, la regla no estaba cumplida igual.
+Si algún día se hace la pantalla de "me aumentaron el sueldo", **el código está en el commit
+`ba6ddee`** y es el punto de partida: `git show ba6ddee:app/dashboard/incomes/actions.ts`.
 
 ### El README
 

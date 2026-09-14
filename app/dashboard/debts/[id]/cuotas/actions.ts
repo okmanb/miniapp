@@ -102,28 +102,3 @@ export async function createInstallmentPlan(formData: FormData): Promise<Install
   return { ok: true };
 }
 
-/**
- * Regla 3: archivar, no borrar. Una compra en cuotas que se saca de la lista
- * sigue habiendo pasado, y su gasto ya movió el saldo de la tarjeta.
- */
-export async function archiveInstallmentPlan(
-  id: string,
-  debtId: string
-): Promise<InstallmentResult> {
-  const supabase = await createClient();
-
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { ok: false, message: "Tenés que iniciar sesión." };
-
-  const { error } = await supabase
-    .from("card_installment_plans")
-    .update({ is_active: false })
-    .eq("id", id);
-
-  if (error) return { ok: false, message: "No pudimos sacarla de la lista." };
-
-  revalidatePath(`/dashboard/debts/${debtId}/cuotas`);
-  revalidatePath(`/dashboard/debts/${debtId}`);
-  revalidatePath("/dashboard/cashflow");
-  return { ok: true };
-}
