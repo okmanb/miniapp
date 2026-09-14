@@ -104,8 +104,19 @@ export default async function ExpensesPage() {
       </div>
 
       {[...groups.entries()].map(([groupPeriod, list]) => {
+        /*
+         * El subtotal del mes cuenta lo que valió EN ESE MES, no todo lo que se
+         * cargó ese mes.
+         *
+         * La diferencia aparece con un gasto fijo que se cargó y se terminó en
+         * el mismo mes: no cuenta en ningún mes —la proyección ya lo trataba
+         * así— pero acá se sumaba igual, así que el subtotal decía que salía
+         * plata que no salía. `expenseAppliesTo` contra el mes del grupo lo
+         * resuelve sin tocar los meses anteriores: un gasto de junio que se
+         * terminó en septiembre sí valió en junio, y sigue contando acá.
+         */
         const cashSubtotal = list
-          .filter((r) => r.debt_id === null)
+          .filter((r) => r.debt_id === null && expenseAppliesTo(r, groupPeriod))
           .reduce((sum, r) => sum + r.amount, 0);
 
         return (

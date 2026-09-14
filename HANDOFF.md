@@ -176,6 +176,28 @@ gastos, se eligió lo segundo. Si se prefiere al revés, hay que cambiar las dos
 `formatMonthName` se sumó a `lib/calc/dates.ts` por el mismo motivo que `formatPeriodShort`:
 había tres copias de la tabla de meses y ahora los ingresos usan una sola.
 
+### "Si lo cargaste en septiembre y terminó, no contó ese mes"
+
+La regla la decidió el usuario, y destapó un tercer lugar donde la app decía otra cosa.
+
+Un gasto fijo cargado y terminado en el mismo mes cuenta en **cero** meses: la proyección ya
+lo trataba así —`expenseAppliesTo` corta en `ended_period`— pero **el subtotal de la lista de
+gastos lo sumaba igual**. La pantalla decía "efectivo $ 250.000" para septiembre por un gasto
+que no salía de ningún lado.
+
+El subtotal ahora cuenta lo que valió **en el mes del grupo** y no todo lo que se cargó ese
+mes: `expenseAppliesTo(row, groupPeriod)`. Eso arregla el mes en curso sin tocar los
+anteriores —un gasto de junio que terminó en septiembre sí valió en junio y sigue contando
+ahí—. Verificado en el navegador: al terminarlo, el subtotal de septiembre pasó de
+$ 250.000 a $ 0 con la fila todavía a la vista, apagada y con su "terminó septiembre 2026";
+y el mismo gasto puesto en junio siguió sumando $ 250.000 en junio.
+
+**La fila no se borra, y acá es donde gastos e ingresos se separan a propósito.** La lista de
+gastos muestra el historial mes por mes, así que la fila apagada es información: dice que ese
+gasto existió y dejó de valer. La lista de ingresos, en cambio, esconde los cerrados, así que
+un ingreso cargado y terminado en el mismo mes sería una fila que nadie puede ver nunca —por
+eso ahí `endIncome` borra—. La asimetría sale de las pantallas, no de un descuido.
+
 ### La limpieza del repo, y lo que a propósito NO se borró
 
 Se fue **`Tail.zip`**: 1,7 MB de punteros del mouse para Windows, subidos por accidente desde
