@@ -255,6 +255,34 @@ ocho días atrás se borra.
 Los 7 días están en dos lados que tienen que coincidir: la migración y el texto de
 `DebtActionsSheet` ("se borran del todo" a los 7 días).
 
+### Lo que dice el resumen es lectura, no un formulario
+
+La pregunta que lo destapó: *"el pago mínimo está definido por el banco, ¿por qué habría de
+modificarlo? Igual con los saldos en dólares. Son todo de lectura, y sigue la lista."*
+
+Tenía razón y la regla es más simple de lo que parecía: **si el PDF lo declara, es lectura;
+si no, es un campo.** Con el resumen leído, la pantalla muestra una sola ficha —"Lo que dice
+el resumen"— con los consumos, los intereses, los impuestos, la cuotificación, los pagos que
+tomó el banco, el mínimo y el total en dólares, todos como renglones, sin cajas de texto.
+
+Debajo quedan **las dos únicas cosas que la app necesita de la persona**:
+
+1. **La cotización del dólar**, que ningún banco publica —se fija el día del débito— y sin la
+   cual los dólares no pueden entrar al saldo. Deja de estar escondida adentro de un
+   desplegable: con el PDF cargado es una de las dos cosas a completar.
+2. **Registrar un pago de este resumen**, que es la otra.
+
+La salida para cuando el lector se equivoca es un botón, *"Alguno no coincide con mi
+resumen"*, que devuelve todos los campos editables. Es una decisión explícita y no un campo
+abierto invitando a tocar, que era el problema: el formulario pedía confirmar catorce números
+del banco como si en cada uno hubiera algo que elegir.
+
+Sin PDF —carga a mano— no cambia nada: todo sigue siendo editable desde el principio.
+
+Verificado en el navegador forzando el estado (la ficha no se puede ver en `/dev-preview` sin
+subir un PDF de verdad): los siete renglones salen con sus cifras, abajo quedan solo la
+cotización y el pago, y el botón de corregir devuelve los nueve campos.
+
 ### El pago del banco y el pago tuyo son dos campos, no uno
 
 El primer arreglo fue de texto —ver más abajo— y no alcanzaba. El problema no era la ayuda

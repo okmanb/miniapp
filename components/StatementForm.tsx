@@ -127,6 +127,15 @@ export function StatementForm({
   const [paid, setPaid] = useState("");
   /** Los pagos que declara el resumen, cuando hay que cargarlos a mano. */
   const [pagosDelBanco, setPagosDelBanco] = useState("");
+  /**
+   * Editar a mano los numeros que trajo el PDF.
+   *
+   * Apagado por defecto: lo que dice el resumen es del banco y no hay nada que
+   * decidir. Pero el lector esta atado a la maquetacion de cada banco y se
+   * rompe cuando la cambian, asi que tiene que haber una salida — una que se
+   * elija a proposito y no un campo abierto invitando a tocar.
+   */
+  const [corrigiendo, setCorrigiendo] = useState(false);
   /*
    * Lo que el resumen cobra y hasta ahora no tenia donde entrar.
    *
@@ -214,6 +223,17 @@ export function StatementForm({
     parsed?.ok && parsed.paidInPeriod != null && parsed.paidInPeriod > 0
       ? Math.round(parsed.paidInPeriod)
       : null;
+
+  /**
+   * Si los numeros del resumen se muestran como lo que son --datos del banco--
+   * o como campos.
+   *
+   * Con el PDF leido son lectura: el minimo lo fija el banco, los consumos los
+   * cargo el banco, el total en dolares lo dice el banco. Preguntarlos, o
+   * dejarlos editables al lado de las cosas que si hay que decidir, hacia
+   * parecer que habia algo que elegir en cada uno.
+   */
+  const soloLectura = parsed?.ok === true && !corrigiendo;
 
   const missing: string[] = [];
   if (parseMoney(minimum) <= 0) missing.push("cargá el pago mínimo");
@@ -562,6 +582,81 @@ export function StatementForm({
           />
         </div>
 
+        {/*
+          Lo que dice el resumen, junto y sin campos.
+
+          Todo esto lo decidio el banco: el minimo lo fija el, los consumos los
+          cargo el, el total en dolares lo dice el. Tenerlos como campos --y
+          encima mezclados con las dos cosas que si hay que decidir-- hacia
+          parecer que en cada uno habia algo que elegir. No lo hay.
+
+          La salida para cuando el lector se equivoca es el boton de abajo, que
+          es una decision explicita y no un campo abierto invitando a tocar.
+        */}
+        {soloLectura && (
+          <div className="mt-5 rounded-surface-lg border border-border bg-surface-sunken px-4 py-3">
+            <div className="text-label uppercase text-muted">Lo que dice el resumen</div>
+
+            <div className="mt-2.5 space-y-1.5">
+              <DatoDelResumen label="Consumos del mes" value={formatMoney(parseMoney(newCharges))} />
+              {parseMoney(interest) > 0 && (
+                <DatoDelResumen
+                  label="Intereses del período"
+                  value={formatMoney(parseMoney(interest))}
+                />
+              )}
+              {parseMoney(otherCharges) > 0 && (
+                <DatoDelResumen
+                  label="Impuestos y otros cargos"
+                  value={formatMoney(parseMoney(otherCharges))}
+                />
+              )}
+              {parseMoney(credits) > 0 && (
+                <DatoDelResumen
+                  label="Cuotificación"
+                  value={`−${formatMoney(parseMoney(credits))}`}
+                />
+              )}
+              {pagoDeclarado != null && pagoDeclarado > 0 && (
+                <DatoDelResumen
+                  label="Pagos que ya tomó el banco"
+                  value={`−${formatMoney(pagoDeclarado)}`}
+                />
+              )}
+              {parseMoney(minimum) > 0 && (
+                <DatoDelResumen label="Pago mínimo" value={formatMoney(parseMoney(minimum))} />
+              )}
+              {(parseArgNumber(usdBalance) ?? 0) > 0 && (
+                <DatoDelResumen
+                  label="Total en dólares"
+                  value={formatUsd(parseArgNumber(usdBalance) ?? 0)}
+                />
+              )}
+            </div>
+
+            <p className="help mt-2.5">
+              Son los números del banco: acá no hay nada que decidir. Lo único que falta lo
+              pedimos abajo.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setCorrigiendo(true)}
+              className="mt-2.5 inline-flex min-h-touch items-center text-[12px] text-pine underline underline-offset-2 hover:text-leaf"
+            >
+              Alguno no coincide con mi resumen
+            </button>
+
+            {/* Los valores viajan igual: lo que cambia es que no se toquen. */}
+            <input type="hidden" name="new_charges" value={newCharges} />
+            <input type="hidden" name="minimum_payment" value={minimum} />
+            <input type="hidden" name="usd_balance" value={usdBalance} />
+            {pagoDeclarado != null && (
+              <input type="hidden" name="period_payments" value={pagoDeclarado} />
+            )}
+          </div>
+        )}
+
         {usdWarning && (
           <div className="mt-5 rounded-surface border border-gold-border bg-gold-bg px-3 py-3">
             <p className="text-[12px] font-semibold text-gold-ink">Ojo con los dólares</p>
@@ -576,6 +671,8 @@ export function StatementForm({
           </div>
         )}
 
+        {!soloLectura && (
+          <>
         <MoneyField
           id="new_charges"
           label="Consumos nuevos del mes"
@@ -633,7 +730,11 @@ export function StatementForm({
             onChange={setCredits}
           />
         </details>
+          </>
+        )}
 
+        {!soloLectura && (
+          <>
         {/*
           Los dolares, que antes quedaban afuera del saldo con un aviso que
           decia "cargalos a mano" y no decia donde. Se pagan a la cotizacion del
@@ -679,39 +780,25 @@ export function StatementForm({
             <p className="help mt-1.5">El que dice el resumen, no la suma de los consumos.</p>
           </div>
 
-          <MoneyField
-            id="usd_rate"
-            label="Cotización del dólar"
-            help="A cuánto se pagó cada dólar. El resumen no la trae — mirá el débito de tu cuenta, o traé la de hoy y corregila si hace falta."
+          <CotizacionDelDolar
             value={usdRate}
             onChange={(v) => {
               setUsdRate(v);
               // Escrita a mano deja de ser la que trajimos: la nota mentiría.
               setRateNote(null);
             }}
+            onHoy={pickTodaysRate}
+            busy={rateBusy}
+            note={rateNote}
+            enPesos={usdInPesos}
+            usd={parseArgNumber(usdBalance) ?? 0}
           />
-
-          <button
-            type="button"
-            onClick={pickTodaysRate}
-            disabled={rateBusy}
-            className="mt-2 inline-flex min-h-[51px] items-center gap-2 rounded-pill border border-border-input bg-surface px-3 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:border-pine disabled:opacity-60"
-          >
-            {rateBusy && <Spinner className="text-teal" />}
-            Usar la cotización de hoy
-          </button>
-
-          {rateNote && <p className="help mt-1.5">{rateNote}</p>}
-
-          {usdInPesos > 0 && (
-            <p className="mt-3 text-[12px] text-leaf-deep">
-              Entran{" "}
-              <span className="font-mono font-semibold">{formatMoney(usdInPesos)}</span> al saldo:{" "}
-              {formatUsd(parseArgNumber(usdBalance) ?? 0)} × {formatMoney(parseArgNumber(usdRate) ?? 0)}.
-            </p>
-          )}
         </details>
+          </>
+        )}
 
+        {!soloLectura && (
+          <>
         <MoneyField
           id="minimum_payment"
           label="Pago mínimo del resumen"
@@ -752,6 +839,35 @@ export function StatementForm({
             value={pagosDelBanco}
             onChange={setPagosDelBanco}
           />
+        )}
+
+          </>
+        )}
+
+        {/*
+          Con el PDF leido, de los dolares falta una sola cosa: a cuanto se
+          pagaron. El total lo dice el resumen --esta arriba, en la ficha-- y
+          la cotizacion no la trae ningun banco: la fija el dia del debito.
+
+          Sin ella los dolares quedan afuera del saldo, asi que el campo no se
+          esconde adentro de un desplegable como cuando hay que cargar todo a
+          mano: es una de las dos cosas que de verdad hay que completar.
+        */}
+        {soloLectura && (parseArgNumber(usdBalance) ?? 0) > 0 && (
+          <div className="mt-5">
+            <CotizacionDelDolar
+              value={usdRate}
+              onChange={(v) => {
+                setUsdRate(v);
+                setRateNote(null);
+              }}
+              onHoy={pickTodaysRate}
+              busy={rateBusy}
+              note={rateNote}
+              enPesos={usdInPesos}
+              usd={parseArgNumber(usdBalance) ?? 0}
+            />
+          </div>
         )}
 
         {/*
@@ -1142,6 +1258,84 @@ function ParseSummary({ parsed }: { parsed: ParseResult }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/**
+ * Un renglón de "lo que dice el resumen": etiqueta a la izquierda, cifra a la
+ * derecha, sin caja propia.
+ *
+ * Deliberadamente igual que los renglones del preview: son la misma clase de
+ * cosa —números que ya están decididos— y verlos iguales ahorra tener que
+ * darse cuenta de eso.
+ */
+/**
+ * La cotización del dólar: lo único de los dólares que el resumen no trae.
+ *
+ * Los consumos en dólares se pagan a la cotización del cierre, y el PDF la
+ * omite. Convertirlos con un número inventado por nosotros sería peor que no
+ * sumarlos, así que se pide — y el botón trae la del día para no obligar a
+ * buscarla.
+ *
+ * Vive en su propio componente porque aparece en dos lugares: adentro del
+ * bloque de dólares cuando se carga a mano, y suelto debajo de la ficha del
+ * resumen cuando el PDF ya trajo todo lo demás.
+ */
+function CotizacionDelDolar({
+  value,
+  onChange,
+  onHoy,
+  busy,
+  note,
+  enPesos,
+  usd,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  onHoy: () => void;
+  busy: boolean;
+  note: string | null;
+  enPesos: number;
+  usd: number;
+}) {
+  return (
+    <>
+      <MoneyField
+        id="usd_rate"
+        label="Cotización del dólar"
+        help="A cuánto se pagó cada dólar. El resumen no la trae — mirá el débito de tu cuenta, o traé la de hoy y corregila si hace falta."
+        value={value}
+        onChange={onChange}
+      />
+
+      <button
+        type="button"
+        onClick={onHoy}
+        disabled={busy}
+        className="mt-2 inline-flex min-h-[51px] items-center gap-2 rounded-pill border border-border-input bg-surface px-3 text-[12px] font-semibold text-pine transition-colors duration-150 ease-sd hover:border-pine disabled:opacity-60"
+      >
+        {busy && <Spinner className="text-teal" />}
+        Usar la cotización de hoy
+      </button>
+
+      {note && <p className="help mt-1.5">{note}</p>}
+
+      {enPesos > 0 && (
+        <p className="mt-3 text-[12px] text-leaf-deep">
+          Entran <span className="font-mono font-semibold">{formatMoney(enPesos)}</span> al saldo:{" "}
+          {formatUsd(usd)} × {formatMoney(enPesos / usd)}.
+        </p>
+      )}
+    </>
+  );
+}
+
+function DatoDelResumen({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className="text-[12px] text-muted">{label}</span>
+      <span className="num text-[12.5px] text-ink">{value}</span>
     </div>
   );
 }
