@@ -119,6 +119,58 @@ que se traba con `vercel.app` porque no es un dominio que se pueda acreditar com
 sea que la frase completa —nombre, logo, dominio— sale con la misma compra que destraba el
 SMTP: **un dominio**. Está dicho en la sección de la octava sesión y sigue siendo cierto.
 
+### La pantalla del aumento de sueldo
+
+Un ingreso no tenía dónde cambiarse: la pantalla de ingresos sabía agregar y nada más, así
+que un aumento de sueldo no se podía registrar salvo cargando un ingreso nuevo y quedándose
+con los dos. Ahora cada renglón de la lista abre `/dashboard/incomes/[id]`.
+
+**La decisión que hace la pantalla** es la misma que con el monto de un gasto fijo, y la app
+no puede adivinarla: un monto distinto puede ser una corrección —el viejo nunca fue cierto—
+o un aumento —el viejo fue cierto hasta este mes—. Se ofrecen como dos opciones con la
+consecuencia escrita al lado. Un aumento cierra el registro viejo con `ended_period` y abre
+uno nuevo desde este mes; una corrección toca la fila y nada más.
+
+Los dos meses se tocan sin pisarse, y eso ya estaba resuelto en el modelo: `incomeAppliesTo`
+deja de contar el viejo **en** `ended_period` y empieza a contar el nuevo en su `period`, que
+es el mismo mes. Verificado contra la base: `$900.000` de mayo con `ended_period` septiembre,
+`$1.200.000` desde septiembre, sin hueco ni superposición.
+
+**Dos cosas que la pantalla hace y no son obvias:**
+
+1. **La elección solo aparece si hay historial que defender.** Un ingreso cargado este mismo
+   mes no tiene meses anteriores, así que cerrarlo y reabrirlo dejaría una fila con
+   `period` igual a `ended_period` —un registro que no cuenta en ningún mes— y un "terminó en
+   septiembre" que no pasó. La regla es del prototipo, que muestra el selector de alcance
+   solo cuando el registro es de un mes anterior (`expScopeShow`). La acción también se
+   defiende sola, no solo la interfaz.
+
+   **Esto deja a la vista una diferencia en la pantalla de gastos**: `ExpenseEditor` muestra
+   el selector para cualquier gasto fijo, incluso uno cargado este mes, y ahí sí se puede
+   fabricar esa fila muerta. Es un bug chico y no se tocó en este commit.
+
+2. **"Este ingreso ya no entra" cierra, salvo que no haya nada que conservar.** Si el ingreso
+   es de un mes anterior se cierra con `ended_period` —los meses que ya pasaron contaron con
+   esa plata—; si es de este mes se borra, porque cerrarlo lo dejaría contando cero meses. En
+   los dos casos termina en la lista: quedarse en la pantalla de un ingreso borrado daba un
+   404, visto en el navegador antes de arreglarlo.
+
+**El historial se muestra**, y no es decoración: "el historial no se toca" es una promesa que
+nadie puede verificar si no se ve. Abajo van los tramos cerrados con su monto y desde/hasta
+cuándo valió cada uno —"mayo de 2026 a agosto de 2026 · $900.000"—, derivados de las mismas
+filas que usa la proyección. Los tramos se encuentran por descripción dentro del escenario,
+que es como se arma el reemplazo; dos ingresos distintos con el mismo nombre se verían como
+uno solo, y es el precio de no agregarle una columna al modelo.
+
+Esta pantalla no está en el prototipo —ahí los ingresos son de solo lectura— así que se armó
+con el idioma que el prototipo sí define para el mismo problema en gastos. Sigue la versión
+de la app (`ExpenseEditor`, tarjetas con radio) y no la del prototipo (píldoras segmentadas
+con una línea de ayuda que cambia): entre parecerse al prototipo y parecerse a su gemela de
+gastos, se eligió lo segundo. Si se prefiere al revés, hay que cambiar las dos juntas.
+
+`formatMonthName` se sumó a `lib/calc/dates.ts` por el mismo motivo que `formatPeriodShort`:
+había tres copias de la tabla de meses y ahora los ingresos usan una sola.
+
 ### La limpieza del repo, y lo que a propósito NO se borró
 
 Se fue **`Tail.zip`**: 1,7 MB de punteros del mouse para Windows, subidos por accidente desde

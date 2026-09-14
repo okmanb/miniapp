@@ -56,6 +56,18 @@ export function formatPeriodLong(period: string): string {
 }
 
 /**
+ * 6 -> "junio". El nombre de un mes del año, suelto.
+ *
+ * Lo necesitan los ingresos, que eligen meses del año y no períodos: el
+ * aguinaldo vive en {6, 12} y un bono en el mes que se elija. Vive acá por lo
+ * mismo que `formatPeriodShort`: dos tablas de nombres de mes en dos archivos
+ * distintos terminan divergiendo.
+ */
+export function formatMonthName(month: number): string {
+  return MONTHS_ES[month - 1] ?? String(month);
+}
+
+/**
  * "2026-12" -> "diciembre". El mes solo, sin año.
  *
  * Para cuando el año se sobreentiende porque el período está a pocos meses de
