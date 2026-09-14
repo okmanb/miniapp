@@ -133,7 +133,7 @@ export function SettingsView({
           </Link>
           <p className="help mt-2">
             Esta cuenta es de prueba y se borra sola {prueba}, con todo lo que tenga cargado.
-            Ponerle tu mail la deja como cualquier otra.
+            Entrar con Google la deja como cualquier otra.
           </p>
         </>
       )}

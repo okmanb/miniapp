@@ -478,7 +478,7 @@ function StepToday({ draft }: { draft: OnboardingDraft }) {
 
       <p className="help mt-3 text-center">
         Podés seguir sin cuenta: el tablero se abre en una cuenta de prueba que se borra sola
-        a las {HORAS_DE_PRUEBA} horas. Ponerle tu mail después la guarda tal como está.
+        a las {HORAS_DE_PRUEBA} horas. Entrar con Google después la guarda tal como está.
       </p>
     </>
   );

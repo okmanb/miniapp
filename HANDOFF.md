@@ -1,8 +1,8 @@
 # Dónde quedó esto — para retomar
 
-Última actualización: 13 de septiembre de 2026.
+Última actualización: 14 de septiembre de 2026.
 
-Ocho sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
+Nueve sesiones lo escribieron. La primera construyó la app; la segunda comparó las dieciséis
 pantallas contra el prototipo y la desplegó; la tercera la usó en producción y arregló lo
 que aparece solo cuando la abrís; la cuarta arregló los cuatro controles que la tercera dejó
 rotos al mirarlos en un teléfono de verdad. La quinta y la sexta la usaron con resúmenes
@@ -11,7 +11,9 @@ guardaba y no se usaba, y diseñó la puerta de entrada. **La octava encontró q
 tomado, que los 504 del gateway se leían como datos faltantes, que las cuotas
 del PDF nunca se guardaron** —la tabla tenía cero filas después de seis resúmenes— y
 convirtió la prueba sin cuenta en una cuenta de prueba de verdad, que se borra sola a las 24
-horas.
+horas. **La novena dejó una sola puerta de entrada —Google— y la sacó de la
+pantalla de Supabase: el token lo pide el navegador, así que Google muestra el dominio de la
+app y no `udhqdbpjhifeotgoqaoa.supabase.co`.**
 
 ---
 
@@ -33,14 +35,108 @@ estar vacía.
 
 ---
 
+## Lo que hizo la novena sesión
+
+### Se entra solo con Google, y Google ya no dice `udhqdbpjhifeotgoqaoa.supabase.co`
+
+Dos cambios que son uno solo.
+
+**El mail y la clave salieron de `/login` y de `/signup`.** No porque estén mal, sino porque
+no pueden cumplir: el servidor de mail incorporado de Supabase solo entrega a los miembros de
+la organización, así que el alta por mail funciona para una persona y falla para todas las
+demás (pendiente 2). Un formulario que no puede cumplir es peor que no tenerlo. El código
+—`login`, `signup`, `guardarCuentaDePrueba`, `/recuperar`, `/clave`— **sigue en el repo y
+sigue andando**: quedó dormido, con un comentario arriba de `app/auth-actions.ts` que explica
+qué lo despierta. El día que haya dominio y SMTP, volver a colgarlo de la pantalla es un
+commit corto.
+
+**Y el ingreso dejó de pasar por la pantalla de Supabase.** Google muestra siempre a dónde te
+está mandando, y con `signInWithOAuth` eso era el id del proyecto:
+
+    Para continuar a udhqdbpjhifeotgoqaoa.supabase.co
+
+Veinte caracteres al azar, justo en el renglón que uno mira para darse cuenta de que está en
+una pantalla falsa. La documentación de Supabase dice que eso se arregla con un **dominio
+propio**, que es un add-on de un plan pago —y la organización está en el gratuito, verificado
+por la API—. Así que se hizo por el otro lado, que no cuesta nada: `components/EntrarConGoogle.tsx`
+carga la librería de Google (GIS), le pide el id token **desde esta página**, y lo canjea con
+`signInWithIdToken`. El origen que Google muestra pasa a ser el de la app. Es el mismo usuario
+y la misma identidad que por el camino largo: cambia quién pide el token, no quién entra.
+
+**El camino largo quedó abajo como respaldo, y no es adorno.** Si el origen no está
+autorizado en la consola de Google, si el script está bloqueado, o si el navegador corta las
+cookies de terceros de una forma que FedCM no salva, GIS no dibuja nada — y como esta es la
+única puerta, quedarse sin botón es quedarse afuera. El componente detecta eso (Google no
+avisa: no dibuja y escribe una línea en la consola) y muestra el formulario de siempre, que
+lo resuelve el servidor y anda siempre.
+
+**Con una cuenta de prueba abierta NO se usa GIS, y es a propósito.** Enlazar una identidad a
+una cuenta que ya existe (`linkIdentity`) solo se puede por redirección; con el token de GIS,
+Supabase abriría una cuenta **nueva** y la de prueba quedaría esperando que el cron la borre
+con todo lo cargado adentro. Por eso `/login` con sesión anónima manda a `/signup?desde=prueba`
+—verificado en el navegador— y ahí el botón es el largo.
+
+Se fue `lib/auth/proveedores.ts` con esto. Preguntaba en cada visita qué proveedores estaban
+prendidos **y** configurados; con un solo proveedor, cuya configuración se verifica una vez y
+no cambia, eran dos pedidos de red por visita para decidir algo que ya se sabe. Y era
+peligroso de una forma que no se había visto: devolvía "ninguno" ante cualquier error de red,
+o sea que un 504 del gateway dejaba la pantalla de entrar **sin ningún botón**.
+
+#### Faltan dos cosas a mano, y hasta que estén se entra por el camino largo
+
+Ninguna rompe nada: sin ellas el botón sigue funcionando, solo que Google vuelve a mostrar el
+id del proyecto.
+
+1. **Consola de Google → Clients → el cliente Web → *Authorized JavaScript origins*.** Agregar
+   `https://llegas.vercel.app` (y `http://localhost:3000` para desarrollo). Es lo que
+   habilita a GIS a correr en ese origen. Ojo: es una lista distinta de la de *Authorized
+   redirect URIs*, que ya está y no se toca.
+2. **Vercel → el proyecto → Environment Variables.** Agregar
+   `NEXT_PUBLIC_GOOGLE_CLIENT_ID` con el client id de ese mismo cliente Web. Ya está en
+   `.env.local` y en `.env.example`. Es un dato **público** —viaja en la URL de cada login de
+   OAuth, y de ahí se sacó— así que no hay nada que cuidar con él.
+
+Si además Supabase rechazara el token, el campo es *Authentication → Providers → Google →
+Authorized Client IDs*: va el mismo client id. No debería hacer falta, porque es el mismo
+cliente que ya tiene configurado el proveedor.
+
+#### Lo que la pantalla de Google va a decir cuando esto termine
+
+Con los dos pasos hechos, dice el dominio de la app. Para que diga **"¿Llegás?"** con el
+logo, falta lo otro que ya estaba empezado: la verificación de marca en la consola de Google,
+que se traba con `vercel.app` porque no es un dominio que se pueda acreditar como propio. O
+sea que la frase completa —nombre, logo, dominio— sale con la misma compra que destraba el
+SMTP: **un dominio**. Está dicho en la sección de la octava sesión y sigue siendo cierto.
+
+### Lo que se tocó de copia
+
+Tres carteles decían "ponele tu mail" para guardar una cuenta de prueba —el del tablero, el
+de Ajustes y el del final del onboarding— y ahora dicen "entrá con Google", que es lo que
+realmente hace que deje de borrarse.
+
+Y dos cosas de las páginas legales que habían quedado falsas: privacidad decía que se guarda
+"una clave cifrada" (ya no se guarda ninguna clave) y términos decía que la baja de cuenta se
+pide por mail (se hace sola desde Ajustes desde la octava sesión).
+
+---
+
+---
+
 ## Lo que encontró la octava sesión
 
-### Entrar con Google o con Apple: el lado de la app está hecho y espera el interruptor
+### Entrar con Google o con Apple: cómo se configuró
 
-Los botones ya están en `/login` y en `/signup`, y **aparecen solos**: `proveedoresHabilitados()`
-le pregunta a `/auth/v1/settings` de Supabase cuáles están prendidos y cachea la respuesta
-cinco minutos. Hoy están los dos apagados, así que no se ve nada. El día que se habilite uno,
-el botón aparece sin tocar código — y si se apaga, desaparece.
+> **Ojo, esto quedó viejo en parte.** Google está prendido y andando desde entonces, y en la
+> novena sesión pasó a ser el **único** ingreso, con el botón de GIS en vez del chequeo
+> automático que se describe acá. `proveedoresHabilitados()` ya no existe. Lo que sigue
+> siendo cierto y por eso se conserva: cómo se configura el proveedor en Google y en
+> Supabase, por qué `supabase.co` no sirve como *authorized domain*, y la verificación del
+> dominio en Search Console.
+
+Los botones aparecían solos: `proveedoresHabilitados()` le preguntaba a `/auth/v1/settings`
+de Supabase cuáles estaban prendidos y cacheaba la respuesta cinco minutos. Con un solo
+proveedor eso dejó de tener sentido —y tenía un modo de falla feo, que está contado en la
+sección de la novena sesión—.
 
 **Por qué importa más de lo que parece:** el servidor de mail incorporado de Supabase solo
 entrega a los miembros de la organización, así que hoy **nadie que no sea `okmanb@gmail.com`
@@ -105,21 +201,24 @@ propiedad; y en la consola OAuth, después de pedir la re-revisión, **el panel 
 los problemas de la revisión anterior** hasta que Google termine, que tarda horas o días.
 Mientras tanto el login funciona igual.
 
-#### "Prendido" no es "configurado", y se aprendió a los golpes
+#### "Prendido" no es "configurado", y se aprendió a los golpes (el chequeo ya no está, la lección sí)
 
 Apple quedó prendido en el panel **sin credenciales**. `/auth/v1/settings` lo daba por activo
 —`apple: true`— así que el botón se mostraba, y arrancar el flujo devolvía:
 
     400 · "Unsupported provider: missing OAuth secret"
 
-Un botón que lleva derecho a un error. Por eso `proveedoresHabilitados()` pregunta **dos**
+Un botón que lleva derecho a un error. Por eso `proveedoresHabilitados()` preguntaba **dos**
 cosas: `settings` para saber qué está prendido, y `/auth/v1/authorize?provider=…` con
 `redirect: "manual"` para saber si además arranca. Un 3xx es que sí; un 400 es que falta el
 secret. Solo se prueba lo que dice estar prendido, y las dos respuestas se cachean cinco
 minutos.
 
-Verificado contra el proyecto real: hoy `settings` dice `apple: true`, el authorize da 400, y
-la app no muestra ningún botón — que es lo correcto.
+Verificado contra el proyecto real en su momento: `settings` decía `apple: true`, el
+authorize daba 400, y la app no mostraba ningún botón. Ese chequeo se fue con la novena
+sesión —el ingreso es uno solo y su configuración ya está verificada—, pero **el interruptor
+de Apple sigue prendido y sin secret en el panel, y conviene apagarlo**: hoy no se ve porque
+no hay botón que lo llame, no porque esté resuelto.
 
 #### `robots.txt`, `sitemap.xml` y el `noindex` del tablero
 

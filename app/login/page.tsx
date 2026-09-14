@@ -1,10 +1,26 @@
-import Link from "next/link";
-import { login } from "@/app/auth-actions";
-import { AuthShell, AuthField, AuthSubmit, AuthError, AuthProbar, EntrarConProveedores } from "@/components/AuthShell";
-import { proveedoresHabilitados } from "@/lib/auth/proveedores";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { AuthShell, AuthError, AuthProbar } from "@/components/AuthShell";
+import { EntrarConGoogle } from "@/components/EntrarConGoogle";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Entrar. Hoy, solo con Google.
+ *
+ * El mail y la clave salieron de acá a propósito y en forma temporal: el
+ * servidor de mail que viene con Supabase solo entrega a los miembros de la
+ * organización, así que el alta por mail funciona **para una sola persona** y
+ * falla en silencio para cualquier otra. Un formulario que no puede cumplir es
+ * peor que no tenerlo.
+ *
+ * Vuelve cuando haya dominio propio y SMTP: el código sigue en el repo
+ * —`login`, `signup`, `/recuperar`, `/clave`— y lo único que hay que hacer es
+ * volver a colgarlo de esta pantalla.
+ *
+ * Entrar y crear cuenta son el mismo gesto con Google, así que no hay dos
+ * caminos ni link a "crear una": la primera vez la cuenta se crea sola.
+ */
 export default async function LoginPage({
   searchParams,
 }: {
@@ -16,7 +32,15 @@ export default async function LoginPage({
   // qué pasa con eso. Lo sube `DraftImporter` al entrar; acá se dice.
   const desdeOnboarding = query.desde === "onboarding";
 
-  const proveedores = await proveedoresHabilitados();
+  /*
+   * Con una cuenta de prueba abierta, esta pantalla haría daño: entrar con
+   * Google abre una cuenta NUEVA, y la de prueba —con la deuda, el resumen y
+   * todo lo cargado— quedaría esperando que el cron la borre. La pantalla de
+   * guardar hace lo contrario: le cuelga la identidad a esta misma cuenta.
+   */
+  const supabase = await createClient();
+  const { data: sesion } = await supabase.auth.getUser();
+  if (sesion.user?.is_anonymous) redirect("/signup?desde=prueba");
 
   return (
     <AuthShell
@@ -27,44 +51,21 @@ export default async function LoginPage({
           : "Entrás y recuperás tus deudas, tu flujo y tu plan tal como los dejaste."
       }
     >
-      <form action={login} className="mt-6">
-        <AuthField id="email" label="Email" type="email" autoComplete="email" />
-        <AuthField id="password" label="Clave" type="password" autoComplete="current-password" />
+      {query.error && <AuthError message={query.error} />}
 
-        {query.error && <AuthError message={query.error} />}
+      <EntrarConGoogle clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID} verbo="Entrar" />
 
-        <div className="mt-2 text-right text-[12px]">
-          <Link href="/recuperar" className="text-pine underline underline-offset-2">
-            Olvidé mi clave
-          </Link>
-        </div>
-
-        <AuthSubmit>
-          Ingresar
-          <span className="ml-1" aria-hidden>
-            &rarr;
-          </span>
-        </AuthSubmit>
-      </form>
-
-      <EntrarConProveedores google={proveedores.google} apple={proveedores.apple} />
+      <p className="help mt-3">
+        Es el único ingreso por ahora. No hay clave que recordar, y si es tu primera vez la
+        cuenta se crea sola. Google nos da tu nombre y tu mail, nada más.
+      </p>
 
       {/*
         La salida a probar. Quien llega acá sin cuenta —desde un link, desde el
         historial— no tenía cómo llegar a probar que no fuera el botón de atrás
         del navegador.
       */}
-      <AuthProbar separador={!proveedores.google && !proveedores.apple} />
-
-      <p className="mt-6 text-center text-[12px] text-muted">
-        ¿Todavía no tenés cuenta?{" "}
-        <Link
-          href={desdeOnboarding ? "/signup?desde=onboarding" : "/signup"}
-          className="text-pine underline underline-offset-2"
-        >
-          Crear una
-        </Link>
-      </p>
+      <AuthProbar />
     </AuthShell>
   );
 }

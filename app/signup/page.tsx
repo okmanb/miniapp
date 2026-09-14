@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { signup } from "@/app/auth-actions";
 import { createClient } from "@/lib/supabase/server";
-import { AuthShell, AuthField, AuthSubmit, AuthError, EntrarConProveedores } from "@/components/AuthShell";
-import { proveedoresHabilitados } from "@/lib/auth/proveedores";
+import { AuthShell } from "@/components/AuthShell";
+import { EntrarConGoogle, BotonGoogleRedirect } from "@/components/EntrarConGoogle";
 import { estadoDePrueba } from "@/lib/auth/prueba";
 
 export const dynamic = "force-dynamic";
@@ -10,14 +9,22 @@ export const dynamic = "force-dynamic";
 /**
  * Crear cuenta — o guardar la de prueba, que no es lo mismo.
  *
- * Con una sesión anónima abierta esta pantalla NO da de alta a nadie: le
- * cuelga un mail a la cuenta que ya existe, así que el id no cambia y no hay
- * que mover una sola fila. La diferencia se detecta del lado del servidor
- * —`is_anonymous`— y no del query string, que cualquiera puede escribir.
+ * Las dos cosas se hacen con Google, que es el único ingreso mientras no haya
+ * dominio propio y servidor de mail (ver `/login`). Pero por abajo son dos
+ * caminos distintos y la diferencia importa:
  *
- * La clave no se pide en ese caso: Supabase no deja ponerle clave a una cuenta
- * anónima hasta que el mail esté confirmado. Se pide en `/clave`, al volver
- * del link. Pedirla acá sería pedir algo que se va a tirar.
+ *   * **Sin sesión** se crea la cuenta con el token que da Google en esta misma
+ *     página (`EntrarConGoogle`), y la pantalla de Google muestra el dominio de
+ *     la app en vez del id del proyecto de Supabase.
+ *
+ *   * **Con una cuenta de prueba abierta** se ENLAZA la identidad a la cuenta
+ *     que ya existe, y eso solo se puede por redirección (`linkIdentity`). Con
+ *     el token de acá, Supabase abriría una cuenta nueva y lo cargado quedaría
+ *     esperando que el cron borre la vieja. Por eso ahí va el botón largo, y no
+ *     es un plan B: es el único que conserva los datos.
+ *
+ * La diferencia se detecta del lado del servidor —`is_anonymous`— y no del
+ * query string, que cualquiera puede escribir.
  */
 export default async function SignupPage({
   searchParams,
@@ -43,8 +50,12 @@ export default async function SignupPage({
    */
   const desdeOnboarding = query.desde === "onboarding";
 
-  const proveedores = await proveedoresHabilitados();
-
+  /*
+   * Pantalla del alta por mail, hoy dormida: el alta por mail salió de la
+   * interfaz hasta que haya SMTP propio. Se queda acá porque la acción que
+   * manda a este lugar sigue en el repo, y una acción viva que aterriza en una
+   * pantalla que no existe es peor que una pantalla de más.
+   */
   if (query.check_email) {
     return (
       <AuthShell
@@ -55,24 +66,6 @@ export default async function SignupPage({
           Si no llega en unos minutos, mirá en spam. El link vence, así que si se pasó el
           tiempo pedí otro creando la cuenta de nuevo con el mismo mail.
         </p>
-        {query.desde === "prueba" ? (
-          /* La cuenta de prueba sigue viva y sigue teniendo fecha de
-             vencimiento hasta que el mail se confirme: decirlo acá evita que
-             el link quede para mañana. */
-          <p className="help mt-3">
-            Lo que cargaste ya está en esa cuenta y no se toca. Confirmá el mail antes de que
-            se cumplan las horas de la prueba: recién ahí deja de tener fecha de vencimiento.
-            Al volver te pedimos la clave.
-          </p>
-        ) : (
-          /* El borrador vive en ESTE navegador. Confirmar desde el mail del
-             teléfono y seguir ahí deja lo cargado del otro lado, así que
-             conviene decir dónde está antes de que parezca perdido. */
-          <p className="help mt-3">
-            Lo que cargaste probando sigue guardado en este navegador y se sube solo la
-            primera vez que entres desde acá.
-          </p>
-        )}
         <Link
           href="/login"
           className="mt-5 inline-flex min-h-touch items-center text-[12px] text-pine underline underline-offset-2"
@@ -89,43 +82,16 @@ export default async function SignupPage({
     return (
       <AuthShell
         title="Guardar mi cuenta"
-        note={`Tu cuenta de prueba se borra sola ${etiqueta}. Con tu mail deja de borrarse y queda tal cual está.`}
+        note={`Tu cuenta de prueba se borra sola ${etiqueta}. Con tu cuenta de Google deja de borrarse y queda tal cual está.`}
       >
-        <form action={signup} className="mt-6">
-          <AuthField id="name" label="Nombre" type="text" autoComplete="name" />
-          <AuthField
-            id="email"
-            label="Email"
-            type="email"
-            autoComplete="email"
-            help="Te mandamos un link para confirmarlo. La clave te la pedimos al volver."
-          />
+        <div className="mt-6">
+          <BotonGoogleRedirect verbo="Guardar" />
+        </div>
 
-          <p className="help mt-4">
-            No se crea nada de cero: es la misma cuenta que venís usando. Las deudas, los
-            pagos y los resúmenes que cargaste quedan donde están.
-          </p>
-
-          {query.error && <AuthError message={query.error} />}
-
-          <AuthSubmit>
-            Guardar mi cuenta
-            <span className="ml-1" aria-hidden>
-              &rarr;
-            </span>
-          </AuthSubmit>
-        </form>
-
-        {/*
-          Con Google o Apple la conversión es de un toque y sin mail de por
-          medio: `linkIdentity` le cuelga la identidad a esta misma cuenta, así
-          que no se pierde nada de lo cargado.
-        */}
-        <EntrarConProveedores
-          google={proveedores.google}
-          apple={proveedores.apple}
-          verbo="Guardar"
-        />
+        <p className="help mt-3">
+          No se crea nada de cero: es la misma cuenta que venís usando. Las deudas, los pagos y
+          los resúmenes que cargaste quedan donde están.
+        </p>
 
         <p className="mt-6 text-center text-[12px] text-muted">
           <Link href="/dashboard" className="text-pine underline underline-offset-2">
@@ -147,45 +113,23 @@ export default async function SignupPage({
     >
       {/* La cuenta de prueba no se pudo abrir —las sesiones anónimas están
           apagadas en el proyecto—. El botón prometía entrar sin cuenta, así
-          que lo mínimo es decir por qué esto es un formulario. */}
+          que lo mínimo es decir por qué esto es otra pantalla. */}
       {query.sin_prueba && (
         <p className="mt-4 rounded-surface border border-gold-border bg-[#FCF4E7] px-3 py-3 text-[11.5px] text-gold-ink">
-          No pudimos abrirte la cuenta de prueba. Creá la cuenta y lo que cargaste se sube
+          No pudimos abrirte la cuenta de prueba. Entrá con Google y lo que cargaste se sube
           igual: no hay que volver a escribir nada.
         </p>
       )}
 
-      <form action={signup} className="mt-6">
-        <AuthField id="name" label="Nombre" type="text" autoComplete="name" />
-        <AuthField id="email" label="Email" type="email" autoComplete="email" />
-        <AuthField
-          id="password"
-          label="Clave"
-          type="password"
-          autoComplete="new-password"
-          help="Mínimo 8 caracteres. Usá una que no uses en el banco."
-        />
-
-        <p className="help mt-4">
-          Guardamos tus deudas y tu plan en tu cuenta. No pedimos acceso a tu banco ni a tus
-          tarjetas.
-        </p>
-
-        {query.error && <AuthError message={query.error} />}
-
-        <AuthSubmit>
-          {desdeOnboarding ? "Crear mi tablero" : "Crear cuenta"}
-          <span className="ml-1" aria-hidden>
-            &rarr;
-          </span>
-        </AuthSubmit>
-      </form>
-
-      <EntrarConProveedores
-        google={proveedores.google}
-        apple={proveedores.apple}
+      <EntrarConGoogle
+        clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}
         verbo="Crear cuenta"
       />
+
+      <p className="help mt-3">
+        Guardamos tus deudas y tu plan en tu cuenta. Google nos da tu nombre y tu mail, nada
+        más: no pedimos acceso a tu banco ni a tus tarjetas.
+      </p>
 
       <p className="mt-6 text-center text-[12px] text-muted">
         <Link

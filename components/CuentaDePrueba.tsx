@@ -36,7 +36,7 @@ export async function CuentaDePrueba() {
           Estás probando con una cuenta temporal
         </p>
         <p className="mt-1 text-[11.5px] leading-[1.5] text-gold-ink">
-          Se borra sola {etiqueta}, con todo lo que cargues. Ponele tu mail y queda guardada:
+          Se borra sola {etiqueta}, con todo lo que cargues. Entrá con Google y queda guardada:
           no se pierde nada ni hay que volver a empezar.
         </p>
         <Link

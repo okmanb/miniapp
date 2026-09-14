@@ -40,9 +40,9 @@ export default function PrivacidadPage() {
         <ListaLegal
           items={[
             <>
-              <strong className="text-ink">Tu cuenta:</strong> el mail, una clave cifrada que
-              nunca vemos en claro, y el nombre si lo escribiste. Si entrás con Google,
-              guardamos el mail y el nombre que Google nos pasa.
+              <strong className="text-ink">Tu cuenta:</strong> el mail y el nombre que nos
+              pasa Google, que hoy es la única forma de entrar. No guardamos ninguna clave
+              tuya, ni siquiera cifrada, y no le pedimos a Google nada más que eso.
             </>,
             <>
               <strong className="text-ink">Tus números:</strong> deudas, saldos, tasas, días de
@@ -123,7 +123,7 @@ export default function PrivacidadPage() {
                 Las cuentas de prueba se borran solas a las {HORAS_DE_PRUEBA} horas
               </strong>
               , con todo lo que hayan cargado. No tienen mail ni ningún dato que te
-              identifique. Ponerle tu mail las convierte en una cuenta común y dejan de
+              identifique. Entrar con Google las convierte en una cuenta común y dejan de
               borrarse.
             </>,
             <>

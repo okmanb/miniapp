@@ -1,5 +1,24 @@
 "use server";
 
+/**
+ * Las acciones de cuenta.
+ *
+ * ## Mitad de este archivo está dormida, no rota
+ *
+ * `login`, `signup`, `guardarCuentaDePrueba` y `guardarClaveDeCuentaNueva`
+ * —con sus pantallas `/recuperar` y `/clave`— siguen andando, pero ya no
+ * cuelgan de ninguna pantalla. El motivo es de afuera: el servidor de mail que
+ * viene con Supabase **solo entrega a los miembros de la organización**, así
+ * que el alta por mail funciona para el dueño del proyecto y falla en silencio
+ * para cualquier otra persona. Mientras eso siga así, el único ingreso es
+ * Google.
+ *
+ * Se quedan porque la cuenta pendiente es comprar un dominio, y con dominio
+ * viene el SMTP propio: ese día esto se vuelve a colgar de `/login` y no hay
+ * que escribirlo de nuevo. Si pasa el tiempo y la decisión es otra, borrarlas
+ * es un commit corto.
+ */
+
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { appOrigin } from "@/lib/app-url";
@@ -98,13 +117,20 @@ async function entrarConProveedor(provider: "google" | "apple") {
   redirect(data.url);
 }
 
-/** Uno por proveedor, para colgarlos de un `<form action>` sin envolver nada. */
+/**
+ * Para colgarlo de un `<form action>` sin envolver nada.
+ *
+ * Es el camino largo —el que pasa por la pantalla de Supabase— y queda por dos
+ * motivos: es el plan B de `EntrarConGoogle` cuando el navegador no puede con
+ * la librería de Google, y es el ÚNICO camino cuando hay que enlazar la
+ * identidad a una cuenta de prueba que ya existe.
+ *
+ * `entrarConProveedor` sigue siendo genérica aunque hoy se llame con un solo
+ * proveedor: Apple quedó prendido en el panel pero sin secret, y volver a
+ * ofrecerlo es agregar de nuevo estas tres líneas.
+ */
 export async function entrarConGoogle() {
   await entrarConProveedor("google");
-}
-
-export async function entrarConApple() {
-  await entrarConProveedor("apple");
 }
 
 /**

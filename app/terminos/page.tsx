@@ -76,15 +76,16 @@ export default function TerminosPage() {
         <ListaLegal
           items={[
             <>
-              Sos responsable de tu clave y de lo que se haga desde tu cuenta. Usá una que no
-              uses en el banco.
+              Se entra con tu cuenta de Google y no manejamos ninguna clave tuya. Cuidá esa
+              cuenta, porque es la llave de esta: lo que se haga desde acá es tu
+              responsabilidad.
             </>,
             <>
               <strong className="text-ink">
                 Las cuentas de prueba duran {HORAS_DE_PRUEBA} horas
               </strong>{" "}
               y después se borran con todo lo que tengan adentro. No tienen mail, así que no
-              hay forma de recuperarlas: si querés conservar lo que cargaste, ponele tu mail
+              hay forma de recuperarlas: si querés conservar lo que cargaste, entrá con Google
               antes.
             </>,
             <>
@@ -92,8 +93,8 @@ export default function TerminosPage() {
               pareja, por ejemplo— asegurate de que esté de acuerdo.
             </>,
             <>
-              Podés borrar todos tus datos cuando quieras desde Ajustes, y pedirnos la baja de
-              la cuenta por mail.
+              Podés borrar todos tus datos, o la cuenta entera, cuando quieras desde Ajustes.
+              No hay que pedirlo por mail.
             </>,
           ]}
         />
