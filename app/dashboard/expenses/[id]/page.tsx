@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/calc/money";
+import { currentPeriod } from "@/lib/calc/dates";
 import { Screen, Card, MetaChip } from "@/components/ui";
 import { ExpenseEditor } from "@/components/ExpenseEditor";
 
@@ -70,6 +71,7 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
         isArchived={expense.is_archived}
         currentAmount={Number(expense.amount)}
         alreadyEnded={Boolean(expense.ended_period)}
+        hayHistorial={expense.period < currentPeriod()}
       />
     </Screen>
   );

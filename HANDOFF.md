@@ -145,9 +145,14 @@ es el mismo mes. Verificado contra la base: `$900.000` de mayo con `ended_period
    solo cuando el registro es de un mes anterior (`expScopeShow`). La acción también se
    defiende sola, no solo la interfaz.
 
-   **Esto deja a la vista una diferencia en la pantalla de gastos**: `ExpenseEditor` muestra
-   el selector para cualquier gasto fijo, incluso uno cargado este mes, y ahí sí se puede
-   fabricar esa fila muerta. Es un bug chico y no se tocó en este commit.
+   **La pantalla de gastos tenía el mismo bug y se arregló** en el commit siguiente:
+   `ExpenseEditor` mostraba el selector para cualquier gasto fijo, incluso uno cargado este
+   mes, y ahí sí se podía fabricar la fila muerta. Ahora la esconde, y `updateExpenseAmount`
+   se defiende sola —el alcance viaja en un campo oculto, así que la pantalla no puede ser el
+   único lugar donde se decide—. Verificado en el navegador falseando ese campo a mano:
+   con `scope=desde_ahora` sobre un gasto de este mes quedó una sola fila corregida, y sobre
+   uno de junio siguió partiendo bien (junio a agosto $333.000, septiembre en
+   adelante $400.000).
 
 2. **"Este ingreso ya no entra" cierra, salvo que no haya nada que conservar.** Si el ingreso
    es de un mes anterior se cierra con `ended_period` —los meses que ya pasaron contaron con

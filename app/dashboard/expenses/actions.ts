@@ -84,6 +84,12 @@ export async function createExpense(formData: FormData): Promise<ExpenseResult |
  *
  * Son dos operaciones distintas a propósito: la app no puede adivinar si un
  * monto distinto es una corrección o un aumento.
+ *
+ * Si el gasto se cargó ESTE mes no hay historial que conservar, así que cerrar
+ * y reabrir dejaría una fila muerta —`period` igual a `ended_period`, un
+ * registro que no cuenta en ningún mes— y un "terminó en septiembre" que no
+ * pasó. En ese caso se corrige, aunque el formulario pida lo otro: el alcance
+ * viaja en un campo oculto y la pantalla no es el único lugar donde defenderlo.
  */
 export async function updateExpenseAmount(formData: FormData): Promise<ExpenseResult | never> {
   const supabase = await createClient();
@@ -108,7 +114,7 @@ export async function updateExpenseAmount(formData: FormData): Promise<ExpenseRe
 
   const period = currentPeriod();
 
-  if (scope === "siempre" || !expense.is_recurring) {
+  if (scope === "siempre" || !expense.is_recurring || expense.period >= period) {
     const { error } = await supabase.from("expenses").update({ amount }).eq("id", id);
     if (error) return { ok: false, message: "No pudimos guardar el cambio." };
   } else {

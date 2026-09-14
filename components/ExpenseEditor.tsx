@@ -20,7 +20,10 @@ import { Spinner } from "./ui";
  *    en que dejó de valer y se abre uno nuevo — el historial no se reescribe.
  *
  * Para un consumo único no hay tal elección: entra una sola vez, así que solo
- * se puede corregir.
+ * se puede corregir. Tampoco la hay para un gasto cargado este mismo mes: no
+ * tiene meses anteriores que defender, y "desde este mes" fabricaría una fila
+ * que no cuenta en ninguno. Es la regla del prototipo, que muestra el selector
+ * de alcance solo cuando el registro es de un mes anterior (`expScopeShow`).
  */
 export function ExpenseEditor({
   id,
@@ -28,13 +31,17 @@ export function ExpenseEditor({
   isArchived,
   currentAmount,
   alreadyEnded,
+  hayHistorial,
 }: {
   id: string;
   isRecurring: boolean;
   isArchived: boolean;
   currentAmount: number;
   alreadyEnded: boolean;
+  /** El gasto empezó en un mes anterior: cambiarlo ahora parte la historia en dos. */
+  hayHistorial: boolean;
 }) {
+  const puedeElegir = isRecurring && hayHistorial;
   const [pending, startTransition] = useTransition();
   const [scope, setScope] = useState<"siempre" | "desde_ahora">("siempre");
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +63,7 @@ export function ExpenseEditor({
           }
         >
           <input type="hidden" name="id" value={id} />
-          <input type="hidden" name="scope" value={isRecurring ? scope : "siempre"} />
+          <input type="hidden" name="scope" value={puedeElegir ? scope : "siempre"} />
 
           <div className="flex items-center rounded-surface border border-border-input bg-surface px-3">
             <span className="font-mono text-[15px] text-muted" aria-hidden>
@@ -72,7 +79,7 @@ export function ExpenseEditor({
             />
           </div>
 
-          {isRecurring && (
+          {puedeElegir && (
             <fieldset className="mt-4">
               <legend className="text-label uppercase text-muted">Desde cuándo vale</legend>
 
@@ -89,6 +96,13 @@ export function ExpenseEditor({
                 note="Aumentó de verdad. El monto anterior sigue valiendo para los meses que ya pasaron; el historial no se toca."
               />
             </fieldset>
+          )}
+
+          {isRecurring && !hayHistorial && (
+            <p className="help mt-3">
+              Lo cargaste este mes, así que todavía no hay meses anteriores que defender:
+              cambiar el monto acá lo corrige y nada más.
+            </p>
           )}
 
           {error && (
