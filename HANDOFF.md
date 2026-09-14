@@ -274,6 +274,12 @@ comparación— y un pie con lo que el resumen dice pero la cuenta no usa: el m�
 vencimiento y las compras en cuotas. Los consumos del mes, que faltaban en esa lista, ahora
 están.
 
+El mes del resumen siguió el mismo camino: lo dice el PDF —es el período que cierra, no una
+elección— así que con el archivo leído viaja en un hidden y se lee en la bajada de la ficha,
+*"Resumen de agosto de 2026"*. Es además la clave con la que se guarda junto con la tarjeta,
+así que si el lector se equivocara de mes el resumen se escribiría sobre otro: para eso está
+la salida a corregir, que vale para éste como para el resto.
+
 Arriba, pegado al que subió el archivo, quedó **lo único que esa caja puede decir y la otra
 no**: que el PDF entró, y qué no se le pudo leer ("No pudimos leer el pago mínimo. Completalo
 abajo antes de guardar").

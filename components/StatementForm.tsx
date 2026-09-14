@@ -584,18 +584,32 @@ export function StatementForm({
           </div>
         )}
 
-        <div className="mt-5">
-          <CalendarField
-            id="period"
-            name="period"
-            label="Mes del resumen"
-            mode="month"
-            value={period}
-            onChange={setPeriod}
-            kicker="Mes del resumen"
-            note="El período que cierra este resumen."
-          />
-        </div>
+        {/*
+          El mes también lo dice el resumen: es el período que cierra, no una
+          elección. Con el PDF leído viaja en un hidden y se lee arriba de la
+          cuenta, que es donde tiene sentido —"resumen de agosto"— en vez de
+          como un campo más esperando que alguien lo confirme.
+
+          Es además la clave con la que se guarda, junto con la tarjeta: si el
+          lector se equivocara de mes, el resumen se escribiría sobre otro. Por
+          eso la salida a corregir vale para éste como para el resto.
+        */}
+        {soloLectura ? (
+          <input type="hidden" name="period" value={period} />
+        ) : (
+          <div className="mt-5">
+            <CalendarField
+              id="period"
+              name="period"
+              label="Mes del resumen"
+              mode="month"
+              value={period}
+              onChange={setPeriod}
+              kicker="Mes del resumen"
+              note="El período que cierra este resumen."
+            />
+          </div>
+        )}
 
         {/*
           Con el PDF leído, los números del resumen no son campos: viajan acá y
@@ -902,6 +916,7 @@ export function StatementForm({
             card={card}
             previousBalance={previousBalance}
             close={preview}
+            periodo={soloLectura ? period : null}
             tarjetaNueva={
               creatingCard
                 ? { anual: cardRate, mensual: cardMonthlyRate, dia: cardDueDay }
@@ -1005,6 +1020,7 @@ function StatementPreview({
   card,
   previousBalance,
   close,
+  periodo,
   tarjetaNueva,
   newCharges,
   minimumPayment,
@@ -1031,6 +1047,8 @@ function StatementPreview({
    * los dos numeros en pantallas distintas.
    */
   bankBalance: number | null;
+  /** El mes que cierra, cuando lo dijo el PDF y no hay campo que lo muestre. */
+  periodo: string | null;
   /**
    * Cuando la tarjeta se está creando con este resumen, lo suyo que la cuenta
    * no dice: la tasa y el día de vencimiento. El nombre ya encabeza la ficha y
@@ -1066,18 +1084,30 @@ function StatementPreview({
         no en una ficha aparte: la tasa con la que se va a calcular todos los
         meses y el día que vence.
       */}
-      {tarjetaNueva && (
+      {/*
+        Una sola bajada con las dos cosas que no son cifras: de qué mes es el
+        resumen y, si la tarjeta nace con él, con qué tasa se va a calcular.
+        En dos párrafos separados eran dos renglones sueltos diciendo una frase
+        cada uno.
+      */}
+      {(periodo || tarjetaNueva) && (
         <p className="help mt-1">
-          Se crea con este resumen
-          {tarjetaNueva.mensual != null
-            ? `, calculando con el ${formatArgNumber(tarjetaNueva.mensual)}% mensual que él declara`
-            : tarjetaNueva.anual
-              ? `, al ${tarjetaNueva.anual}% anual`
-              : ""}
-          {/* El día solo si el pie no muestra ya la fecha de este vencimiento:
-              "vence el día 7" arriba y "vence el 7 de septiembre" abajo son el
-              mismo dato dicho dos veces. */}
-          {tarjetaNueva.dia && !dueDate ? `, y vence el día ${tarjetaNueva.dia}` : ""}.
+          {periodo && `Resumen de ${describeCalendarValue("month", periodo).toLowerCase()}.`}
+          {periodo && tarjetaNueva ? " " : ""}
+          {tarjetaNueva && (
+            <>
+              La tarjeta se crea con este resumen
+              {tarjetaNueva.mensual != null
+                ? `, calculando con el ${formatArgNumber(tarjetaNueva.mensual)}% mensual que él declara`
+                : tarjetaNueva.anual
+                  ? `, al ${tarjetaNueva.anual}% anual`
+                  : ""}
+              {/* El día solo si el pie no muestra ya la fecha de este
+                  vencimiento: "vence el día 7" arriba y "vence el 7 de
+                  septiembre" abajo son el mismo dato dicho dos veces. */}
+              {tarjetaNueva.dia && !dueDate ? `, y vence el día ${tarjetaNueva.dia}` : ""}.
+            </>
+          )}
         </p>
       )}
 
