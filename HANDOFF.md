@@ -63,6 +63,17 @@ carga la librería de Google (GIS), le pide el id token **desde esta página**, 
 `signInWithIdToken`. El origen que Google muestra pasa a ser el de la app. Es el mismo usuario
 y la misma identidad que por el camino largo: cambia quién pide el token, no quién entra.
 
+**El botón de Google se agranda hasta los 51 de la app, y el factor se mide solo.** Google
+dibuja el suyo de 40 y no ofrece más: `size` tiene tres valores y `large` es el más grande.
+Al lado de "Probar sin cuenta", que mide 51, se veía hundido —y en un teléfono todavía más—.
+Así que se dibuja dos veces: la primera solo para medir cuánto mide de alto, y la segunda a
+un ancho tal que, escalado por `51 / alto`, llena la misma columna que los demás botones.
+Medir en vez de suponer los 40 es lo que hace que esto siga andando el día que Google cambie
+su botón. Lo único que se agranda es el tamaño: proporción, colores y logo quedan intactos,
+que es lo que pide Google. El texto queda algo más grande que el del botón de al lado —es el
+precio de la única palanca que hay— y a cambio las dos píldoras miden exactamente lo mismo:
+verificado, 339 × 51 las dos en un teléfono, 366 × 51 en el navegador.
+
 **El camino largo quedó abajo como respaldo, y no es adorno.** Si el origen no está
 autorizado en la consola de Google, si el script está bloqueado, o si el navegador corta las
 cookies de terceros de una forma que FedCM no salva, GIS no dibuja nada — y como esta es la

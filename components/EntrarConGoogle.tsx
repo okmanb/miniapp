@@ -53,6 +53,21 @@ import { ENTRY_SECONDARY } from "@/components/ui";
 
 type Estado = "cargando" | "google" | "fallback" | "entrando";
 
+/**
+ * Cuánto mide de alto un botón de esta app, y por qué no son 52.
+ *
+ * Es `BUTTON_HEIGHT_OUTLINED`: el botón de contorno va un píxel más bajo que el
+ * relleno a propósito —está explicado en `components/ui.tsx`— porque una figura
+ * clara sobre fondo claro se agranda a la vista. El de Google es claro, así que
+ * le toca 51.
+ *
+ * Google dibuja el suyo de 40 y no ofrece más: `size` tiene tres valores y
+ * `large` es el más grande. Así que se lo escala, que es lo único que se puede
+ * hacer sin tocar lo que Google dibuja: la proporción, los colores y el logo
+ * quedan intactos, solo cambia el tamaño.
+ */
+const ALTO_DEL_BOTON = 51;
+
 interface Credencial {
   credential?: string;
 }
@@ -101,6 +116,7 @@ export function EntrarConGoogle({
   const yaArranco = useRef(false);
 
   const [estado, setEstado] = useState<Estado>(clientId ? "cargando" : "fallback");
+  const [escala, setEscala] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
   const entrar = useCallback(
@@ -137,13 +153,14 @@ export function EntrarConGoogle({
     const google = (window as unknown as { google?: GoogleGlobal }).google;
     if (!google?.accounts?.id || !caja.current || !marco.current) return;
 
+    const idDeGoogle = google.accounts.id;
     yaArranco.current = true;
 
     try {
       const { nonce, hasheado } = await generarNonce();
       nonceRef.current = nonce;
 
-      google.accounts.id.initialize({
+      idDeGoogle.initialize({
         client_id: clientId,
         callback: (respuesta: Credencial) => {
           if (respuesta.credential) void entrar(respuesta.credential);
@@ -167,16 +184,46 @@ export function EntrarConGoogle({
       const medido = Math.round(marco.current.getBoundingClientRect().width);
       const ancho = medido || Math.min(394, document.documentElement.clientWidth - 36);
 
-      google.accounts.id.renderButton(caja.current, {
-        type: "standard",
-        theme: "outline",
-        size: "large",
-        shape: "pill",
-        text: "continue_with",
-        logo_alignment: "left",
-        locale: "es-419",
-        width: Math.min(400, Math.max(200, ancho)),
-      });
+      const dibujar = (anchoPedido: number) =>
+        idDeGoogle.renderButton(caja.current!, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          shape: "pill",
+          text: "continue_with",
+          logo_alignment: "left",
+          locale: "es-419",
+          width: Math.min(400, Math.max(200, Math.round(anchoPedido))),
+        });
+
+      /*
+       * Se dibuja dos veces, y la primera es solo para medir.
+       *
+       * El alto de Google se mide en vez de darlo por sabido: hoy son 40, pero
+       * si mañana cambia, el factor se recalcula solo y el botón sigue
+       * midiendo lo mismo que los de al lado. El ancho de este primer dibujo da
+       * igual, se descarta enseguida.
+       */
+      dibujar(260);
+      await new Promise((listo) => window.setTimeout(listo, 120));
+
+      if (!caja.current || !marco.current) {
+        // Nunca dejarlo en "cargando": eso es una pantalla de entrar sin botón.
+        setEstado("fallback");
+        return;
+      }
+
+      const altoDeGoogle = caja.current.firstElementChild?.getBoundingClientRect().height ?? 0;
+      const factor =
+        altoDeGoogle > 0 && altoDeGoogle < ALTO_DEL_BOTON
+          ? Math.min(1.6, ALTO_DEL_BOTON / altoDeGoogle)
+          : 1;
+
+      // Y el de verdad: a un ancho que, agrandado por el factor, llena la
+      // columna exacta que ocupan los demás botones.
+      caja.current.replaceChildren();
+      setEscala(factor);
+      dibujar(ancho / factor);
     } catch (e) {
       console.error("No se pudo preparar el ingreso con Google", e);
       setEstado("fallback");
@@ -220,11 +267,19 @@ export function EntrarConGoogle({
       )}
 
       {/* Siempre montada: `renderButton` necesita un nodo de verdad, y el ancho
-          se calcula antes de que haya nada adentro. */}
+          se calcula antes de que haya nada adentro. La fila fija el alto de la
+          app y centra lo que Google dibuje; la caja de adentro es la que se
+          agranda, desde el centro, para llegar a ese alto. */}
       <div
-        ref={caja}
-        className={estado === "google" ? "flex justify-center" : "invisible h-0 overflow-hidden"}
-      />
+        className={
+          estado === "google"
+            ? "flex items-center justify-center"
+            : "invisible h-0 overflow-hidden"
+        }
+        style={estado === "google" ? { height: ALTO_DEL_BOTON } : undefined}
+      >
+        <div ref={caja} style={escala === 1 ? undefined : { transform: `scale(${escala})` }} />
+      </div>
 
       {estado === "cargando" && (
         <div aria-busy className={`${ENTRY_SECONDARY} justify-center opacity-60`}>
